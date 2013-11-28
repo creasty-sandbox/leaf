@@ -1,0 +1,4 @@
+
+# Framework namespace
+window.Leaf = {}
+

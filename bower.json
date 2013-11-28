@@ -1,0 +1,7 @@
+{
+  "name": "leaf",
+  "dependencies": {
+    "jquery": "~1.10.0",
+    "lodash": "~2.4.0"
+  }
+}
