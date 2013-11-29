@@ -1,6 +1,6 @@
 
-Leaf (wip)
-==========
+Leaf
+====
 
 Client-side MVC framework for rails projects
 
