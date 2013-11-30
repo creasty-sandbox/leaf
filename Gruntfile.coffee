@@ -5,6 +5,10 @@ module.exports = (grunt) ->
   #-----------------------------------------------
   require('matchdep').filterDev('grunt-*').forEach grunt.loadNpmTasks
 
+  #  Option
+  #-----------------------------------------------
+  filter = grunt.option 'filter'
+
   #  File list
   #-----------------------------------------------
   files = (tmp) ->
@@ -153,6 +157,9 @@ module.exports = (grunt) ->
 
     # Watch
     watch:
+      options:
+        spawn: false
+
       coffee:
         files: 'src/**/*.coffee'
         tasks: ['coffee:src']
@@ -162,7 +169,7 @@ module.exports = (grunt) ->
         tasks: ['coffee:test']
 
       jasmine:
-        files: 'tmp/spec/**/*.js'
+        files: ['tmp/spec/**/*.js', 'tmp/src/**/*.js']
         tasks: ['filtered_test']
 
 
@@ -171,7 +178,7 @@ module.exports = (grunt) ->
   grunt.option 'force', true
   grunt.registerTask 'default', ['dev']
 
-  filteredTest = if (filter = grunt.option('filter')) then "jasmine:#{filter}" else 'jasmine'
+  filteredTest = if filter then "jasmine:#{filter}" else 'jasmine'
   grunt.registerTask 'filtered_test', [filteredTest]
 
   grunt.registerTask 'dev', ['coffee:src', 'watch:coffee']
