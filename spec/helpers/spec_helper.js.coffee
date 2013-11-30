@@ -15,6 +15,6 @@ beforeEach ->
 
 
   @addMatchers
-    toHaveSameContents: (expected) ->
+    toHaveContents: (expected) ->
       JSON.stringify(@actual) == JSON.stringify(expected)
 

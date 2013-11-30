@@ -26,13 +26,8 @@ module.exports = (grunt) ->
       'observable/observable.coffee'
     ].map fn
     template: [
-      'template/rivets.coffee'
-      'template/view.coffee'
-      'template/bindings.coffee'
-      'template/parsers.coffee'
-      'template/keypath_observer.coffee'
-      'template/binders.coffee'
-      'template/adapters.coffee'
+      'template/tokenizer.coffee'
+      'template/parser.coffee'
     ].map fn
     core: [
       'core/leaf.coffee'

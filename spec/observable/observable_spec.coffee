@@ -221,7 +221,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.push 4
 
-        expect(ary).toHaveSameContents [1, 2, 3, 4]
+        expect(ary).toHaveContents [1, 2, 3, 4]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `unshift`', ->
@@ -230,7 +230,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.unshift 0
 
-        expect(ary).toHaveSameContents [0, 1, 2, 3]
+        expect(ary).toHaveContents [0, 1, 2, 3]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `pop`', ->
@@ -239,7 +239,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.pop()
 
-        expect(ary).toHaveSameContents [1, 2]
+        expect(ary).toHaveContents [1, 2]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `shift`', ->
@@ -248,7 +248,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.shift()
 
-        expect(ary).toHaveSameContents [2, 3]
+        expect(ary).toHaveContents [2, 3]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `sort`', ->
@@ -257,7 +257,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.sort()
 
-        expect(ary).toHaveSameContents [1, 2, 3]
+        expect(ary).toHaveContents [1, 2, 3]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `reverse`', ->
@@ -266,7 +266,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.reverse()
 
-        expect(ary).toHaveSameContents [3, 2, 1]
+        expect(ary).toHaveContents [3, 2, 1]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `splice`', ->
@@ -275,7 +275,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.splice 1, 1
 
-        expect(ary).toHaveSameContents [1, 3]
+        expect(ary).toHaveContents [1, 3]
         expect(callback).toHaveBeenCalled()
 
 
