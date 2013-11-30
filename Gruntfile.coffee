@@ -20,6 +20,9 @@ module.exports = (grunt) ->
       'utils/event.coffee'
     ].map fn
     observable: [
+      'observable/base.coffee'
+      'observable/object.coffee'
+      'observable/array.coffee'
       'observable/observable.coffee'
     ].map fn
     template: [
@@ -124,7 +127,7 @@ module.exports = (grunt) ->
           'vendors/lodash/dist/lodash.min.js'
         ]
 
-      filtered:
+      utils:
         src: tmpfiles.utils
         options:
           specs: ['tmp/spec/utils/*.js']

@@ -13,3 +13,8 @@ beforeEach ->
     waitsFor -> flag
     runs fn
 
+
+  @addMatchers
+    toHaveSameContents: (expected) ->
+      JSON.stringify(@actual) == JSON.stringify(expected)
+
