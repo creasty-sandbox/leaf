@@ -93,7 +93,7 @@ describe 'Tokenizer', ->
           type: T_TAG_OPEN
           token: '<div $model="model">'
           name: 'div'
-          bindings: { 'model': 'model' }
+          localeBindings: { 'model': 'model' }
 
         tk = getTokenizer html
         expect(tk.getToken()).toHaveContent token
@@ -111,7 +111,7 @@ describe 'Tokenizer', ->
           {
             type: T_TEXT_INTERP
             token: '{{ animal.name }}'
-            textBinding: 'animal.name'
+            textBinding: { val: 'animal.name', escape: true }
           }
           {
             type: T_TEXT
