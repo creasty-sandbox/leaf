@@ -23,41 +23,41 @@ describe 'Tokenizer', ->
       tokens = [
         {
           type: T_TAG_OPEN
-          token: '<div id="foo" class="bar">'
+          buffer: '<div id="foo" class="bar">'
           name: 'div'
           attrs: { 'id': 'foo', 'class': 'bar' }
         }
         {
           type: T_TEXT
-          token: 'the quick '
+          buffer: 'the quick '
         }
         {
           type: T_TAG_OPEN
-          token: '<i>'
+          buffer: '<i>'
           name: 'i'
         }
         {
           type: T_TEXT
-          token: 'brown'
+          buffer: 'brown'
         }
         {
           type: T_TAG_CLOSE
-          token: '</i>'
+          buffer: '</i>'
           name: 'i'
         }
         {
           type: T_TEXT
-          token: ' fox '
+          buffer: ' fox '
         }
         {
           type: T_TAG_SELF
-          token: '<img src="img.gif">'
+          buffer: '<img src="img.gif">'
           name: 'img'
           attrs: { 'src': 'img.gif' }
         }
         {
           type: T_TAG_CLOSE
-          token: '</div>'
+          buffer: '</div>'
           name: 'div'
         }
       ]
@@ -75,7 +75,7 @@ describe 'Tokenizer', ->
         """
         token =
           type: T_TAG_SELF
-          token: '<img $src="image.url">'
+          buffer: '<img class="foo" $src="image.url">'
           name: 'img'
           attrs: { 'class': 'foo' }
           attrBindings: { 'src': 'image.url' }
@@ -91,7 +91,7 @@ describe 'Tokenizer', ->
 
         token =
           type: T_TAG_OPEN
-          token: '<div $model="model">'
+          buffer: '<div $model="model">'
           name: 'div'
           localeBindings: { 'model': 'model' }
 
@@ -106,16 +106,16 @@ describe 'Tokenizer', ->
         tokens = [
           {
             type: T_TEXT
-            token: 'the quick brown '
+            buffer: 'the quick brown '
           }
           {
             type: T_TEXT_INTERP
-            token: '{{ animal.name }}'
+            buffer: '{{ animal.name }}'
             textBinding: { val: 'animal.name', escape: true }
           }
           {
             type: T_TEXT
-            token: ' jumps'
+            buffer: ' jumps'
           }
         ]
 

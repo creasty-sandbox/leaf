@@ -26,7 +26,7 @@ T_TEXT_INTERP = 5
 TAG_REGEXP = /<(\/?)(\w+)([^>]*)(\/?)>/
 TAG_SELF_CLOSING = /^(img|input|hr|br|wbr)$/
 
-ATTR_REGEXP = /\s+(\$*)([\w\-]+)=(?:(?:\"([^\"]*?)\")|(?:\'([^\']*?)\'))/g
+ATTR_REGEXP = /\s+(\$|\@)([\w\-]+)=(?:(?:\"([^\"]*?)\")|(?:\'([^\']*?)\'))/g
 ATTR_PRESERVED =
   '*': ///
     ^(
@@ -115,15 +115,18 @@ class Tokenizer
   constructor: (@html) ->
     @originalHtml = @html
 
-  bindingFragment: (tag, key, val) ->
-    tar = ATTR_PRESERVED[tag]
+  actionHandler: (key, val) ->
 
-    if key.match(ATTR_PRESERVED['*']) || tar && key.match tar
+  bindingFragment: (tag, key, val) ->
+    globalAttrs = ATTR_PRESERVED['*']
+    tagSpecificAttrs = ATTR_PRESERVED[tag]
+
+    if key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
       @token.attrBindings[key] = val
     else
       @token.localBindings[key] = val
 
-  attrFragment: (pair, tag) ->
+  attrFragment: (attrs, tag) ->
     attrs = " #{attrs} ".match ATTR_REGEXP
 
     for attr in attrs
@@ -132,8 +135,10 @@ class Tokenizer
       key = m[2]
       val = m[3] || m[4]
 
-      if binding
+      if '$' == binding
         @bindingFragment tag, key, val
+      else if '@' == binding
+        @actionHandler key, val
       else
         @token.attrs[key] = val
 
@@ -150,7 +155,7 @@ class Tokenizer
     @token.localBindings = {}
     @attrFragment match[3], @token.name
 
-    t.type =
+    @token.type =
       if match[1]
         T_TAG_CLOSE
       else if match[4] || @token.name.match TAG_SELF_CLOSING
@@ -158,10 +163,7 @@ class Tokenizer
       else
         T_TAG_OPEN
 
-    t
-
   getToken: ->
     @token = {}
-
 
 

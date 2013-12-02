@@ -47,6 +47,11 @@ module.exports = (grunt) ->
   srcfiles = files false
   tmpfiles = files true
 
+  vendorfiles = [
+    'vendors/jquery/jquery.min.js'
+    'vendors/lodash/dist/lodash.min.js'
+  ]
+
 
   #  Config
   #-----------------------------------------------
@@ -121,10 +126,7 @@ module.exports = (grunt) ->
       options:
         helpers: ['spec/lib/*.js', 'tmp/spec/helpers/*.js']
         keepRunner: true
-        vendor: [
-          'vendors/jquery/jquery.min.js'
-          'vendors/lodash/dist/lodash.min.js'
-        ]
+        vendor: vendorfiles
 
       utils:
         src: tmpfiles.utils
