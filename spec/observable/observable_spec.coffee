@@ -4,7 +4,7 @@ describe 'Observable', ->
   observableObj = null
 
   beforeEach ->
-    observableObj = new Observable
+    observableObj = Observable.create
       foo: 1
       bar: 2
       computed: -> 3
@@ -83,7 +83,7 @@ describe 'Observable', ->
     it 'should set multiple property values by hash', ->
       observableObj.set
         foo: 100
-        'nested.prop1', 200
+        'nested.prop1': 200
         nested:
           prop2: 300
 
@@ -138,13 +138,16 @@ describe 'Observable', ->
       expect(callback).toHaveBeenCalled()
       expect(n).toBe 2
 
-    it 'should not call unregistered observers', ->
-      observableObj.observe 'foo', callback
-      observableObj.unobserve 'foo', callback
 
-      observableObj.set 'foo', 100
+    describe '#unobserve(keypath, callback)', ->
 
-      expect(callback).not.toHaveBeenCalled()
+      it 'should not call unregistered observers', ->
+        observableObj.observe 'foo', callback
+        observableObj.unobserve 'foo', callback
+
+        observableObj.set 'foo', 100
+
+        expect(callback).not.toHaveBeenCalled()
 
 
     describe '#update(keypath)', ->
@@ -169,18 +172,19 @@ describe 'Observable', ->
       it 'should call registered observers of computed property when settings its dependent property values', ->
         observableObj.observe 'dependentComputed', callback
 
+        observableObj.get 'dependentComputed'
         observableObj.set 'foo', 100
 
         expect(callback).toHaveBeenCalledWith 110
 
       it 'should call registered observers of dependent properties when setting a computed property value', ->
-        callbackComp = jasmine.createSpy 'observer of computed property'
+        callbackComp = jasmine.createSpy 'observer of settable computed property'
         callbackDep = jasmine.createSpy 'observer of dependent property'
 
-        observableObj.observe 'dependentComputed', callbackComp
-        observableObj.observe 'foo', callbackDep
+        observableObj.observe 'settableComputed', callbackComp
+        observableObj.observe 'bar', callbackDep
 
-        observableObj.set 'dependentComputed', 100
+        observableObj.set 'settableComputed', 100
 
         expect(callbackComp).toHaveBeenCalled()
         expect(callbackDep).toHaveBeenCalled()
@@ -217,16 +221,16 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.push 4
 
-        expect(ary).toEqual [1, 2, 3, 4]
+        expect(ary).toHaveContents [1, 2, 3, 4]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `unshift`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
-        ary.push 0
+        ary.unshift 0
 
-        expect(ary).toEqual [0, 1, 2, 3]
+        expect(ary).toHaveContents [0, 1, 2, 3]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `pop`', ->
@@ -235,7 +239,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.pop()
 
-        expect(ary).toEqual [1, 2]
+        expect(ary).toHaveContents [1, 2]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `shift`', ->
@@ -244,7 +248,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.shift()
 
-        expect(ary).toEqual [2, 3]
+        expect(ary).toHaveContents [2, 3]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `sort`', ->
@@ -253,7 +257,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.sort()
 
-        expect(ary).toEqual [1, 2, 3]
+        expect(ary).toHaveContents [1, 2, 3]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `reverse`', ->
@@ -262,7 +266,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.reverse()
 
-        expect(ary).toEqual [3, 2, 1]
+        expect(ary).toHaveContents [3, 2, 1]
         expect(callback).toHaveBeenCalled()
 
       it 'should call registered observers when updating elements via `splice`', ->
@@ -271,7 +275,7 @@ describe 'Observable', ->
         ary = observableObj.get 'ary'
         ary.splice 1, 1
 
-        expect(ary).toEqual [1, 3]
+        expect(ary).toHaveContents [1, 3]
         expect(callback).toHaveBeenCalled()
 
 

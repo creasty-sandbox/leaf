@@ -5,36 +5,47 @@ module.exports = (grunt) ->
   #-----------------------------------------------
   require('matchdep').filterDev('grunt-*').forEach grunt.loadNpmTasks
 
+  #  Option
+  #-----------------------------------------------
+  filter = grunt.option 'filter'
+
   #  File list
   #-----------------------------------------------
-  srcfiles =
+  files = (tmp) ->
+    base = ''
+    base += 'tmp/' if tmp
+    base += 'src/'
+
+    fn = (path) -> base + (if tmp then path.replace('.coffee', '.js') else path)
+
     utils: [
-      'src/utils/utils.coffee'
-      'src/utils/inflection.coffee'
-      'src/utils/event.coffee'
-    ]
+      'utils/utils.coffee'
+      'utils/inflection.coffee'
+      'utils/event.coffee'
+    ].map fn
     observable: [
-      'src/observable/observable.coffee'
-    ]
+      'observable/base.coffee'
+      'observable/object.coffee'
+      'observable/array.coffee'
+      'observable/observable.coffee'
+    ].map fn
     template: [
-      'src/template/rivets.coffee'
-      'src/template/view.coffee'
-      'src/template/bindings.coffee'
-      'src/template/parsers.coffee'
-      'src/template/keypath_observer.coffee'
-      'src/template/binders.coffee'
-      'src/template/adapters.coffee'
-    ]
-    main: [
-      'src/leaf.coffee'
-      'src/object.coffee'
-      'src/router.coffee'
-      'src/navigator.coffee'
-      'src/model.coffee'
-      'src/controller.coffee'
-      'src/view.coffee'
-      'src/app.coffee'
-    ]
+      'template/tokenizer.coffee'
+      'template/parser.coffee'
+    ].map fn
+    core: [
+      'core/leaf.coffee'
+      'core/object.coffee'
+      'core/router.coffee'
+      'core/navigator.coffee'
+      'core/model.coffee'
+      'core/controller.coffee'
+      'core/view.coffee'
+      'core/app.coffee'
+    ].map fn
+
+  srcfiles = files false
+  tmpfiles = files true
 
 
   #  Config
@@ -63,15 +74,12 @@ module.exports = (grunt) ->
     coffee:
       src:
         options:
-          join: true
           bare: true
-        files:
-          'tmp/dist/template.js': srcfiles.template
-          'tmp/dist/main.js': [
-            srcfiles.utils...
-            srcfiles.observable...
-            srcfiles.main...
-          ]
+        expand: true
+        cwd: 'src'
+        src: ['**/*.coffee']
+        dest: 'tmp/src'
+        ext: '.js'
 
       test:
         expand: true
@@ -88,7 +96,7 @@ module.exports = (grunt) ->
             srcfiles.utils...
             srcfiles.observable...
             srcfiles.template...
-            srcfiles.main...
+            srcfiles.core...
           ]
 
     # Concat
@@ -97,7 +105,7 @@ module.exports = (grunt) ->
         options:
           banner: '<%= meta.banner %>'
         files:
-          'dist/template.js': 'tmp/dist/template.js'
+          'dist/leaf.js': ['tmp/dist/leaf.js']
 
     # Uglify
     uglify:
@@ -106,43 +114,74 @@ module.exports = (grunt) ->
           banner: '<%= meta.banner %>'
           report: 'gzip'
         files:
-          'dist/template.min.js': 'dist/template.js'
+          'dist/leaf.min.js': ['dist/leaf.js']
 
     # Jasmine
     jasmine:
       options:
-        force: true
-        helpers: ['tmp/spec/helpers/*.js', 'spec/lib/*.js']
+        helpers: ['spec/lib/*.js', 'tmp/spec/helpers/*.js']
+        keepRunner: true
         vendor: [
           'vendors/jquery/jquery.min.js'
           'vendors/lodash/dist/lodash.min.js'
         ]
 
+      utils:
+        src: tmpfiles.utils
+        options:
+          specs: ['tmp/spec/utils/*.js']
+
+      observable:
+        src: tmpfiles.observable
+        options:
+          specs: ['tmp/spec/observable/*.js']
+
       template:
-        src: 'tmp/dist/template.js'
+        src: [
+          tmpfiles.utils...
+          tmpfiles.observable...
+          tmpfiles.template...
+        ]
         options:
           specs: ['tmp/spec/template/*.js']
 
-      main:
-        src: 'tmp/dist/main.js'
+      core:
+        src: [
+          tmpfiles.utils...
+          tmpfiles.observable...
+          tmpfiles.template...
+          tmpfiles.core...
+        ]
         options:
-          specs: ['tmp/spec/*.js', 'tmp/spec/utils/*.js', 'tmp/src/observable/*.js']
+          specs: ['tmp/spec/core/*.js']
 
     # Watch
     watch:
+      options:
+        spawn: false
+
       coffee:
         files: 'src/**/*.coffee'
         tasks: ['coffee:src']
 
-      test:
-        files: 'tmp/spec/**/*.js'
-        tasks: ['jasmine:main']
+      coffee_test:
+        files: 'spec/**/*.coffee'
+        tasks: ['coffee:test']
+
+      jasmine:
+        files: ['tmp/spec/**/*.js', 'tmp/src/**/*.js']
+        tasks: ['filtered_test']
 
 
   #  Tasks
   #-----------------------------------------------
+  grunt.option 'force', true
   grunt.registerTask 'default', ['dev']
+
+  filteredTest = if filter then "jasmine:#{filter}" else 'jasmine'
+  grunt.registerTask 'filtered_test', [filteredTest]
+
   grunt.registerTask 'dev', ['coffee:src', 'watch:coffee']
-  grunt.registerTask 'test', ['coffee:src', 'coffee:test', 'jasmine', 'watch']
-  grunt.registerTask 'release', ['coffee', 'concat', 'uglify']
+  grunt.registerTask 'test', ['coffee:src', 'coffee:test', 'filtered_test', 'watch']
+  grunt.registerTask 'release', ['coffee:release', 'concat', 'uglify']
 
