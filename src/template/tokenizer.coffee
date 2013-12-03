@@ -23,6 +23,18 @@ T_TEXT_INTERP = 5
 
 #  Patterns
 #-----------------------------------------------
+TEXT_INTERP_REGEXP = ///
+  (?:
+    \{\{\{
+      (.+?)
+    \}\}\}
+  ) | (?:
+    \{\{
+      (.+?)
+    \}\}
+  )
+///g
+
 TAG_REGEXP = /<(\/?)(\w+)([^>]*)(\/?)>/
 TAG_SELF_CLOSING = /^(img|input|hr|br|wbr)$/
 
@@ -112,21 +124,29 @@ ATTR_PRESERVED =
 #-----------------------------------------------
 class Tokenizer
 
-  constructor: (@html) ->
-    @originalHtml = @html
+  constructor: (@buffer) ->
+    @next = []
 
-  actionHandler: (key, val) ->
+  none: -> { type: T_NONE }
 
-  bindingFragment: (tag, key, val) ->
+  action: (t, eventName, handler) ->
+    t.actions[eventName] = handler
+
+  binding: (t, tag, key, val) ->
     globalAttrs = ATTR_PRESERVED['*']
     tagSpecificAttrs = ATTR_PRESERVED[tag]
 
     if key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
-      @token.attrBindings[key] = val
+      t.attrBindings[key] = val
     else
-      @token.localBindings[key] = val
+      t.localBindings[key] = val
 
-  attrFragment: (attrs, tag) ->
+  tagAttr: (t, attrs, tag) ->
+    t.attrs = {}
+    t.attrBindings = {}
+    t.localBindings = {}
+    t.actions = {}
+
     attrs = " #{attrs} ".match ATTR_REGEXP
 
     for attr in attrs
@@ -136,34 +156,73 @@ class Tokenizer
       val = m[3] || m[4]
 
       if '$' == binding
-        @bindingFragment tag, key, val
+        @binding t, tag, key, val
       else if '@' == binding
-        @actionHandler key, val
+        @action t, key, val
       else
-        @token.attrs[key] = val
+        t.attrs[key] = val
 
-  tagFragment: (buffer) ->
-    match = TAG_REGEXP.exec buffer
+  getTag: (buffer) ->
+    m = TAG_REGEXP.exec buffer
 
-    return { type: T_NONE } unless match
+    return @none() unless m
 
-    @token.buffer = match[0]
-    @token.length = @token.buffer.length
-    @token.name = match[2]
-    @token.attrs = {}
-    @token.attrBindings = {}
-    @token.localBindings = {}
-    @attrFragment match[3], @token.name
+    t = {}
+    t.buffer = m[0]
+    t.index = buffer.indexOf t.buffer
+    t.length = t.buffer.length
+    t.name = m[2]
+    @tagAttr t, m[3], t.name
 
-    @token.type =
-      if match[1]
+    t.type =
+      if m[1]
         T_TAG_CLOSE
-      else if match[4] || @token.name.match TAG_SELF_CLOSING
+      else if m[4] || t.name.match TAG_SELF_CLOSING
         T_TAG_SELF
       else
         T_TAG_OPEN
 
-  getToken: ->
-    @token = {}
+    t
 
+  getInterp: (buffer) ->
+    m = TEXT_INTERP_REGEXP.exec buffer
+
+    return @none() unless m
+
+    t = {}
+    t.buffer = m[0]
+    t.index = buffer.indexOf t.buffer
+    t.length = t.buffer.length
+
+    t.textBinding =
+      val: m[1] || m[2]
+      escape: !!m[2]
+
+    t
+
+  getText: (buffer) ->
+    for interp in interps
+      index =
+
+  getFragments: ->
+    return @none() unless @buffer
+
+    tagToken = @getTag @buffer
+
+    if T_NONE == tagToken.type
+      @buffer = ''
+      return tagToken
+
+    textNode = @buffer[0...@token.index]
+    @next.unshift @getText textNode
+
+    @buffer = @buffer[(@token.index + @token.length)...]
+
+  getToken: ->
+    next = @next.pop()
+    return next if next
+
+    @getFragments()
+
+    @next.shift()
 
