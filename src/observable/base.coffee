@@ -148,16 +148,16 @@ class ObservableBase
     name += ':' + prop if prop
     name
 
-  _update: (prop) ->
+  _update: (prop, op = {}) ->
     @_parent.update? @_parent_key if @_parent
-    $(window).trigger @_getEventName(prop), [@get prop]
+    $(window).trigger @_getEventName(prop), [@get(prop), op]
 
-  update: (keypath) ->
+  update: (keypath, op = {}) ->
     { obj, prop } = @getProperty keypath
-    obj._update prop
+    obj._update prop, op
 
   _observe: (prop, callback) ->
-    fn = (e, val) => callback val
+    fn = (e, args...) => callback args...
     callback._binded = fn
     $(window).on @_getEventName(prop), fn
 

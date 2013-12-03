@@ -24,21 +24,37 @@ T_TEXT_INTERP = 5
 #  Patterns
 #-----------------------------------------------
 TEXT_INTERP_REGEXP = ///
-  (?:
-    \{\{\{
-      (.+?)
-    \}\}\}
-  ) | (?:
-    \{\{
-      (.+?)
-    \}\}
+  (?: # negative lookbehind hack for js
+    ^|[^\\] # don't match with escaped `{`
+  )
+  (
+    (?:\{\{\{(.+?)\}\}\}) # raw print
+    | (?:\{\{(.+?)\}\})   # safe print
   )
 ///g
 
-TAG_REGEXP = /<(\/?)(\w+)([^>]*)(\/?)>/
-TAG_SELF_CLOSING = /^(img|input|hr|br|wbr)$/
+TAG_REGEXP = ///
+  <
+    (\/?)   # closing tag
+    (\w+)   # tag name
+    ([^>]*) # attributes
+    (\/?)   # self closing
+  >
+///g
 
-ATTR_REGEXP = /\s+(\$|\@)([\w\-]+)=(?:(?:\"([^\"]*?)\")|(?:\'([^\']*?)\'))/g
+ATTR_REGEXP = ///
+  \s+ # need spaces seperater
+  (\$|\@) # $ or @
+  ([\w\-]+) # property name
+  =
+  (?:
+    (?:\"([^\"]+?)\")   # double quotes
+    | (?:\'([^\']+?)\') # single quotes
+  )
+///g
+
+TAG_SELF_CLOSING = /^(img|input|hr|br|wbr|outlet|render|component)$/
+
 ATTR_PRESERVED =
   '*': ///
     ^(
@@ -184,25 +200,31 @@ class Tokenizer
 
     t
 
-  getInterp: (buffer) ->
+  getInterpolation: (buffer) ->
     m = TEXT_INTERP_REGEXP.exec buffer
 
     return @none() unless m
 
     t = {}
-    t.buffer = m[0]
+    t.buffer = m[1] # since m[0] includes hack
     t.index = buffer.indexOf t.buffer
     t.length = t.buffer.length
 
     t.textBinding =
-      val: m[1] || m[2]
-      escape: !!m[2]
+      val: m[2] || m[3]
+      escape: !!m[3]
 
     t
 
   getText: (buffer) ->
+    text = []
+
     for interp in interps
-      index =
+      token = @getInterporation buffer
+
+      if T_NONE == token.type
+        @getText
+        buffer
 
   getFragments: ->
     return @none() unless @buffer
@@ -217,6 +239,22 @@ class Tokenizer
     @next.unshift @getText textNode
 
     @buffer = @buffer[(@token.index + @token.length)...]
+
+  matchIndexOf: (buffer, pattern, offset = 0) ->
+    m = buffer.match pattern
+    return -1 unless m
+    buffer.indexOf m[0], offset
+
+  getChunk: ->
+    tagIndex = @matchIndexOf @buffer, TAG_REGEXP
+
+    if 0 == tagIndex
+      t = @getTag @buffer
+      @buffer = @buffer[0...t.length]
+      return t
+    else if tagIndex > 0
+      interpolationIndex
+
 
   getToken: ->
     next = @next.pop()

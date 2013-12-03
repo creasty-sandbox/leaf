@@ -1,5 +1,5 @@
 
-class Observable extends ObservableBase
+class window.Observable extends ObservableBase
 
   @create: (data) -> @::_makeObservable data
 
