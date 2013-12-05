@@ -1,5 +1,5 @@
 
-class ObjectBase
+class Leaf.Object
 
   _uuid = 0
 
@@ -8,8 +8,8 @@ class ObjectBase
   _objectBaseInit: ->
     @_c = @constructor
     @_uuid = ++_uuid
-    @_cacheManager = new CacheManager()
-    @_cacheManager.set @toUUID(), @
+    @_cache = new Leaf.Cache()
+    @_cache.set @toUUID(), @
 
   toUUID: -> "UUID#{@_uuid}"
 

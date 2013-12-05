@@ -1,5 +1,7 @@
 
-class window.Observable extends ObservableBase
+class Leaf.Observable
 
-  @create: (data) -> @::_makeObservable data
+  constructor: (data) ->
+    data = Leaf.ObservableBase::_makeObservable data
+    return data
 

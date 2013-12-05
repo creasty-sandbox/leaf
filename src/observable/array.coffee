@@ -1,10 +1,10 @@
 
-class ObservableArray extends ObservableBase
+class Leaf.ObservableArray extends Leaf.ObservableBase
 
-  toUUIDArray = (ary) -> Array::map.apply ary, (v) -> v.toUUID?()
+  toUUIDArray = (ary) -> Array::map.call ary, (v) -> v.toUUID?() ? v
 
   constructor: (data, parent, parent_key) ->
-    data.__proto__ = ObservableArray::
+    data.__proto__ = Leaf.ObservableArray::
     data.init data, parent, parent_key
     return data
 
@@ -17,8 +17,7 @@ class ObservableArray extends ObservableBase
     @_saveCurrentMap()
     @_lastOperation = {}
 
-    i = 0
-    @_observed.push @_makeObservable(val, @, i++) for val in @
+    @_observed.push @_makeObservable(val, @) for val in @
 
   _saveCurrentMap: -> @_prev = _.clone @_map
 
@@ -35,7 +34,7 @@ class ObservableArray extends ObservableBase
 
     @_saveCurrentMap()
     Array::push.apply @, elements
-    @_map.push toUUIDArray elements
+    @_map.push toUUIDArray(elements)...
     @_update()
     @
 
@@ -49,7 +48,7 @@ class ObservableArray extends ObservableBase
 
     @_saveCurrentMap()
     Array::unshift.apply @, elements
-    @_map.unshift toUUIDArray elements
+    @_map.unshift toUUIDArray(elements)...
     @_update()
     @
 
@@ -92,14 +91,19 @@ class ObservableArray extends ObservableBase
 
     @_saveCurrentMap()
     res = Array::splice.apply @, args
-    @_map.splice index, size, (toUUIDArray elements if len)
+
+    if len
+      @_map.splice index, size, toUUIDArray(elements)...
+    else
+      @_map.splice index, size
+
     @_update()
     res
 
   reverse: ->
     @_recordOperation
       method: 'reverse'
-      changed: [0, @length - 1]
+      changed: true
 
     @_saveCurrentMap()
     Array::reverse.apply @
@@ -110,7 +114,7 @@ class ObservableArray extends ObservableBase
   sort: (compareFunc) ->
     @_recordOperation
       method: 'sort'
-      changed: [0, @length - 1]
+      changed: true
 
     @_saveCurrentMap()
     Array::sort.call @, compareFunc
@@ -131,17 +135,16 @@ class ObservableArray extends ObservableBase
 
     if @_lastOperation.removed
       [from, to] = @_lastOperation.removed
-
-      for i in [from..to] by 1
-        obj = @_cacheManager.get @_prev[i]
-        diff.removed.push obj
+      diff.removed = @_prev[from..to]
 
     if @_lastOperation.added
       [from, to] = @_lastOperation.added
+      diff.added = @_map[from..to]
 
-      for i in [from..to] by 1
-        obj = @_cacheManager.get @_map[i]
-        diff.added.push obj
+    removed = _.without diff.removed, diff.added...
+    added = _.without diff.added, diff.removed...
+    diff.removed = removed.map (v) => @_cache.get v
+    diff.added = added.map (v) => @_cache.get v
 
     if @_lastOperation.changed
       prev = _.clone @_prev
@@ -160,7 +163,7 @@ class ObservableArray extends ObservableBase
 
     @_lastOperationDiff = diff
 
-  sync: ->
+  _sync: ->
 
   cls = @
   [
@@ -177,5 +180,5 @@ class ObservableArray extends ObservableBase
   _update: (prop) ->
     @_sync()
     @_parent.update? @_parent_key, @getDiff() if @_parent
-    $(window).trigger @_getEventName(prop), [@get(prop), @getDiff()]
+    $(window).trigger @_getEventName(prop), [@getDiff()]
 

@@ -18,10 +18,16 @@ module.exports = (grunt) ->
 
     fn = (path) -> base + (if tmp then path.replace('.coffee', '.js') else path)
 
+    headers: [
+      'leaf.coffee'
+      'constants.coffee'
+    ].map fn
     utils: [
       'utils/utils.coffee'
       'utils/inflection.coffee'
       'utils/event.coffee'
+      'utils/cache.coffee'
+      'utils/object.coffee'
     ].map fn
     observable: [
       'observable/base.coffee'
@@ -34,7 +40,6 @@ module.exports = (grunt) ->
       'template/parser.coffee'
     ].map fn
     core: [
-      'core/leaf.coffee'
       'core/object.coffee'
       'core/router.coffee'
       'core/navigator.coffee'
@@ -98,6 +103,7 @@ module.exports = (grunt) ->
           join: true
         files:
           'dist/leaf.js': [
+            srcfiles.headers...
             # srcfiles.utils...
             srcfiles.observable...
             # srcfiles.template...
@@ -129,17 +135,25 @@ module.exports = (grunt) ->
         vendor: vendorfiles
 
       utils:
-        src: tmpfiles.utils
+        src: [
+          tmpfiles.headers...
+          tmpfiles.utils...
+        ]
         options:
           specs: ['tmp/spec/utils/*.js']
 
       observable:
-        src: tmpfiles.observable
+        src: [
+          tmpfiles.headers...
+          tmpfiles.utils...
+          tmpfiles.observable...
+        ]
         options:
           specs: ['tmp/spec/observable/*.js']
 
       template:
         src: [
+          tmpfiles.headers...
           tmpfiles.utils...
           tmpfiles.observable...
           tmpfiles.template...
@@ -149,6 +163,7 @@ module.exports = (grunt) ->
 
       core:
         src: [
+          tmpfiles.headers...
           tmpfiles.utils...
           tmpfiles.observable...
           tmpfiles.template...

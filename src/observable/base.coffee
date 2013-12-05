@@ -1,5 +1,5 @@
 
-class ObservableBase extends ObjectBase
+class Leaf.ObservableBase extends Leaf.Object
 
   constructor: (@_data, @_parent, @_parent_key) ->
     @init()
@@ -12,9 +12,9 @@ class ObservableBase extends ObjectBase
 
   _makeObservable: (o, parent, parent_key) ->
     if _.isArray o
-      new ObservableArray o, parent, parent_key
+      new Leaf.ObservableArray o, parent, parent_key
     else if _.isPlainObject o
-      new ObservableObject o, parent, parent_key
+      new Leaf.ObservableObject o, parent, parent_key
     else
       o
 
@@ -146,13 +146,13 @@ class ObservableBase extends ObjectBase
     name += ':' + prop if prop
     name
 
-  _update: (prop, op = {}) ->
-    @_parent.update? @_parent_key if @_parent
-    $(window).trigger @_getEventName(prop), [@get(prop), op]
+  _update: (prop, data) ->
+    @_parent.update? @_parent_key, data if @_parent
+    $(window).trigger @_getEventName(prop), [data ? @get(prop)]
 
-  update: (keypath, op = {}) ->
+  update: (keypath, data) ->
     { obj, prop } = @getProperty keypath
-    obj._update prop, op
+    obj._update prop, data
 
   _observe: (prop, callback) ->
     fn = (e, args...) => callback args...
