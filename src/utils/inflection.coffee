@@ -1,49 +1,34 @@
 
 class Inflector
 
-  constructor: ->
-    @reset()
+  regularizeRegExp = (pattern) -> new RegExp pattern.source || pattern, 'gi'
 
-  gsub: (word, rule, replacement) ->
-    pattern = new RegExp rule.source || rule, 'gi'
-    word.replace pattern, replacement if pattern.test word
+  detect = (word, rules) ->
+    result = word
+    _(rules).detect (r) -> result = word.replace r[0], r[1] if r[0].test word
+    result
 
-  plural: (rule, replacement) -> @plurals.unshift [rule, replacement]
+  constructor: -> @reset()
 
-  pluralize: (word, count, includeNumber) ->
+  plural: (rule, replacement) -> @plurals.unshift [regularizeRegExp(rule), replacement]
+
+  pluralize: (word, count, withNumber) ->
     if count?
       count = Math.round count
       result = if count == 1 then @singularize word else @pluralize word
-      result = if includeNumber then [count, result].join ' ' else result
+      if withNumber
+        [count, result].join ' '
+      else
+        result
     else
       return word if ~@uncountables.indexOf word
+      detect word, @plurals
 
-      result = word
-
-      _(@plurals).detect (rule) =>
-        gsub = @gsub word, rule[0], rule[1]
-        if gsub
-          result = gsub
-        else
-          false
-
-    result
-
-  singular: (rule, replacement) -> @singulars.unshift [rule, replacement]
+  singular: (rule, replacement) -> @singulars.unshift [regularizeRegExp(rule), replacement]
 
   singularize: (word) ->
     return word if ~@uncountables.indexOf word
-
-    result = word
-
-    _(@singulars).detect (rule) =>
-      gsub = @gsub word, rule[0], rule[1]
-      if gsub
-        result = gsub
-      else
-        false
-
-    result
+    detect word, @singulars
 
   irregular: (singular, plural) ->
     @plural "\\b#{singular}\\b", plural
