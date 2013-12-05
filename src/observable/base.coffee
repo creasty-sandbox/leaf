@@ -1,13 +1,11 @@
 
-class ObservableBase
-
-  _uuid = 0
+class ObservableBase extends ObjectBase
 
   constructor: (@_data, @_parent, @_parent_key) ->
     @init()
 
   init: ->
-    @_uuid = ++_uuid
+    @_objectBaseInit()
     @_dependents = {}
     @_tracked = {}
     @_tracking = {}
@@ -144,7 +142,7 @@ class ObservableBase
     obj._set prop, val
 
   _getEventName: (prop) ->
-    name = "observable:#{@_uuid}"
+    name = "observable:#{@toUUID()}"
     name += ':' + prop if prop
     name
 

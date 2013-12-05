@@ -123,3 +123,12 @@ describe 'Tokenizer', ->
         expect(tk.getToken()).toHaveContent token for token in tokens
 
 
+    describe 'Action handler', ->
+
+      it 'should return token with action handler', ->
+        html = '<input type="text" @focus="glow">'
+
+        token =
+          type: T_TAG_SELF
+          buffer: ''
+
