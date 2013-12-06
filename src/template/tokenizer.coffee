@@ -150,17 +150,17 @@ class Tokenizer
   tagAttrActionFragment: (t, eventName, handler) ->
     t.actions[eventName] = handler
 
-  tagAttrBindingFragment: (t, key, val, tag) ->
+  tagAttrBindingFragment: (t, property, val, tag) ->
     globalAttrs = ATTR_PRESERVED['*']
     tagSpecificAttrs = ATTR_PRESERVED[tag]
 
-    if key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
-      t.attrBindings[key] = val
+    if key.match(globalAttrs) || tagSpecificAttrs && property.match tagSpecificAttrs
+      t.attrBindings[property] = val
     else
-      t.localeBindings[key] = val
+      t.localeBindings[property] = val
 
-  tagAttrNormalFragment: (t, key, val) ->
-    t.attrs[key] = val
+  tagAttrNormalFragment: (t, property, val) ->
+    t.attrs[property] = val
 
   tagAttrFragments: (t, attrs, tag) ->
     t.attrs = {}
@@ -169,7 +169,6 @@ class Tokenizer
     t.actions = {}
 
     ATTR_REGEXP.lastIndex = 0
-
     attrs = " #{attrs} ".match ATTR_REGEXP
 
     return unless attrs
@@ -177,6 +176,7 @@ class Tokenizer
     for attr in attrs
       ATTR_REGEXP.lastIndex = 0
       m = ATTR_REGEXP.exec attr
+
       binding = m[1]
       key = m[2]
       val = m[3] || m[4]
@@ -266,16 +266,16 @@ class Tokenizer
       @tokens[@index + token.index] = token
       token.index
 
-  eatBuffer: (token) ->
+  eat: (token) ->
     len = token.length >>> 0
     @buffer = @buffer[len...]
     @index += len
     token
 
-  getToken: (a) ->
+  getToken: ->
     if (token = @tokens[@index])
       @tokens[@index] = null
-      return @eatBuffer token
+      return @eat token
 
     tt = @getIndexTillTag()
     ti = @getIndexTillInterpolation()
@@ -285,5 +285,5 @@ class Tokenizer
     tx = Math.min tt, ti
 
     token = @getText @buffer[0...tx]
-    @eatBuffer token
+    @eat token
 
