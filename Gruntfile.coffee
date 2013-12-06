@@ -30,9 +30,9 @@ module.exports = (grunt) ->
       'utils/object.coffee'
     ].map fn
     observable: [
-      'observable/base.coffee'
-      'observable/object.coffee'
-      'observable/array.coffee'
+      'observable/observable_base.coffee'
+      'observable/observable_object.coffee'
+      'observable/observable_array.coffee'
       'observable/observable.coffee'
     ].map fn
     template: [
