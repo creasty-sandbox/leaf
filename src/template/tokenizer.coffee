@@ -154,7 +154,7 @@ class Tokenizer
     globalAttrs = ATTR_PRESERVED['*']
     tagSpecificAttrs = ATTR_PRESERVED[tag]
 
-    if key.match(globalAttrs) || tagSpecificAttrs && property.match tagSpecificAttrs
+    if property.match(globalAttrs) || tagSpecificAttrs && property.match tagSpecificAttrs
       t.attrBindings[property] = val
     else
       t.localeBindings[property] = val
