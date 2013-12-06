@@ -1,16 +1,4 @@
 
-class HtmlPreformatter
-
-  constructor: (@html) ->
-
-  minify: ->
-    @html = @html
-      .replace(/\s+/g, ' ')
-      .replace />\s+</g, '><'
-
-  getHtml: -> @html
-
-
 #  Token types
 #-----------------------------------------------
 T_NONE = 0
@@ -140,7 +128,7 @@ ATTR_PRESERVED =
 
 #  Tokenizer
 #-----------------------------------------------
-class Tokenizer
+class Leaf.Template.Tokenizer
 
   constructor: (@buffer) ->
     @_buffer = @buffer

@@ -1,5 +1,16 @@
 
-describe 'Observable', ->
+describe 'Leaf.Observable', ->
+
+  it 'should be defined', ->
+    expect(Leaf.Observable).toBeDefined()
+
+  it 'should create an instance', ->
+    ob = new Leaf.Observable()
+    expect(ob).not.toBeNull()
+    expect(ob.constructor).toBe Leaf.Observable
+
+
+describe 'observable', ->
 
   observableObj = null
 

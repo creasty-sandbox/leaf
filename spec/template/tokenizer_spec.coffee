@@ -1,13 +1,13 @@
 
-describe 'Tokenizer', ->
+describe 'Leaf.Template.Tokenizer', ->
 
   it 'should be defined', ->
-    expect(Tokenizer).toBeDefined()
+    expect(Leaf.Template.Tokenizer).toBeDefined()
 
   it 'should create an instance', ->
-    tk = new Tokenizer()
+    tk = new Leaf.Template.Tokenizer()
     expect(tk).not.toBeNull()
-    expect(tk.constructor).toBe Tokenizer
+    expect(tk.constructor).toBe Leaf.Template.Tokenizer
 
 
 describe 'tokenizer', ->
@@ -15,7 +15,7 @@ describe 'tokenizer', ->
   describe '#eat', ->
 
     it 'should pop buffer by a length of token and return token', ->
-      tk = new Tokenizer '1234$'
+      tk = new Leaf.Template.Tokenizer '1234$'
 
       expect(tk.buffer).toEqual '1234$'
 
@@ -29,12 +29,12 @@ describe 'tokenizer', ->
   describe '#getText(buffer)', ->
 
     it 'should return T_NONE token when `buffer` is empty', ->
-      tk = new Tokenizer()
+      tk = new Leaf.Template.Tokenizer()
       token = type: T_NONE
       expect(tk.getText('')).toHaveContents token
 
     it 'should return T_TEXT token when `buffer` is not empty', ->
-      tk = new Tokenizer()
+      tk = new Leaf.Template.Tokenizer()
 
       buffer = 'text text'
       token =
@@ -49,7 +49,7 @@ describe 'tokenizer', ->
   describe '#getInterpolation(buffer)', ->
 
     it 'should return T_NONE token when there is no interpolations in `buffer`', ->
-      tk = new Tokenizer()
+      tk = new Leaf.Template.Tokenizer()
 
       buffer = 'no interpolations in here'
       token = type: T_NONE
@@ -57,7 +57,7 @@ describe 'tokenizer', ->
       expect(tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_INTERPOLATION token when `buffer` contains interpolations', ->
-      tk = new Tokenizer()
+      tk = new Leaf.Template.Tokenizer()
 
       buffer = 'here goes an {{ interpolation }}'
       token =
@@ -72,7 +72,7 @@ describe 'tokenizer', ->
       expect(tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_INTERPOLATION token with no escape option for raw interpolations', ->
-      tk = new Tokenizer()
+      tk = new Leaf.Template.Tokenizer()
 
       buffer = 'it is {{{ raw }}}'
       token =
@@ -92,7 +92,7 @@ describe 'tokenizer', ->
     describe '#tagAttrFragments(t, attrs, tag)', ->
 
       it 'should create empty hash when `attrs` has no vaild definitions of attribute', ->
-        tk = new Tokenizer()
+        tk = new Leaf.Template.Tokenizer()
 
         t = {}
         tk.tagAttrFragments t, '', ''
@@ -101,7 +101,7 @@ describe 'tokenizer', ->
         expect(Object.keys(t.attrs).length).toBe 0
 
       it 'should create hash object for each attributes, bindings and actions', ->
-        tk = new Tokenizer()
+        tk = new Leaf.Template.Tokenizer()
 
         t = {}
         tk.tagAttrFragments t, 'id="foo" $class="bar" $my="baz" @click="alert"', ''
@@ -114,7 +114,7 @@ describe 'tokenizer', ->
         expect(t).toHaveContents token
 
       it 'should treat attr as a locale binding if its name is not vaild for tag', ->
-        tk = new Tokenizer()
+        tk = new Leaf.Template.Tokenizer()
 
         t1 = {}
         tk.tagAttrFragments t1, '$href="link"', 'a'
@@ -132,12 +132,12 @@ describe 'tokenizer', ->
     describe '#getTag(buffer)', ->
 
       it 'should return T_NONE token when `buffer` is empty', ->
-        tk = new Tokenizer()
+        tk = new Leaf.Template.Tokenizer()
         token = type: T_NONE
         expect(tk.getTag('')).toHaveContents token
 
       it 'should return T_TAG_OPEN token for opening tags', ->
-        tk = new Tokenizer()
+        tk = new Leaf.Template.Tokenizer()
 
         buffer = 'text <div id="foo">'
         token =
@@ -154,7 +154,7 @@ describe 'tokenizer', ->
         expect(tk.getTag(buffer)).toHaveContents token
 
       it 'should return T_TAG_CLOSE token for closing tag', ->
-        tk = new Tokenizer()
+        tk = new Leaf.Template.Tokenizer()
 
         buffer = 'text</div>'
         token =
@@ -167,7 +167,7 @@ describe 'tokenizer', ->
         expect(tk.getTag(buffer)).toHaveContents token
 
       it 'should return T_TAG_SELF token for self closing tag', ->
-        tk = new Tokenizer()
+        tk = new Leaf.Template.Tokenizer()
 
         buffer = 'text <img src="img.gif">'
         token =
@@ -187,10 +187,10 @@ describe 'tokenizer', ->
   describe '#getToken', ->
 
     getTokenizer = (html) ->
-      pf = new HtmlPreformatter html
+      pf = new Leaf.Formatter.HTML html
       pf.minify()
 
-      tokenizer = new Tokenizer pf.getHtml()
+      tokenizer = new Leaf.Template.Tokenizer pf.getHtml()
       tokenizer
 
 
