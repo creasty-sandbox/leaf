@@ -1,22 +1,20 @@
 
-class ObservableBase
-
-  _uuid = 0
+class Leaf.ObservableBase extends Leaf.Object
 
   constructor: (@_data, @_parent, @_parent_key) ->
     @init()
 
   init: ->
-    @_uuid = ++_uuid
+    @_objectBaseInit()
     @_dependents = {}
     @_tracked = {}
     @_tracking = {}
 
   _makeObservable: (o, parent, parent_key) ->
     if _.isArray o
-      new ObservableArray o, parent, parent_key
+      new Leaf.ObservableArray o, parent, parent_key
     else if _.isPlainObject o
-      new ObservableObject o, parent, parent_key
+      new Leaf.ObservableObject o, parent, parent_key
     else
       o
 
@@ -144,20 +142,20 @@ class ObservableBase
     obj._set prop, val
 
   _getEventName: (prop) ->
-    name = "observable:#{@_uuid}"
+    name = "observable:#{@toUUID()}"
     name += ':' + prop if prop
     name
 
-  _update: (prop) ->
-    @_parent.update? @_parent_key if @_parent
-    $(window).trigger @_getEventName(prop), [@get prop]
+  _update: (prop, data) ->
+    @_parent.update? @_parent_key, data if @_parent
+    $(window).trigger @_getEventName(prop), [data ? @get(prop)]
 
-  update: (keypath) ->
+  update: (keypath, data) ->
     { obj, prop } = @getProperty keypath
-    obj._update prop
+    obj._update prop, data
 
   _observe: (prop, callback) ->
-    fn = (e, val) => callback val
+    fn = (e, args...) => callback args...
     callback._binded = fn
     $(window).on @_getEventName(prop), fn
 

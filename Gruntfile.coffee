@@ -11,30 +11,44 @@ module.exports = (grunt) ->
 
   #  File list
   #-----------------------------------------------
+  SRC_DIR  = 'src/'
+  TEMP_DIR = 'tmp/'
+  VENDOR_DIR = 'vendors/'
+
   files = (tmp) ->
     base = ''
-    base += 'tmp/' if tmp
-    base += 'src/'
+    base += TEMP_DIR if tmp
+    base += SRC_DIR
 
     fn = (path) -> base + (if tmp then path.replace('.coffee', '.js') else path)
 
+    headers: [
+      'leaf.coffee'
+      'constants.coffee'
+    ].map fn
     utils: [
       'utils/utils.coffee'
       'utils/inflection.coffee'
       'utils/event.coffee'
+      'utils/cache.coffee'
+      'utils/object.coffee'
+    ].map fn
+    formatters: [
+      'formatters/formatter.coffee'
+      'formatters/html.coffee'
     ].map fn
     observable: [
-      'observable/base.coffee'
-      'observable/object.coffee'
-      'observable/array.coffee'
+      'observable/observable_base.coffee'
+      'observable/observable_object.coffee'
+      'observable/observable_array.coffee'
       'observable/observable.coffee'
     ].map fn
     template: [
+      'template/template.coffee'
       'template/tokenizer.coffee'
       'template/parser.coffee'
     ].map fn
     core: [
-      'core/leaf.coffee'
       'core/object.coffee'
       'core/router.coffee'
       'core/navigator.coffee'
@@ -44,8 +58,13 @@ module.exports = (grunt) ->
       'core/app.coffee'
     ].map fn
 
-  srcfiles = files false
-  tmpfiles = files true
+  files.src = files false
+  files.tmp = files true
+
+  files.vendor = [
+    "#{VENDOR_DIR}jquery/jquery.min.js"
+    "#{VENDOR_DIR}lodash/dist/lodash.min.js"
+  ]
 
 
   #  Config
@@ -93,10 +112,12 @@ module.exports = (grunt) ->
           join: true
         files:
           'dist/leaf.js': [
-            srcfiles.utils...
-            srcfiles.observable...
-            srcfiles.template...
-            srcfiles.core...
+            files.src.headers...
+            files.src.utils...
+            # files.src.formatters...
+            files.src.observable...
+            # files.src.template...
+            # files.src.core...
           ]
 
     # Concat
@@ -105,7 +126,7 @@ module.exports = (grunt) ->
         options:
           banner: '<%= meta.banner %>'
         files:
-          'dist/leaf.js': ['tmp/dist/leaf.js']
+          'dist/leaf.js': ['dist/leaf.js']
 
     # Uglify
     uglify:
@@ -121,36 +142,44 @@ module.exports = (grunt) ->
       options:
         helpers: ['spec/lib/*.js', 'tmp/spec/helpers/*.js']
         keepRunner: true
-        vendor: [
-          'vendors/jquery/jquery.min.js'
-          'vendors/lodash/dist/lodash.min.js'
-        ]
+        vendor: files.vendor
 
       utils:
-        src: tmpfiles.utils
+        src: [
+          files.tmp.headers...
+          files.tmp.utils...
+        ]
         options:
           specs: ['tmp/spec/utils/*.js']
 
       observable:
-        src: tmpfiles.observable
+        src: [
+          files.tmp.headers...
+          files.tmp.utils...
+          files.tmp.observable...
+        ]
         options:
           specs: ['tmp/spec/observable/*.js']
 
       template:
         src: [
-          tmpfiles.utils...
-          tmpfiles.observable...
-          tmpfiles.template...
+          files.tmp.headers...
+          files.tmp.utils...
+          files.tmp.formatters...
+          files.tmp.observable...
+          files.tmp.template...
         ]
         options:
           specs: ['tmp/spec/template/*.js']
 
       core:
         src: [
-          tmpfiles.utils...
-          tmpfiles.observable...
-          tmpfiles.template...
-          tmpfiles.core...
+          files.tmp.headers...
+          files.tmp.utils...
+          files.tmp.formatters...
+          files.tmp.observable...
+          files.tmp.template...
+          files.tmp.core...
         ]
         options:
           specs: ['tmp/spec/core/*.js']

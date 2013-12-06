@@ -75,6 +75,6 @@ Contributions are always welcome!
 License
 =======
 
-This project is copyright by [Creasty](http://www.cresty.com), released under the MIT lisence.  
+This project is copyright by [Creasty](http://www.creasty.com), released under the MIT lisence.  
 See `LICENSE` file for details.
 

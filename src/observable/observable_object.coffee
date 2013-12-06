@@ -1,5 +1,5 @@
 
-class ObservableObject extends ObservableBase
+class Leaf.ObservableObject extends Leaf.ObservableBase
 
   init: ->
     super()

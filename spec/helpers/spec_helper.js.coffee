@@ -13,8 +13,18 @@ beforeEach ->
     waitsFor -> flag
     runs fn
 
+  toHaveContents = (a, b) ->
+    if b && b.constructor == Array
+      JSON.stringify a == JSON.stringify b
+    else if b && b.constructor == Object
+      for key, val of b
+        if !a[key]? || !toHaveContents a[key], val
+          return false
+      true
+    else
+      a == b
 
   @addMatchers
     toHaveContents: (expected) ->
-      JSON.stringify(@actual) == JSON.stringify(expected)
+      toHaveContents @actual, expected
 
