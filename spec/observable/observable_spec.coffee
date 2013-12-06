@@ -215,7 +215,7 @@ describe 'Observable', ->
 
     describe 'Array operation', ->
 
-      it 'should call registered observers when updating elements via `push`', ->
+      it 'should call registered observers with diff object when updating elements via `push`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
@@ -227,7 +227,7 @@ describe 'Observable', ->
         expect(callback).toHaveBeenCalled()
         expect(callback.mostRecentCall.args[0]).toHaveContents diff
 
-      it 'should call registered observers when updating elements via `unshift`', ->
+      it 'should call registered observers with diff object when updating elements via `unshift`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
@@ -239,7 +239,7 @@ describe 'Observable', ->
         expect(callback).toHaveBeenCalled()
         expect(callback.mostRecentCall.args[0]).toHaveContents diff
 
-      it 'should call registered observers when updating elements via `pop`', ->
+      it 'should call registered observers with diff object when updating elements via `pop`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
@@ -251,7 +251,7 @@ describe 'Observable', ->
         expect(callback).toHaveBeenCalled()
         expect(callback.mostRecentCall.args[0]).toHaveContents diff
 
-      it 'should call registered observers when updating elements via `shift`', ->
+      it 'should call registered observers with diff object when updating elements via `shift`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
@@ -263,7 +263,7 @@ describe 'Observable', ->
         expect(callback).toHaveBeenCalled()
         expect(callback.mostRecentCall.args[0]).toHaveContents diff
 
-      it 'should call registered observers when updating elements via `sort`', ->
+      it 'should call registered observers with diff object when updating elements via `sort`', ->
         ary = observableObj.get 'ary'
         ary.push -1
 
@@ -276,7 +276,7 @@ describe 'Observable', ->
         expect(callback).toHaveBeenCalled()
         expect(callback.mostRecentCall.args[0]).toHaveContents diff
 
-      it 'should call registered observers when updating elements via `reverse`', ->
+      it 'should call registered observers with diff object when updating elements via `reverse`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
@@ -288,7 +288,7 @@ describe 'Observable', ->
         expect(callback).toHaveBeenCalled()
         expect(callback.mostRecentCall.args[0]).toHaveContents diff
 
-      it 'should call registered observers when updating elements via `splice`', ->
+      it 'should call registered observers with diff object when updating elements via `splice`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
