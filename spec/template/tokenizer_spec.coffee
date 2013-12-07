@@ -56,6 +56,14 @@ describe 'tokenizer', ->
 
       expect(tk.getInterpolation(buffer)).toHaveContents token
 
+    it 'should return T_NONE token for backslash-escaped interpolations', ->
+      tk = new Leaf.Template.Tokenizer()
+
+      buffer = 'no \\{{ interpolations }} in here'
+      token = type: T_NONE
+
+      expect(tk.getInterpolation(buffer)).toHaveContents token
+
     it 'should return T_INTERPOLATION token when `buffer` contains interpolations', ->
       tk = new Leaf.Template.Tokenizer()
 
