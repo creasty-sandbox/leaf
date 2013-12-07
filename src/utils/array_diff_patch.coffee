@@ -1,9 +1,11 @@
 
-class Leaf.ArrayDiffPatch
+class ArrayDiffPatch
 
   MARK_DELETION  = '-'
   MARK_ADDITION  = '+'
   MARK_NONE      = '='
+
+  getClass: -> @constructor
 
   indexMap: (list) ->
     map = {}
@@ -64,9 +66,9 @@ class Leaf.ArrayDiffPatch
 
     _.union @diff(beforeLeft, afterLeft), equal, @diff(beforeRight, afterRight)
 
-  createPatch: (operation, index, element) ->
+  createPatch: (operation, index, elements) ->
     method: operation
-    args: [index, element]
+    args: [index, elements]
 
   getPatch: (before, after) ->
     diff = @diff before, after
@@ -80,8 +82,11 @@ class Leaf.ArrayDiffPatch
         when MARK_DELETION
           patch.push @createPatch('removeAt', index)
         when MARK_ADDITION
-          patch.push @createPatch('insertAt', index, d[1])
+          patch.push @createPatch('insertAt', index, [d[1]])
           ++index
 
     patch
+
+
+Leaf.ArrayDiffPatch = new ArrayDiffPatch()
 

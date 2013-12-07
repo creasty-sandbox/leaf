@@ -32,6 +32,7 @@ module.exports = (grunt) ->
       'utils/event.coffee'
       'utils/cache.coffee'
       'utils/object.coffee'
+      'utils/array_diff_patch.coffee'
     ].map fn
     formatters: [
       'formatters/formatter.coffee'

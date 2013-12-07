@@ -22,7 +22,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
   _saveCurrentMap: -> @_prev = _.clone @_map
 
   _recordOperation: (@_lastOperation = {}) ->
-    @_lastOperationDiff = null
+    @_lastPatch = null
 
   push: (elements...) ->
     len = elements.length
@@ -128,40 +128,27 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
   insertAt: (index, elements) ->
     @splice index, -1, elements...
 
-  getDiff: ->
-    return @_lastOperationDiff if @_lastOperationDiff
+  getPatch: ->
+    return @_lastPatch if @_lastPatch
 
-    diff = removed: [], added: [], moved: []
-
-    if @_lastOperation.removed
-      [from, to] = @_lastOperation.removed
-      diff.removed = @_prev[from..to]
-
-    if @_lastOperation.added
-      [from, to] = @_lastOperation.added
-      diff.added = @_map[from..to]
-
-    removed = _.without diff.removed, diff.added...
-    added = _.without diff.added, diff.removed...
-    diff.removed = removed.map (v) => @_cache.get v
-    diff.added = added.map (v) => @_cache.get v
+    patch = []
 
     if @_lastOperation.changed
-      prev = _.clone @_prev
+      patch = Leaf.ArrayDiffPatch.getPatch @_prev, @_map
+    else
+      [rf, rt] = @_lastOperation.removed ? [0, 0]
+      [af, at] = @_lastOperation.added ? [0, 0]
 
-      for i in [0...@_map.length] by 1
-        continue if prev[i] == @_map[i]
+      for i in [rf...rt] by 1
+        patch.push Leaf.ArrayDiffPatch.createPatch 'removeAt', rf
 
-        index = prev.indexOf @_map[i]
+      for i in [af...at] by 1
+        patch.push Leaf.ArrayDiffPatch.createPatch 'insertAt', i - rf, [@_map[i]]
 
-        continue if i > index
+    patch.forEach (p) =>
+      p.args[1] = @_cache.get p.args[1] if p.args[1]?
 
-        diff.moved.push [i, index]
-        tmp = prev[i]
-        prev[i] = prev[index]
-        prev[index] = tmp
-
-    @_lastOperationDiff = diff
+    @_lastPatch = patch
 
   _sync: ->
 
@@ -179,6 +166,6 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   _update: (prop) ->
     @_sync()
-    @_parent.update? @_parent_key, @getDiff() if @_parent
-    $(window).trigger @_getEventName(prop), [@getDiff()]
+    @_parent.update? @_parent_key, @ if @_parent
+    $(window).trigger @_getEventName(prop), [@]
 
