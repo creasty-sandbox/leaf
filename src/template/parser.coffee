@@ -1,13 +1,11 @@
 
 Leaf.Template.customTags['if'] =
   reset: (node, parent) ->
-    name = node.name
-
     if node.type == T_TAG_OPEN
-      if name != 'elseif' && name != 'else'
+      if node.name != 'elseif' && node.name != 'else'
         parent.context.if = null
     else if node.type == T_TAG_CLOSE
-      if name != 'if' && name != 'elseif' && name != 'else'
+      if node.name != 'if' && node.name != 'elseif' && node.name != 'else'
         parent.context.if = null
     else
       parent.context.if = null
@@ -21,6 +19,15 @@ Leaf.Template.customTags['else'] =
       n = parent.context.if
       node.localeBindings.condition = "!(#{n.localeBindings.condition})"
       parent.context.if = null
+    else if node.type == T_TAG_OPEN
+      throw new Error 'Parse error'
+
+Leaf.Template.customTags['elseif'] =
+  parse: (node, parent) ->
+    if parent.context.if
+      n = parent.context.if
+      node.localeBindings.condition = "!(#{n.localeBindings.condition}) && (#{node.localeBindings.condition})"
+      parent.context.if = node
     else if node.type == T_TAG_OPEN
       throw new Error 'Parse error'
 
@@ -72,8 +79,8 @@ class Leaf.Template.Parser
     node.attrBindings = token.attrBindings
     node.localeBindings = token.localeBindings
     node.actions = token.actions
-    @createNewScope node, parent
     @parseCustomTag node, parent
+    @createNewScope node, parent
     node
 
   createTextNode: (token) ->
