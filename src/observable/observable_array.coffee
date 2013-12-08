@@ -24,6 +24,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
   _recordOperation: (@_lastOperation = {}) ->
     @_lastPatch = null
 
+  indexOf: (v) -> @_map.indexOf v.toUUID?() ? v
+
   push: (elements...) ->
     len = elements.length
 
@@ -150,8 +152,6 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     @_lastPatch = patch
 
-  _sync: ->
-
   cls = @
   [
     'forEach'
@@ -165,7 +165,6 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     cls::[method] = -> Array::[method].apply @, [arguments...]
 
   _update: (prop) ->
-    @_sync()
     @_parent.update? @_parent_key, @ if @_parent
     $(window).trigger @_getEventName(prop), [@]
 
