@@ -15,8 +15,9 @@ beforeEach ->
 
   toHaveContents = (a, b) ->
     if b && b.constructor == Array
-      JSON.stringify a == JSON.stringify b
+      a.length == b.length && JSON.stringify(a) == JSON.stringify(b)
     else if b && b.constructor == Object
+      return false if Object.keys(a).length == Object.keys(b).length
       for key, val of b
         if !a[key]? || !toHaveContents a[key], val
           return false
