@@ -3,52 +3,30 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   toUUIDArray = (ary) -> Array::map.call ary, (v) -> v.toUUID?() ? v
 
-  constructor: (data, parent, parent_key) ->
-    data.__proto__ = Leaf.ObservableArray::
-    data.init data, parent, parent_key
-    return data
-
-  _.extend @::, new Array
-
-  init: (@_data, @_parent, @_parent_key) ->
+  init: ->
     super()
-    @_observed = @
-    @_map = toUUIDArray @
+    @_observed = []
     @_saveCurrentMap()
     @_lastOperation = {}
+    @length = @_data.length
 
-    for i in [0...@length] by 1
-      val = @_makeObservable @[i], @
+    for i in [0...@_data.length] by 1
+      val = @_makeObservable @_data[i], @
       @_observed[i] = val
-      @[i] = val
+      @_accessor i
+
+    @_map = toUUIDArray @_observed
 
   _saveCurrentMap: -> @_prev = _.clone @_map
 
   _recordOperation: (@_lastOperation = {}) ->
     @_lastPatch = null
 
-  _set: (prop, val) ->
-    prop = @_intOrKey prop
-
-    if _.isFunction @_observed[prop]
-      @_observed[prop].call @, val
-    else
-      val = @_makeObservable val, @, prop
-      @_observed[prop] = val
-      @[prop] = val
-
-    if @_tracking.setter
-      @_createTrack 'setter', prop
-    else
-      @_update prop
-
-    val
-
   indexOf: (v) ->
     if v.toUUID
       @_map.indexOf v.toUUID()
     else
-      Array::indexOf @, v
+      @_observed.indexOf v
 
   push: (elements...) ->
     len = elements.length
@@ -60,7 +38,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       added: [@length, @length + len - 1]
 
     @_saveCurrentMap()
-    Array::push.apply @, elements
+    @_observed.push elements...
     @_map.push toUUIDArray(elements)...
     @_update()
     @
@@ -75,7 +53,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       added: [0, len - 1]
 
     @_saveCurrentMap()
-    Array::unshift.apply @, elements
+    @_observed.unshift elements...
     @_map.unshift toUUIDArray(elements)...
     @_update()
     @
@@ -86,7 +64,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       removed: [@length - 1, @length - 1]
 
     @_saveCurrentMap()
-    res = Array::pop.apply @
+    res = @_observed.pop()
     @_map.pop()
     @_update()
     res
@@ -97,7 +75,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       removed: [0, 0]
 
     @_saveCurrentMap()
-    res = Array::shift.apply @
+    res = @_observed.shift()
     @_map.shift()
     @_update()
     res
@@ -119,7 +97,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_recordOperation op
 
     @_saveCurrentMap()
-    res = Array::splice.apply @, args
+    res = @_observed.splice args...
 
     if len
       @_map.splice index, size, toUUIDArray(elements)...
@@ -135,7 +113,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       changed: true
 
     @_saveCurrentMap()
-    Array::reverse.apply @
+    @_observed.reverse()
     @_map.reverse()
     @_update()
     @
@@ -146,8 +124,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       changed: true
 
     @_saveCurrentMap()
-    Array::sort.call @, compareFunc
-    @_map = toUUIDArray @
+    @_observed.sort compareFunc
+    @_map = toUUIDArray @_observed
     @_update()
     @
 
@@ -192,6 +170,14 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     cls::[method] = -> Array::[method].apply @, [arguments...]
 
   _update: (prop) ->
+    len = @_observed.length
+
+    if @length < len
+      @_accessor i for i in [@length...len] by 1
+    else if @length > len
+      @_removeAccessor i for i in [len...@length] by 1
+
+    @length = len
     @_parent.update? @_parent_key, @ if @_parent
     $(window).trigger @_getEventName(prop), [@]
 

@@ -31,6 +31,12 @@ class Leaf.ObservableBase extends Leaf.Object
       get: => @get attr
       set: (val) => @set attr, val
 
+  _removeAccessor: (attr) ->
+    Object.defineProperty @, attr,
+      enumerable: false
+      configurable: true
+      value: undefined
+
   _beginTrack: (name) ->
     @_tracked[name] ?= []
     @_tracking[name] = true
