@@ -183,7 +183,12 @@ class Leaf.ObservableBase extends Leaf.Object
     callback._binded = fn
     $(window).on @_getEventName(prop), fn
 
-  observe: (keypath, callback) ->
+  observe: ->
+    { keypath, callback } = Leaf.Utils.polymorphic
+      'f':  'callback'
+      'sf': 'keypath callback'
+    , arguments
+
     { obj, prop } = @getProperty keypath
     obj._observe prop, callback
 
