@@ -20,23 +20,6 @@ class Leaf.ObservableBase extends Leaf.Object
       o?._parent_key = parent_key
       o
 
-  _initAccessors: (accessors) ->
-    return unless accessors
-    @_accessor attr for attr in accessors
-
-  _accessor: (attr) ->
-    Object.defineProperty @, attr,
-      enumerable: true
-      configurable: true
-      get: => @get attr
-      set: (val) => @set attr, val
-
-  _removeAccessor: (attr) ->
-    Object.defineProperty @, attr,
-      enumerable: false
-      configurable: true
-      value: undefined
-
   _beginTrack: (name) ->
     @_tracked[name] ?= []
     @_tracking[name] = true
