@@ -12,22 +12,47 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   init: (@_data, @_parent, @_parent_key) ->
     super()
-    @_observed = []
+    @_observed = @
     @_map = toUUIDArray @
     @_saveCurrentMap()
     @_lastOperation = {}
 
-    @_observed.push @_makeObservable(val, @) for val in @
+    for i in [0...@length] by 1
+      val = @_makeObservable @[i], @
+      @_observed[i] = val
+      @[i] = val
 
   _saveCurrentMap: -> @_prev = _.clone @_map
 
   _recordOperation: (@_lastOperation = {}) ->
     @_lastPatch = null
 
-  indexOf: (v) -> @_map.indexOf v.toUUID?() ? v
+  _set: (prop, val) ->
+    prop = @_intOrKey prop
+
+    if _.isFunction @_observed[prop]
+      @_observed[prop].call @, val
+    else
+      val = @_makeObservable val, @, prop
+      @_observed[prop] = val
+      @[prop] = val
+
+    if @_tracking.setter
+      @_createTrack 'setter', prop
+    else
+      @_update prop
+
+    val
+
+  indexOf: (v) ->
+    if v.toUUID
+      @_map.indexOf v.toUUID()
+    else
+      Array::indexOf @, v
 
   push: (elements...) ->
     len = elements.length
+    elements = elements.map (el) => @_makeObservable el, @
 
     @_recordOperation
       method: 'push'
@@ -42,6 +67,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   unshift: (elements...) ->
     len = elements.length
+    elements = elements.map (el) => @_makeObservable el, @
 
     @_recordOperation
       method: 'unshift'
@@ -80,14 +106,15 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     [index, size, elements...] = args
 
     len = elements.length
+    elements = elements.map (el) => @_makeObservable el, @
     diff = len - size
 
     op =
       method: 'splice'
       args: args
 
-    op.removed = [index, index + size] if size >= 0
-    op.added = [index, index + len] if len > 0
+    op.removed = [index, index + size - 1] if size + 1 > 0
+    op.added = [index, index + len - 1] if len > 0
 
     @_recordOperation op
 
@@ -138,17 +165,17 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     if @_lastOperation.changed
       patch = Leaf.ArrayDiffPatch.getPatch @_prev, @_map
     else
-      [rf, rt] = @_lastOperation.removed ? [0, 0]
-      [af, at] = @_lastOperation.added ? [0, 0]
+      [rf, rt] = @_lastOperation.removed ? [0, -1]
+      [af, at] = @_lastOperation.added ? [0, -1]
 
-      for i in [rf...rt] by 1
+      for i in [rf..rt] by 1
         patch.push Leaf.ArrayDiffPatch.createPatch 'removeAt', rf
 
-      for i in [af...at] by 1
+      for i in [af..at] by 1
         patch.push Leaf.ArrayDiffPatch.createPatch 'insertAt', i - rf, [@_map[i]]
 
     patch.forEach (p) =>
-      p.args[1] = @_cache.get p.args[1] if p.args[1]?
+      p.args[1][0] = @_cache.get p.args[1][0] if p.args[1]?
 
     @_lastPatch = patch
 

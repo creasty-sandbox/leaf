@@ -16,6 +16,8 @@ class Leaf.ObservableBase extends Leaf.Object
     else if _.isPlainObject o
       new Leaf.ObservableObject o, parent, parent_key
     else
+      o?._parent = parent
+      o?._parent_key = parent_key
       o
 
   _initAccessors: (accessors) ->
@@ -85,10 +87,17 @@ class Leaf.ObservableBase extends Leaf.Object
       val
 
   get: (keypath) ->
-    return @ unless keypath
+    return @ unless keypath?
 
     keypath += ''
     path = keypath.split '.'
+    len = path.length
+
+    if len == 0
+      return @
+    else if len == 1
+      return @_observed[keypath]
+
     prop = path[path.length - 1]
     ref = @_observed
     parent = @
@@ -145,6 +154,15 @@ class Leaf.ObservableBase extends Leaf.Object
     name = "observable:#{@toUUID()}"
     name += ':' + prop if prop
     name
+
+  _destroy: (prop) ->
+    if @_parent && @_parent.removeAt
+      index = @_parent.indexOf @
+      @_parent.removeAt index
+
+  destroy: (keypath) ->
+    { obj, prop } = @getProperty keypath
+    obj._destroy prop
 
   _update: (prop, data) ->
     @_parent.update? @_parent_key, data if @_parent
