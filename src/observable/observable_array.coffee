@@ -167,7 +167,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     'reduce'
     'reduceRight'
   ].forEach (method) ->
-    cls::[method] = -> Array::[method].apply @, [arguments...]
+    cls::[method] = -> @_observed[method] arguments...
 
   _update: (prop) ->
     len = @_observed.length
