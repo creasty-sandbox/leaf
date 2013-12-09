@@ -74,58 +74,43 @@ class Leaf.ObservableBase extends Leaf.Object
 
     val
 
-  _intOrKey: (prop) ->
-    int = parseInt prop
+  _get: (prop, tracker = @, keypath) ->
+    return @ unless prop?
 
-    if !prop || prop == '' || isNaN int
-      prop
-    else
-      int
+    tracker._createTrack 'getter', keypath ? prop if tracker._tracking.getter
 
-  _get: (val, prop, keypath, parent) ->
-    prop = @_intOrKey prop
-
-    @_createTrack 'getter', prop if @_tracking.getter
+    val = @_observed[prop]
 
     if _.isFunction val
-      parent._getComputed prop
+      @_getComputed prop
     else
       val
 
   get: (keypath) ->
-    return @ unless keypath?
+    { obj, prop } = @getProperty keypath
+    obj._get prop, @, keypath
+
+  getProperty: (keypath) ->
+    return { obj: @ } unless keypath?
 
     keypath += ''
     path = keypath.split '.'
     len = path.length
 
     if len == 0
-      return @
+      { obj: @ }
     else if len == 1
-      return @_observed[keypath]
-
-    prop = path[path.length - 1]
-    ref = @_observed
-    parent = @
-
-    while ref && (p = path.shift())
-      p = @_intOrKey p
-      parent = ref if ref._observed
-      ref = ref.get?(p) ? ref[p]
-
-    @_get ref, prop, keypath, parent
-
-  getProperty: (keypath) ->
-    return { obj: @ } unless keypath
-
-    keypath += ''
-
-    if !~keypath.indexOf '.'
       { obj: @, prop: keypath }
     else
-      path = keypath.split '.'
       prop = path.pop()
-      obj = @get path.join '.'
+      obj = @
+      ref = @_observed
+
+      while ref && (p = path.shift())
+        p = @_intOrKey p
+        obj = ref if ref._observed
+        ref = ref.get?(p) ? ref[p]
+
       { obj, prop }
 
   _set: (prop, val) ->
@@ -198,6 +183,4 @@ class Leaf.ObservableBase extends Leaf.Object
   unobserve: (keypath, callback) ->
     { obj, prop } = @getProperty keypath
     obj._unobserve prop, callback
-
-
 
