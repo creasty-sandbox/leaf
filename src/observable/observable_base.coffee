@@ -43,7 +43,7 @@ class Leaf.ObservableBase extends Leaf.Object
         @_update prop
 
   _getComputed: (prop) ->
-    fn = @_observed[prop]
+    fn = @_data[prop]
 
     @_beginTrack 'getter' unless @_dependents[prop]
 
@@ -62,7 +62,7 @@ class Leaf.ObservableBase extends Leaf.Object
 
     tracker._createTrack 'getter', keypath ? prop if tracker._tracking.getter
 
-    val = @_observed[prop]
+    val = @_data[prop]
 
     if _.isFunction val
       @_getComputed prop
@@ -87,45 +87,42 @@ class Leaf.ObservableBase extends Leaf.Object
     else
       prop = path.pop()
       obj = @
-      ref = @_observed
+      ref = @_data
 
       while ref && (p = path.shift())
-        p = @_intOrKey p
-        obj = ref if ref._observed
+        obj = ref if ref._data
         ref = ref.get?(p) ? ref[p]
 
       { obj, prop }
 
-  _set: (prop, val) ->
-    prop = @_intOrKey prop
-
-    if _.isFunction @_observed[prop]
-      @_observed[prop].call @, val
+  _set: (prop, val, notify = true) ->
+    if _.isFunction @_data[prop]
+      @_data[prop].call @, val
     else
-      @_observed[prop] = val
+      @_data[prop] = val
 
     if @_tracking.setter
       @_createTrack 'setter', prop
-    else
-      @_update prop
+    else if notify
+      @_update prop, 'set'
 
     val
 
-  set: (keypath, val) ->
+  set: (keypath, val, notify = true) ->
     if _.isPlainObject keypath
       for k, v of keypath
         if _.isPlainObject v
-          @get(k).set v
+          @get(k).set v, val ? true
         else
-          @set k, v
+          @set k, v, notify
 
       return @
 
     { obj, prop } = @getProperty keypath
-    obj._set prop, val
+    obj._set prop, val, notify
 
   _getEventName: (prop) ->
-    name = "observable:#{@toUUID()}"
+    name = "#{@toLeafID()}:update"
     name += ':' + prop if prop
     name
 
@@ -138,9 +135,9 @@ class Leaf.ObservableBase extends Leaf.Object
     { obj, prop } = @getProperty keypath
     obj._destroy prop
 
-  _update: (prop, data) ->
-    @_parent.update? @_parent_key, data if @_parent
-    $(window).trigger @_getEventName(prop), [data ? @get(prop)]
+  _update: (prop, name) ->
+    @_parent.update? @_parent_key, name if @_parent
+    $(window).trigger @_getEventName(prop), [@get(prop), name]
 
   update: (keypath, data) ->
     { obj, prop } = @getProperty keypath

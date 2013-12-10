@@ -1,21 +1,20 @@
 
 class Leaf.ObservableArray extends Leaf.ObservableBase
 
-  toUUIDArray = (ary) -> Array::map.call ary, (v) -> v.toUUID?() ? v
+  toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v._leafObject then v.toLeafID() else v
 
   init: ->
     super()
-    @_observed = []
     @_saveCurrentMap()
     @_lastOperation = {}
     @length = @_data.length
 
     for i in [0...@_data.length] by 1
       val = @_makeObservable @_data[i], @
-      @_observed[i] = val
+      @_data[i] = val
       @_accessor i
 
-    @_map = toUUIDArray @_observed
+    @_map = toLeafIDs @_data
 
   _saveCurrentMap: -> @_prev = _.clone @_map
 
@@ -23,10 +22,10 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_lastPatch = null
 
   indexOf: (v) ->
-    if v.toUUID
-      @_map.indexOf v.toUUID()
+    if v._leafObject
+      @_map.indexOf v.toLeafID()
     else
-      @_observed.indexOf v
+      @_data.indexOf v
 
   push: (elements...) ->
     len = elements.length
@@ -38,8 +37,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       added: [@length, @length + len - 1]
 
     @_saveCurrentMap()
-    @_observed.push elements...
-    @_map.push toUUIDArray(elements)...
+    @_data.push elements...
+    @_map.push toLeafIDs(elements)...
     @_update()
     @
 
@@ -53,8 +52,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       added: [0, len - 1]
 
     @_saveCurrentMap()
-    @_observed.unshift elements...
-    @_map.unshift toUUIDArray(elements)...
+    @_data.unshift elements...
+    @_map.unshift toLeafIDs(elements)...
     @_update()
     @
 
@@ -64,7 +63,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       removed: [@length - 1, @length - 1]
 
     @_saveCurrentMap()
-    res = @_observed.pop()
+    res = @_data.pop()
     @_map.pop()
     @_update()
     res
@@ -75,7 +74,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       removed: [0, 0]
 
     @_saveCurrentMap()
-    res = @_observed.shift()
+    res = @_data.shift()
     @_map.shift()
     @_update()
     res
@@ -97,10 +96,10 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_recordOperation op
 
     @_saveCurrentMap()
-    res = @_observed.splice args...
+    res = @_data.splice args...
 
     if len
-      @_map.splice index, size, toUUIDArray(elements)...
+      @_map.splice index, size, toLeafIDs(elements)...
     else
       @_map.splice index, size
 
@@ -113,7 +112,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       changed: true
 
     @_saveCurrentMap()
-    @_observed.reverse()
+    @_data.reverse()
     @_map.reverse()
     @_update()
     @
@@ -124,8 +123,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       changed: true
 
     @_saveCurrentMap()
-    @_observed.sort compareFunc
-    @_map = toUUIDArray @_observed
+    @_data.sort compareFunc
+    @_map = toLeafIDs @_data
     @_update()
     @
 
@@ -167,10 +166,10 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     'reduce'
     'reduceRight'
   ].forEach (method) ->
-    cls::[method] = -> @_observed[method] arguments...
+    cls::[method] = -> @_data[method] arguments...
 
-  _update: (prop) ->
-    len = @_observed.length
+  _update: (prop, name) ->
+    len = @_data.length
 
     if @length < len
       @_accessor i for i in [@length...len] by 1
@@ -178,6 +177,10 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       @_removeAccessor i for i in [len...@length] by 1
 
     @length = len
-    @_parent.update? @_parent_key, @ if @_parent
-    $(window).trigger @_getEventName(prop), [@]
+
+    if name == 'set'
+      @_lastPatch = null
+      @_lastOperation = null
+
+    super prop, name
 
