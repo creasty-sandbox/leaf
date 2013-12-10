@@ -156,17 +156,46 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     @_lastPatch = patch
 
-  cls = @
-  [
-    'forEach'
-    'map'
-    'every'
-    'some'
-    'filter'
-    'reduce'
-    'reduceRight'
-  ].forEach (method) ->
-    cls::[method] = -> @_data[method] arguments...
+  forEach: (fn, thisObject) ->
+    fn = fn.bind thisObject if thisObject
+    fn @get(i), i for i in [0...@length] by 1
+    null
+
+  map: (fn, thisObject) ->
+    fn = fn.bind thisObject if thisObject
+    (fn @get(i), i for i in [0...@length] by 1)
+
+  every: (fn, thisObject) ->
+    fn = fn.bind thisObject if thisObject
+    return false for i in [0...@length] by 1 when !fn @get(i), i
+    true
+
+  some: (fn, thisObject) ->
+    fn = fn.bind thisObject if thisObject
+    return true for i in [0...@length] by 1 when fn @get(i), i
+    false
+
+  filter: ->
+    fn = fn.bind thisObject if thisObject
+
+    result = new @constructor
+
+    for i in [0...@length] by 1
+      val = @get i
+      result.push val if fn val, i
+
+    result
+
+  reduce: (fn, initialValue) ->
+    result = initialValue ? @get 0
+    result = fn result, @get(i), index, @ for i in [0...@length] by 1
+    result
+
+  reduceRight: ->
+    result = initialValue ? @get(@length - 1)
+    i = @length
+    result = fn result, @get(i - 1), i - 1, @ while i--
+    result
 
   _update: (prop, name) ->
     len = @_data.length
