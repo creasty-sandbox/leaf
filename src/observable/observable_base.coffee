@@ -96,15 +96,13 @@ class Leaf.ObservableBase extends Leaf.Object
     else
       @_data[prop] = val
 
-    if @_tracking.setter
-      @_createTrack 'setter', prop
-    else if options.notify
-      @_update prop, 'set'
+    @_createTrack 'setter', prop if @_tracking.setter
+    @_update prop if options.notify
 
     val
 
   set: ->
-    { keypath, val, options, pairs } = polymorphic
+    { keypath, val, options, pairs } = Leaf.Utils.polymorphic
       '.': 'val'
       'oo?': 'pairs options'
       's.o?': 'keypath val options'
