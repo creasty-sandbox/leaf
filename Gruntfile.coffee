@@ -141,7 +141,10 @@ module.exports = (grunt) ->
     # Jasmine
     jasmine:
       options:
-        helpers: ['spec/lib/*.js', 'tmp/spec/helpers/*.js']
+        helpers: [
+          'vendors/jasmine-jquery/lib/jasmine-jquery.js'
+          'tmp/spec/helpers/*.js'
+        ]
         keepRunner: true
         vendor: files.vendor
 
