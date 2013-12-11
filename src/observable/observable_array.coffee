@@ -7,6 +7,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     super()
     @_saveCurrentMap()
     @_lastOperation = {}
+    @_removeHandlers = {}
     @length = @_data.length
 
     for i in [0...@_data.length] by 1
@@ -29,7 +30,10 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   push: (elements...) ->
     len = elements.length
-    elements = elements.map (el) => @_makeObservable el, @
+    elements = elements.map (el) =>
+      o = @_makeObservable el, @
+      @_registerRemoveHandler o
+      o
 
     @_recordOperation
       method: 'push'
@@ -44,7 +48,10 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   unshift: (elements...) ->
     len = elements.length
-    elements = elements.map (el) => @_makeObservable el, @
+    elements = elements.map (el) =>
+      o = @_makeObservable el, @
+      @_registerRemoveHandler o
+      o
 
     @_recordOperation
       method: 'unshift'
@@ -64,6 +71,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     @_saveCurrentMap()
     res = @_data.pop()
+    @_unregisterRemoveHandler res
     @_map.pop()
     @_update()
     res
@@ -75,6 +83,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     @_saveCurrentMap()
     res = @_data.shift()
+    @_unregisterRemoveHandler res
     @_map.shift()
     @_update()
     res
@@ -83,24 +92,32 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     [index, size, elements...] = args
 
     len = elements.length
-    elements = elements.map (el) => @_makeObservable el, @
     diff = len - size
 
     op =
       method: 'splice'
       args: args
 
-    op.removed = [index, index + size - 1] if size + 1 > 0
-    op.added = [index, index + len - 1] if len > 0
+    if size + 1 > 0
+      op.removed = [index, index + size - 1]
+      @_unregisterRemoveHandler @_data[i] for i in [op.removed[0]..op.removed[1]] by 1
+
+    if len > 0
+      op.added = [index, index + len - 1]
 
     @_recordOperation op
-
     @_saveCurrentMap()
-    res = @_data.splice args...
 
     if len
+      elements = elements.map (el) =>
+        o = @_makeObservable el, @
+        @_registerRemoveHandler o
+        o
+
+      res = @_data.splice index, size, elements...
       @_map.splice index, size, toLeafIDs(elements)...
     else
+      res = @_data.splice index, size
       @_map.splice index, size
 
     @_update()
@@ -197,6 +214,11 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     result = fn result, @get(i - 1), i - 1, @ while i--
     result
 
+  _set: (prop, val, options = {}) ->
+    @_lastPatch = []
+    @_lastOperation = method: 'set', args: [val, options]
+    super prop, val, options
+
   _update: (prop, name) ->
     len = @_data.length
 
@@ -207,9 +229,17 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     @length = len
 
-    if name == 'set'
-      @_lastPatch = null
-      @_lastOperation = null
-
     super prop, name
+
+  _unregisterRemoveHandler: (o) ->
+    handler = @_removeHandlers[o.toLeafID()]
+    return unless handler
+    $(window).off @_getEventName(null, o, 'removeFromCollection'), handler
+
+  _registerRemoveHandler: (o) ->
+    @_unregisterRemoveHandler o
+    handler = => @removeAt index if ~(index = @indexOf o)
+    @_removeHandlers[o.toLeafID()] = handler
+    $(window).on @_getEventName(null, o, 'removeFromCollection'), handler
+
 

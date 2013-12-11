@@ -1,5 +1,7 @@
 
-class Leaf.Object extends Object
+PlainObject = Object
+
+class Leaf.Object extends PlainObject
 
   @_objectType = 'Object'
 
@@ -26,7 +28,7 @@ class Leaf.Object extends Object
   _accessor: (attr, obj = @) ->
     @_accessors[attr] = 1
 
-    window.Object.defineProperty @, attr,
+    PlainObject.defineProperty @, attr,
       enumerable: true
       configurable: true
       get: => obj.get attr
@@ -35,7 +37,7 @@ class Leaf.Object extends Object
   _removeAccessor: (attr, obj = @) ->
     @_accessors[attr] = undefined
 
-    window.Object.defineProperty obj, attr,
+    PlainObject.defineProperty obj, attr,
       enumerable: false
       configurable: true
       value: undefined
@@ -46,7 +48,6 @@ class Leaf.Object extends Object
   getLeafClass: -> "Leaf.#{@_c._objectType}"
 
   @isLeafID: (id) ->
-    return false unless id?
-    id += ''
+    return false unless _.isString id
     !!id.match /^__LEAF_ID_\d+$/
 
