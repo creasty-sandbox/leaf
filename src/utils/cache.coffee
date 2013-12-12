@@ -9,7 +9,7 @@ class Leaf.Cache
 
   set: (key, val) -> @storage[key] = val
   get: (key, set) ->
-    if "#{key}"[0...4] == 'UUID'
+    if Leaf.Object.isLeafID key
       @storage[key] ?= set
     else
       key

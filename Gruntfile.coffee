@@ -32,6 +32,7 @@ module.exports = (grunt) ->
       'utils/event.coffee'
       'utils/cache.coffee'
       'utils/object.coffee'
+      'utils/array_diff_patch.coffee'
     ].map fn
     formatters: [
       'formatters/formatter.coffee'
@@ -47,6 +48,7 @@ module.exports = (grunt) ->
       'template/template.coffee'
       'template/tokenizer.coffee'
       'template/parser.coffee'
+      'template/custom_tags.coffee'
     ].map fn
     core: [
       'core/object.coffee'
@@ -140,7 +142,10 @@ module.exports = (grunt) ->
     # Jasmine
     jasmine:
       options:
-        helpers: ['spec/lib/*.js', 'tmp/spec/helpers/*.js']
+        helpers: [
+          'vendors/jasmine-jquery/lib/jasmine-jquery.js'
+          'tmp/spec/helpers/*.js'
+        ]
         keepRunner: true
         vendor: files.vendor
 

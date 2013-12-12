@@ -1,33 +1,26 @@
 
 class Leaf.ObservableBase extends Leaf.Object
 
-  constructor: (@_data, @_parent, @_parent_key) ->
+  @isObservable = true
+
+  constructor: (@_data) ->
     @init()
 
   init: ->
+    @isObservable = true
     @_objectBaseInit()
     @_dependents = {}
     @_tracked = {}
     @_tracking = {}
+    @_sub = {}
 
-  _makeObservable: (o, parent, parent_key) ->
+  _makeObservable: (o) ->
     if _.isArray o
-      new Leaf.ObservableArray o, parent, parent_key
+      new Leaf.ObservableArray o
     else if _.isPlainObject o
-      new Leaf.ObservableObject o, parent, parent_key
+      new Leaf.ObservableObject o
     else
       o
-
-  _initAccessors: (accessors) ->
-    return unless accessors
-    @_accessor attr for attr in accessors
-
-  _accessor: (attr) ->
-    Object.defineProperty @, attr,
-      enumerable: true
-      configurable: true
-      get: => @get attr
-      set: (val) => @set attr, val
 
   _beginTrack: (name) ->
     @_tracked[name] ?= []
@@ -52,11 +45,13 @@ class Leaf.ObservableBase extends Leaf.Object
         @_update prop
 
   _getComputed: (prop) ->
-    fn = @_observed[prop]
+    val = @_data[prop]
+
+    return val unless _.isFunction val
 
     @_beginTrack 'getter' unless @_dependents[prop]
 
-    val = fn.call @
+    val = val.call @
 
     if (tracked = @_endTrack 'getter')
       @_dependents[prop] = tracked
@@ -66,109 +61,123 @@ class Leaf.ObservableBase extends Leaf.Object
 
     val
 
-  _intOrKey: (prop) ->
-    int = parseInt prop
-
-    if !prop || prop == '' || isNaN int
-      prop
-    else
-      int
-
-  _get: (val, prop, keypath, parent) ->
-    prop = @_intOrKey prop
+  _get: (prop) ->
+    return @ unless prop?
 
     @_createTrack 'getter', prop if @_tracking.getter
 
-    if _.isFunction val
-      parent._getComputed prop
-    else
-      val
+    @_getComputed prop
 
   get: (keypath) ->
-    return @ unless keypath
+    { obj, prop } = @getParent keypath
+
+    @_createTrack 'getter', keypath if @_tracking.getter
+
+    obj?._get prop, @, keypath
+
+  getParent: (keypath) ->
+    return { obj: @ } unless keypath?
 
     keypath += ''
     path = keypath.split '.'
-    prop = path[path.length - 1]
-    ref = @_observed
-    parent = @
+    len = path.length
 
-    while ref && (p = path.shift())
-      p = @_intOrKey p
-      parent = ref if ref._observed
-      ref = ref.get?(p) ? ref[p]
-
-    @_get ref, prop, keypath, parent
-
-  getProperty: (keypath) ->
-    return { obj: @ } unless keypath
-
-    keypath += ''
-
-    if !~keypath.indexOf '.'
-      { obj: @, prop: keypath }
+    if len == 0
+      { obj: @ }
+    else if len == 1
+      obj = @_data[keypath]
+      if obj?.isObservable
+        { obj }
+      else
+        { obj: @, prop: keypath }
     else
-      path = keypath.split '.'
       prop = path.pop()
-      obj = @get path.join '.'
-      { obj, prop }
+      ref = @
+      ref = ref.get?(p) ? ref[p] while ref && (p = path.shift())
+      { obj: ref, prop }
 
-  _set: (prop, val) ->
-    prop = @_intOrKey prop
+  _set: (prop, val, options = {}) ->
+    options = _.defaults { notify: true }, options
 
-    if _.isFunction @_observed[prop]
-      @_observed[prop].call @, val
+    if _.isFunction @_data[prop]
+      @_data[prop].call @, val
     else
-      @_observed[prop] = val
+      @_data[prop] = @_makeObservable val
 
     if @_tracking.setter
-      @_createTrack 'setter', prop
+      @_createTrack 'setter', prop if options.notify
+      @_createTrack 'setter' if options.bubbling
     else
-      @_update prop
+      @_update prop if options.notify
+      @_update() if options.notify
 
     val
 
-  set: (keypath, val) ->
-    if _.isPlainObject keypath
-      for k, v of keypath
+  set: ->
+    { keypath, val, options, pairs } = Leaf.Utils.polymorphic
+      'oo?':  'pairs options'
+      's.o?': 'keypath val options'
+      '.':    'val'
+    , arguments
+
+    if pairs
+      for k, v of pairs
         if _.isPlainObject v
-          @get(k).set v
+          @get(k).set v, options
         else
-          @set k, v
+          @set k, v, options
 
       return @
 
-    { obj, prop } = @getProperty keypath
-    obj._set prop, val
+    { obj, prop } = @getParent keypath
 
-  _getEventName: (prop) ->
-    name = "observable:#{@toUUID()}"
-    name += ':' + prop if prop
-    name
+    if @_tracking.setter
+      @_createTrack 'setter', keypath if options?.notify
+      @_createTrack 'setter' if options?.bubbling
+    else
+      obj._set prop, val, options, @
 
-  _update: (prop, data) ->
-    @_parent.update? @_parent_key, data if @_parent
-    $(window).trigger @_getEventName(prop), [data ? @get(prop)]
+  _getEventName: (prop, o = @, eventName = 'update') ->
+    name = ['observer']
+    name.push eventName
+    name.push o.toLeafID()
+    name.push prop if prop
+    name.join ':'
 
-  update: (keypath, data) ->
-    { obj, prop } = @getProperty keypath
-    obj._update prop, data
+  _fire: (prop, eventName) ->
+    $(window).trigger @_getEventName(prop, null, eventName), [@get(prop)]
+
+  _removeFromCollection: (prop) ->
+    @_fire prop, 'removeFromCollection'
+
+  removeFromCollection: (keypath) ->
+    { obj, prop } = @getParent keypath
+    obj._removeFromCollection prop
+
+  _update: (prop) -> @_fire prop, 'update'
+
+  update: (keypath) ->
+    { obj, prop } = @getParent keypath
+    obj._update prop
 
   _observe: (prop, callback) ->
     fn = (e, args...) => callback args...
     callback._binded = fn
     $(window).on @_getEventName(prop), fn
 
-  observe: (keypath, callback) ->
-    { obj, prop } = @getProperty keypath
+  observe: ->
+    { keypath, callback } = Leaf.Utils.polymorphic
+      'f':  'callback'
+      'sf': 'keypath callback'
+    , arguments
+
+    { obj, prop } = @getParent keypath
     obj._observe prop, callback
 
   _unobserve: (prop, callback) ->
     $(window).off @_getEventName(prop), callback._binded ? callback
 
   unobserve: (keypath, callback) ->
-    { obj, prop } = @getProperty keypath
+    { obj, prop } = @getParent keypath
     obj._unobserve prop, callback
-
-
 

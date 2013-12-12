@@ -71,7 +71,7 @@ describe 'observable', ->
       expect(val).toBe undefined
 
 
-  describe '#set(keypath, value, notify = true)', ->
+  describe '#set(keypath, value, options = { notify: true })', ->
 
     it 'should set property values', ->
       observableObj.set 'foo', 100
@@ -173,7 +173,7 @@ describe 'observable', ->
       it 'should call registered observer of parent properties when setting children values', ->
         observableObj.observe 'nested', callback
 
-        observableObj.set 'nested.prop1', 200
+        observableObj.set 'nested.prop1', 200, bubbling: true
 
         expect(callback).toHaveBeenCalled()
 
@@ -226,89 +226,109 @@ describe 'observable', ->
 
     describe 'Array operation', ->
 
-      it 'should call registered observers with diff object when updating elements via `push`', ->
+      it 'should call registered observers when updating elements via `push`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
         ary.push 4
 
-        diff = removed: [], added: [4], moved: []
+        patch = [
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 3, 4
+        ]
 
-        expect(ary).toHaveContents [1, 2, 3, 4]
+        expect(ary.toArray()).toHaveContents [1, 2, 3, 4]
         expect(callback).toHaveBeenCalled()
-        expect(callback.mostRecentCall.args[0]).toHaveContents diff
+        expect(ary.getPatch()).toHaveContents patch
 
-      it 'should call registered observers with diff object when updating elements via `unshift`', ->
+      it 'should call registered observers when updating elements via `unshift`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
         ary.unshift 0
 
-        diff = removed: [], added: [0], moved: []
+        patch = [
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, 4
+        ]
 
-        expect(ary).toHaveContents [0, 1, 2, 3]
+        expect(ary.toArray()).toHaveContents [0, 1, 2, 3]
         expect(callback).toHaveBeenCalled()
-        expect(callback.mostRecentCall.args[0]).toHaveContents diff
+        expect(ary.getPatch()).toHaveContents patch
 
-      it 'should call registered observers with diff object when updating elements via `pop`', ->
+      it 'should call registered observers when updating elements via `pop`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
         ary.pop()
 
-        diff = removed: [3], added: [], moved: []
+        patch = [
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 2
+        ]
 
-        expect(ary).toHaveContents [1, 2]
+        expect(ary.toArray()).toHaveContents [1, 2]
         expect(callback).toHaveBeenCalled()
-        expect(callback.mostRecentCall.args[0]).toHaveContents diff
+        expect(ary.getPatch()).toHaveContents patch
 
-      it 'should call registered observers with diff object when updating elements via `shift`', ->
+      it 'should call registered observers when updating elements via `shift`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
         ary.shift()
 
-        diff = removed: [1], added: [], moved: []
+        patch = [
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0
+        ]
 
-        expect(ary).toHaveContents [2, 3]
+        expect(ary.toArray()).toHaveContents [2, 3]
         expect(callback).toHaveBeenCalled()
-        expect(callback.mostRecentCall.args[0]).toHaveContents diff
+        expect(ary.getPatch()).toHaveContents patch
 
-      it 'should call registered observers with diff object when updating elements via `sort`', ->
+      it 'should call registered observers when updating elements via `sort`', ->
         ary = observableObj.get 'ary'
         ary.push -1
 
         observableObj.observe 'ary', callback
         ary.sort()
 
-        diff = removed: [], added: [], moved: [[0, 3], [1, 3], [2, 3]]
+        patch = [
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, -1
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 4
+        ]
 
-        expect(ary).toHaveContents [-1, 1, 2, 3]
+        expect(ary.toArray()).toHaveContents [-1, 1, 2, 3]
         expect(callback).toHaveBeenCalled()
-        expect(callback.mostRecentCall.args[0]).toHaveContents diff
+        expect(ary.getPatch()).toHaveContents patch
 
-      it 'should call registered observers with diff object when updating elements via `reverse`', ->
+      it 'should call registered observers when updating elements via `reverse`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
         ary.reverse()
 
-        diff = removed: [], added: [], moved: [[0, 2]]
+        patch = [
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, 2
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 2, 1
+        ]
 
-        expect(ary).toHaveContents [3, 2, 1]
+        expect(ary.toArray()).toHaveContents [3, 2, 1]
         expect(callback).toHaveBeenCalled()
-        expect(callback.mostRecentCall.args[0]).toHaveContents diff
+        expect(ary.getPatch()).toHaveContents patch
 
-      it 'should call registered observers with diff object when updating elements via `splice`', ->
+      it 'should call registered observers when updating elements via `splice`', ->
         observableObj.observe 'ary', callback
 
         ary = observableObj.get 'ary'
         ary.splice 1, 1, 8, 9
 
-        diff = removed: [2], added: [8, 9], moved: []
+        patch = [
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 1
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, 8
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 2, 9
+        ]
 
-        expect(ary).toHaveContents [1, 8, 9, 3]
+        expect(ary.toArray()).toHaveContents [1, 8, 9, 3]
         expect(callback).toHaveBeenCalled()
-        expect(callback.mostRecentCall.args[0]).toHaveContents diff
+        expect(ary.getPatch()).toHaveContents patch
 
 
