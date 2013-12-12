@@ -95,101 +95,53 @@ describe 'tokenizer', ->
       expect(tk.getInterpolation(buffer)).toHaveContents token
 
 
-  describe 'Tag tokens', ->
+  describe '#getTag(buffer)', ->
 
-    describe '#tagAttrFragments(t, attrs, tag)', ->
+    it 'should return T_NONE token when `buffer` is empty', ->
+      tk = new Leaf.Template.Tokenizer()
+      token = type: T_NONE
+      expect(tk.getTag('')).toHaveContents token
 
-      it 'should create empty hash when `attrs` has no vaild definitions of attribute', ->
-        tk = new Leaf.Template.Tokenizer()
+    it 'should return T_TAG_OPEN token for opening tags', ->
+      tk = new Leaf.Template.Tokenizer()
 
-        t = {}
-        tk.tagAttrFragments t, '', ''
+      buffer = 'text <div id="foo">'
+      token =
+        type: T_TAG_OPEN
+        buffer: '<div id="foo">'
+        attrPart: ' id="foo"'
+        name: 'div'
+        index: 5
+        length: 14
 
-        expect(t.attrs).toBeDefined()
-        expect(Object.keys(t.attrs).length).toBe 0
+      expect(tk.getTag(buffer)).toHaveContents token
 
-      it 'should create hash object for each attributes, bindings and actions', ->
-        tk = new Leaf.Template.Tokenizer()
+    it 'should return T_TAG_CLOSE token for closing tag', ->
+      tk = new Leaf.Template.Tokenizer()
 
-        t = {}
-        tk.tagAttrFragments t, 'id="foo" $class="bar" $my="baz" @click="alert"', ''
-        token =
-          attrs: { 'id': 'foo' }
-          attrBindings: { 'class': 'bar' }
-          localeBindings: { 'my': 'baz' }
-          actions: { 'click': 'alert' }
+      buffer = 'text</div>'
+      token =
+        type: T_TAG_CLOSE
+        buffer: '</div>'
+        name: 'div'
+        index: 4
+        length: 6
 
-        expect(t).toHaveContents token
+      expect(tk.getTag(buffer)).toHaveContents token
 
-      it 'should treat attr as a locale binding if its name is not vaild for tag', ->
-        tk = new Leaf.Template.Tokenizer()
+    it 'should return T_TAG_SELF token for self closing tag', ->
+      tk = new Leaf.Template.Tokenizer()
 
-        t1 = {}
-        tk.tagAttrFragments t1, '$href="link"', 'a'
+      buffer = 'text <img src="img.gif">'
+      token =
+        type: T_TAG_SELF
+        buffer: '<img src="img.gif">'
+        attrPart: ' src="img.gif"'
+        name: 'img'
+        index: 5
+        length: 19
 
-        expect(t1.attrBindings).toBeDefined()
-        expect(t1.attrBindings.href).toBe 'link'
-
-        t2 = {}
-        tk.tagAttrFragments t2, '$href="link"', 'div'
-
-        expect(t2.localeBindings).toBeDefined()
-        expect(t2.localeBindings.href).toBe 'link'
-
-
-    describe '#getTag(buffer)', ->
-
-      it 'should return T_NONE token when `buffer` is empty', ->
-        tk = new Leaf.Template.Tokenizer()
-        token = type: T_NONE
-        expect(tk.getTag('')).toHaveContents token
-
-      it 'should return T_TAG_OPEN token for opening tags', ->
-        tk = new Leaf.Template.Tokenizer()
-
-        buffer = 'text <div id="foo">'
-        token =
-          type: T_TAG_OPEN
-          buffer: '<div id="foo">'
-          name: 'div'
-          attrs: { 'id': 'foo' }
-          attrBindings: {}
-          localeBindings: {}
-          actions: {}
-          index: 5
-          length: 14
-
-        expect(tk.getTag(buffer)).toHaveContents token
-
-      it 'should return T_TAG_CLOSE token for closing tag', ->
-        tk = new Leaf.Template.Tokenizer()
-
-        buffer = 'text</div>'
-        token =
-          type: T_TAG_CLOSE
-          buffer: '</div>'
-          name: 'div'
-          index: 4
-          length: 6
-
-        expect(tk.getTag(buffer)).toHaveContents token
-
-      it 'should return T_TAG_SELF token for self closing tag', ->
-        tk = new Leaf.Template.Tokenizer()
-
-        buffer = 'text <img src="img.gif">'
-        token =
-          type: T_TAG_SELF
-          buffer: '<img src="img.gif">'
-          name: 'img'
-          attrs: { 'src': 'img.gif' }
-          attrBindings: {}
-          localeBindings: {}
-          actions: {}
-          index: 5
-          length: 19
-
-        expect(tk.getTag(buffer)).toHaveContents token
+      expect(tk.getTag(buffer)).toHaveContents token
 
 
   describe '#getToken', ->
@@ -215,11 +167,8 @@ describe 'tokenizer', ->
         {
           type: T_TAG_OPEN
           buffer: '<div id="foo" class="bar">'
+          attrPart: ' id="foo" class="bar"'
           name: 'div'
-          attrs: { 'id': 'foo', 'class': 'bar' }
-          attrBindings: {}
-          localeBindings: {}
-          actions: {}
           index: 0
           length: 26
         }
@@ -232,11 +181,8 @@ describe 'tokenizer', ->
         {
           type: T_TAG_OPEN
           buffer: '<i>'
+          attrPart: ''
           name: 'i'
-          attrs: {}
-          attrBindings: {}
-          localeBindings: {}
-          actions: {}
           index: 10
           length: 3
         }
@@ -262,11 +208,8 @@ describe 'tokenizer', ->
         {
           type: T_TAG_SELF
           buffer: '<img src="img.gif">'
+          attrPart: ' src="img.gif"'
           name: 'img'
-          attrs: { 'src': 'img.gif' }
-          attrBindings: {}
-          localeBindings: {}
-          actions: {}
           index: 5
           length: 19
         }
@@ -282,92 +225,5 @@ describe 'tokenizer', ->
       tk = getTokenizer html
 
       expect(tk.getToken()).toHaveContents token for token in tokens
-
-
-    describe 'Data bindings', ->
-
-      it 'should return tokens with data binding for normal attributes', ->
-        html = """
-          <img class="foo" $src="image.url">
-        """
-        token =
-          type: T_TAG_SELF
-          buffer: '<img class="foo" $src="image.url">'
-          name: 'img'
-          attrs: { 'class': 'foo' }
-          attrBindings: { 'src': 'image.url' }
-          localeBindings: {}
-          actions: {}
-
-        tk = getTokenizer html
-        expect(tk.getToken()).toHaveContents token
-
-
-      it 'should return tokens with data binding of locales', ->
-        html = """
-          <div $model="model"></div>
-        """
-
-        token =
-          type: T_TAG_OPEN
-          buffer: '<div $model="model">'
-          name: 'div'
-          attrs: {}
-          attrBindings: {}
-          localeBindings: { 'model': 'model' }
-          actions: {}
-
-        tk = getTokenizer html
-        expect(tk.getToken()).toHaveContents token
-
-      it 'should return tokens with data binding of text interpolations', ->
-        html = """
-          the quick brown {{ animal.name }} jumps
-        """
-
-        tokens = [
-          {
-            type: T_TEXT
-            buffer: 'the quick brown '
-            index: 0
-            length: 16
-          }
-          {
-            type: T_INTERPOLATION
-            buffer: '{{ animal.name }}'
-            textBinding: { val: 'animal.name', escape: true }
-            index: 16
-            length: 17
-          }
-          {
-            type: T_TEXT
-            buffer: ' jumps'
-            index: 0
-            length: 6
-          }
-        ]
-
-        tk = getTokenizer html
-        expect(tk.getToken()).toHaveContents token for token in tokens
-
-
-    describe 'Action handler', ->
-
-      it 'should return token with action handler', ->
-        html = '<input type="text" @focus="glow">'
-
-        token =
-          type: T_TAG_SELF
-          buffer: '<input type="text" @focus="glow">'
-          name: 'input'
-          attrs: { 'type': 'text' }
-          attrBindings: {}
-          localeBindings: {}
-          actions: { 'focus': 'glow' }
-          index: 0
-          length: 33
-
-        tk = getTokenizer html
-        expect(tk.getToken()).toHaveContents token
 
 
