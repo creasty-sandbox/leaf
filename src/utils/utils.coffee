@@ -16,7 +16,9 @@ class Leaf.Utils
     # clone
     argv = [argv...]
     # types of each argument
-    argt = argv.reduce ((a, b) -> a + Object::toString.call(b)[8...9]), ''
+    argt = argv.reduce (a, b) ->
+      a + (if b? then Object::toString.call(b)[8...9] else '')
+    , ''
 
     # find match
     for pattern, vars of def

@@ -66,9 +66,7 @@ class ArrayDiffPatch
 
     _.union @diff(beforeLeft, afterLeft), equal, @diff(beforeRight, afterRight)
 
-  createPatch: (operation, index, elements) ->
-    method: operation
-    args: [index, elements]
+  createPatch: (method, index, element) -> { method, index, element }
 
   getPatch: (before, after) ->
     diff = @diff before, after
@@ -82,7 +80,7 @@ class ArrayDiffPatch
         when MARK_DELETION
           patch.push @createPatch('removeAt', index)
         when MARK_ADDITION
-          patch.push @createPatch('insertAt', index, [d[1]])
+          patch.push @createPatch('insertAt', index, d[1])
           ++index
 
     patch

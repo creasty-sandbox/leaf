@@ -7,6 +7,7 @@ class Leaf.ObservableBase extends Leaf.Object
     @init()
 
   init: ->
+    @isObservable = true
     @_objectBaseInit()
     @_dependents = {}
     @_tracked = {}
@@ -60,16 +61,19 @@ class Leaf.ObservableBase extends Leaf.Object
 
     val
 
-  _get: (prop, tracker = @, keypath) ->
+  _get: (prop) ->
     return @ unless prop?
 
-    tracker._createTrack 'getter', keypath ? prop if tracker._tracking.getter
+    @_createTrack 'getter', prop if @_tracking.getter
 
     @_getComputed prop
 
   get: (keypath) ->
     { obj, prop } = @getParent keypath
-    obj._get prop, @, keypath
+
+    @_createTrack 'getter', keypath if @_tracking.getter
+
+    obj?._get prop, @, keypath
 
   getParent: (keypath) ->
     return { obj: @ } unless keypath?
@@ -81,7 +85,11 @@ class Leaf.ObservableBase extends Leaf.Object
     if len == 0
       { obj: @ }
     else if len == 1
-      { obj: @, prop: keypath }
+      obj = @_data[keypath]
+      if obj?.isObservable
+        { obj }
+      else
+        { obj: @, prop: keypath }
     else
       prop = path.pop()
       ref = @
@@ -94,22 +102,26 @@ class Leaf.ObservableBase extends Leaf.Object
     if _.isFunction @_data[prop]
       @_data[prop].call @, val
     else
-      @_data[prop] = val
+      @_data[prop] = @_makeObservable val
 
-    @_createTrack 'setter', prop if @_tracking.setter
-    @_update prop if options.notify
+    if @_tracking.setter
+      @_createTrack 'setter', prop if options.notify
+      @_createTrack 'setter' if options.bubbling
+    else
+      @_update prop if options.notify
+      @_update() if options.notify
 
     val
 
   set: ->
     { keypath, val, options, pairs } = Leaf.Utils.polymorphic
-      '.': 'val'
-      'oo?': 'pairs options'
+      'oo?':  'pairs options'
       's.o?': 'keypath val options'
+      '.':    'val'
     , arguments
 
     if pairs
-      for k, v of keypath
+      for k, v of pairs
         if _.isPlainObject v
           @get(k).set v, options
         else
@@ -118,7 +130,12 @@ class Leaf.ObservableBase extends Leaf.Object
       return @
 
     { obj, prop } = @getParent keypath
-    obj._set prop, val, options
+
+    if @_tracking.setter
+      @_createTrack 'setter', keypath if options?.notify
+      @_createTrack 'setter' if options?.bubbling
+    else
+      obj._set prop, val, options, @
 
   _getEventName: (prop, o = @, eventName = 'update') ->
     name = ['observer']
@@ -128,7 +145,7 @@ class Leaf.ObservableBase extends Leaf.Object
     name.join ':'
 
   _fire: (prop, eventName) ->
-    $(window).trigger @_getEventName(prop, null, eventName), [@get(prop), eventName]
+    $(window).trigger @_getEventName(prop, null, eventName), [@get(prop)]
 
   _removeFromCollection: (prop) ->
     @_fire prop, 'removeFromCollection'
@@ -137,12 +154,11 @@ class Leaf.ObservableBase extends Leaf.Object
     { obj, prop } = @getParent keypath
     obj._removeFromCollection prop
 
-  _update: (prop, eventName = 'update') ->
-    @_fire prop, eventName
+  _update: (prop) -> @_fire prop, 'update'
 
-  update: (keypath, eventName) ->
+  update: (keypath) ->
     { obj, prop } = @getParent keypath
-    obj._update prop, eventName
+    obj._update prop
 
   _observe: (prop, callback) ->
     fn = (e, args...) => callback args...

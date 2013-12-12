@@ -14,18 +14,19 @@ beforeEach ->
     runs fn
 
   toHaveContents = (a, b) ->
-    if b && b.constructor == Array
-      a.length == b.length && JSON.stringify(a) == JSON.stringify(b)
+    if a == b
+      true
+    else if b && b.constructor == Array
+      a.length == b.length && b.every (_, i) -> toHaveContents a[i], b[i]
     else if b && b.constructor == Object
-      return false if Object.keys(a).length == Object.keys(b).length
+      return false unless Object.keys(a).length == Object.keys(b).length
       for key, val of b
-        if !a[key]? || !toHaveContents a[key], val
+        if !a[key]? && !toHaveContents a[key], val
           return false
       true
     else
-      a == b
+      false
 
   @addMatchers
-    toHaveContents: (expected) ->
-      toHaveContents @actual, expected
+    toHaveContents: (expected) -> toHaveContents @actual, expected
 

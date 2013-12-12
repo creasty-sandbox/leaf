@@ -151,28 +151,6 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
   insertAt: (index, elements) ->
     @splice index, -1, elements...
 
-  getPatch: ->
-    return @_lastPatch if @_lastPatch
-
-    patch = []
-
-    if @_lastOperation.changed
-      patch = Leaf.ArrayDiffPatch.getPatch @_prev, @_map
-    else
-      [rf, rt] = @_lastOperation.removed ? [0, -1]
-      [af, at] = @_lastOperation.added ? [0, -1]
-
-      for i in [rf..rt] by 1
-        patch.push Leaf.ArrayDiffPatch.createPatch 'removeAt', rf
-
-      for i in [af..at] by 1
-        patch.push Leaf.ArrayDiffPatch.createPatch 'insertAt', i - rf, [@_map[i]]
-
-    patch.forEach (p) =>
-      p.args[1][0] = @_cache.get p.args[1][0] if p.args[1]?
-
-    @_lastPatch = patch
-
   forEach: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
     fn @get(i), i for i in [0...@length] by 1
@@ -214,12 +192,33 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     result = fn result, @get(i - 1), i - 1, @ while i--
     result
 
+  getPatch: ->
+    return @_lastPatch if @_lastPatch
+
+    patch = []
+
+    if @_lastOperation.changed
+      patch = Leaf.ArrayDiffPatch.getPatch @_prev, @_map
+    else
+      [rf, rt] = @_lastOperation.removed ? [0, -1]
+      [af, at] = @_lastOperation.added ? [0, -1]
+
+      for i in [rf..rt] by 1
+        patch.push Leaf.ArrayDiffPatch.createPatch 'removeAt', rf
+
+      for i in [af..at] by 1
+        patch.push Leaf.ArrayDiffPatch.createPatch 'insertAt', i - rf, @_map[i]
+
+    patch.forEach (p) => p.element = @_cache.get p.element
+
+    @_lastPatch = patch
+
   _set: (prop, val, options = {}) ->
     @_lastPatch = []
     @_lastOperation = method: 'set', args: [val, options]
     super prop, val, options
 
-  _update: (prop, name) ->
+  _update: (prop) ->
     len = @_data.length
 
     if @length < len
@@ -229,17 +228,20 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     @length = len
 
-    super prop, name
+    super prop
 
   _unregisterRemoveHandler: (o) ->
+    return unless o?.isObservable
     handler = @_removeHandlers[o.toLeafID()]
     return unless handler
     $(window).off @_getEventName(null, o, 'removeFromCollection'), handler
 
   _registerRemoveHandler: (o) ->
+    return unless o?.isObservable
     @_unregisterRemoveHandler o
     handler = => @removeAt index if ~(index = @indexOf o)
     @_removeHandlers[o.toLeafID()] = handler
     $(window).on @_getEventName(null, o, 'removeFromCollection'), handler
 
+  toArray: -> @_data
 

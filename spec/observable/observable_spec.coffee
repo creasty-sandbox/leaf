@@ -71,7 +71,7 @@ describe 'observable', ->
       expect(val).toBe undefined
 
 
-  describe '#set(keypath, value, notify = true)', ->
+  describe '#set(keypath, value, options = { notify: true })', ->
 
     it 'should set property values', ->
       observableObj.set 'foo', 100
@@ -173,7 +173,7 @@ describe 'observable', ->
       it 'should call registered observer of parent properties when setting children values', ->
         observableObj.observe 'nested', callback
 
-        observableObj.set 'nested.prop1', 200
+        observableObj.set 'nested.prop1', 200, bubbling: true
 
         expect(callback).toHaveBeenCalled()
 
@@ -233,10 +233,10 @@ describe 'observable', ->
         ary.push 4
 
         patch = [
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 3, [4]
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 3, 4
         ]
 
-        expect(ary).toHaveContents [1, 2, 3, 4]
+        expect(ary.toArray()).toHaveContents [1, 2, 3, 4]
         expect(callback).toHaveBeenCalled()
         expect(ary.getPatch()).toHaveContents patch
 
@@ -247,10 +247,10 @@ describe 'observable', ->
         ary.unshift 0
 
         patch = [
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, [4]
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, 4
         ]
 
-        expect(ary).toHaveContents [0, 1, 2, 3]
+        expect(ary.toArray()).toHaveContents [0, 1, 2, 3]
         expect(callback).toHaveBeenCalled()
         expect(ary.getPatch()).toHaveContents patch
 
@@ -264,7 +264,7 @@ describe 'observable', ->
           Leaf.ArrayDiffPatch.createPatch 'removeAt', 2
         ]
 
-        expect(ary).toHaveContents [1, 2]
+        expect(ary.toArray()).toHaveContents [1, 2]
         expect(callback).toHaveBeenCalled()
         expect(ary.getPatch()).toHaveContents patch
 
@@ -278,7 +278,7 @@ describe 'observable', ->
           Leaf.ArrayDiffPatch.createPatch 'removeAt', 0
         ]
 
-        expect(ary).toHaveContents [2, 3]
+        expect(ary.toArray()).toHaveContents [2, 3]
         expect(callback).toHaveBeenCalled()
         expect(ary.getPatch()).toHaveContents patch
 
@@ -290,11 +290,11 @@ describe 'observable', ->
         ary.sort()
 
         patch = [
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, [-1]
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, -1
           Leaf.ArrayDiffPatch.createPatch 'removeAt', 4
         ]
 
-        expect(ary).toHaveContents [-1, 1, 2, 3]
+        expect(ary.toArray()).toHaveContents [-1, 1, 2, 3]
         expect(callback).toHaveBeenCalled()
         expect(ary.getPatch()).toHaveContents patch
 
@@ -307,11 +307,11 @@ describe 'observable', ->
         patch = [
           Leaf.ArrayDiffPatch.createPatch 'removeAt', 0
           Leaf.ArrayDiffPatch.createPatch 'removeAt', 0
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, [2]
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 2, [1]
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, 2
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 2, 1
         ]
 
-        expect(ary).toHaveContents [3, 2, 1]
+        expect(ary.toArray()).toHaveContents [3, 2, 1]
         expect(callback).toHaveBeenCalled()
         expect(ary.getPatch()).toHaveContents patch
 
@@ -323,11 +323,11 @@ describe 'observable', ->
 
         patch = [
           Leaf.ArrayDiffPatch.createPatch 'removeAt', 1
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, [8]
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 2, [9]
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, 8
+          Leaf.ArrayDiffPatch.createPatch 'insertAt', 2, 9
         ]
 
-        expect(ary).toHaveContents [1, 8, 9, 3]
+        expect(ary.toArray()).toHaveContents [1, 8, 9, 3]
         expect(callback).toHaveBeenCalled()
         expect(ary.getPatch()).toHaveContents patch
 
