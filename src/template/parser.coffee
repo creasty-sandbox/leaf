@@ -1,44 +1,66 @@
 
 #  Custom tags
 #-----------------------------------------------
-Leaf.Template.customTags['if'] =
+Leaf.Template.registerTag 'if',
   reset: (node, parent) ->
-    if node.type == T_TAG_OPEN
-      if node.name != 'elseif' && node.name != 'else'
-        parent.context.if = null
-    else if node.type == T_TAG_CLOSE
-      if node.name != 'if' && node.name != 'elseif' && node.name != 'else'
-        parent.context.if = null
-    else
-      parent.context.if = null
-  parse: (node, parent) ->
-    if node.type == T_TAG_OPEN
-      throw new Error 'Parse error' unless node.localeBindings.condition
-      node.condition = node.localeBindings.condition
-      node.localeBindings.condition = undefined
-      parent.context.if = node
+    parent.context.if = null
 
-Leaf.Template.customTags['else'] =
-  parse: (node, parent) ->
-    if parent.context.if
-      n = parent.context.if
-      node.condition = "!(#{n.condition})"
-      parent.context.if = null
-    else if node.type == T_TAG_OPEN
-      throw new Error 'Parse error'
+  openOther: (node, parent) ->
+    return if node.name == 'elseif' || node.name == 'else'
+    parent.context.if = null
 
-Leaf.Template.customTags['elseif'] =
-  parse: (node, parent) ->
-    if parent.context.if
-      throw new Error 'Parse error' unless node.localeBindings.condition
-      node.condition = node.localeBindings.condition
-      node.localeBindings.condition = undefined
+  closeOther: (node, parent) ->
+    return if node.name == 'elseif' || node.name == 'else'
+    parent.context.if = null
 
-      n = parent.context.if
-      node.condition = "!(#{n.condition}) && (#{node.condition})"
-      parent.context.if = node
-    else if node.type == T_TAG_OPEN
-      throw new Error 'Parse error'
+  open: (node, parent) ->
+    unless node.localeBindings.condition
+      throw new Error 'Parse error: if should have $condition'
+
+    node.condition = node.localeBindings.condition
+    node.localeBindings.condition = undefined
+    node.scope.condition = undefined
+    parent.context.if = node
+
+Leaf.Template.registerTag 'else',
+  open: (node, parent) ->
+    unless parent.context.if
+      throw new Error 'Context error: cannot resolve else'
+
+    n = parent.context.if
+    node.condition = "!(#{n.condition})"
+    parent.context.if = null
+
+Leaf.Template.registerTag 'elseif',
+  open: (node, parent) ->
+    unless parent.context.if
+      throw new Error 'Context error: cannot resolve elseif'
+
+    unless node.localeBindings.condition
+      throw new Error 'Parse error: if should have $condition'
+
+    node.condition = node.localeBindings.condition
+    node.localeBindings.condition = undefined
+    node.scope.condition = undefined
+
+    n = parent.context.if
+    node.condition = "!(#{n.condition}) && (#{node.condition})"
+    parent.context.if = node
+
+
+Leaf.Template.registerTag 'each',
+  open: (node, parent) ->
+    node.iterators = []
+
+    for key, val of node.localeBindings when val.match /\w+\[\]/
+      ik = "#{key}Index"
+      val = val.replace '[]', "[#{ik}]"
+      node.localeBindings[key] = undefined
+      node.scope[key] = val
+      node.iterators.push ik
+
+    unless node.iterators.length
+      throw new Error 'Parse error: each should have one or more iterators'
 
 
 #  Attribute patterns
@@ -163,22 +185,30 @@ class Leaf.Template.Parser
 
   parseKeypath: (path, parent) ->
 
-  parseCustomTag: (node, parent) ->
-    ctags = Leaf.Template.customTags
-    ctags[node.name]?.parse node, parent
+  customTagOpen: (node, parent) ->
+    opens = Leaf.Template.customTags.opens
+    opens[node.name]? node, parent
 
-  resetCustomTags: (node, parent) ->
-    ctags = Leaf.Template.customTags
+  customTagClose: (node, parent) ->
+    closes = Leaf.Template.customTags.closes
+    closes[node.name]? node, parent
 
-    for name, ctag of ctags
-      ctag.reset? node, parent
-      ctag.other? node, parent unless name == node.name
+  customTagReset: (node, parent) ->
+    r node, parent for r in Leaf.Template.customTags.resets
+
+  customTagOpenOther: (node, parent) ->
+    r.fn node, parent for r in Leaf.Template.customTags.openOthers when r.tag != node.tag
+
+  customTagCloseOther: (node, parent) ->
+    r.fn node, parent for r in Leaf.Template.customTags.closeOthers when r.tag != node.tag
 
   parseTagAttrs: (node, attrs, tag) ->
     node.attrs = {}
     node.attrBindings = {}
     node.localeBindings = {}
     node.actions = {}
+
+    return unless attrs
 
     attrs = " #{attrs} "
 
@@ -210,10 +240,7 @@ class Leaf.Template.Parser
     node.contents = []
     node.context = {}
     node.name = token.name
-
-    @parseTagAttrs node, token.attrPart, token.name unless token.attrPart
-
-    @parseCustomTag node, parent
+    @parseTagAttrs node, token.attrPart, token.name
     @createNewScope node, parent
     node
 
@@ -233,25 +260,31 @@ class Leaf.Template.Parser
   parseNode: (parents, token) ->
     p = parents[0]
 
-    @resetCustomTags token, p
-
     switch token.type
       when T_TEXT
+        @customTagReset token, p
         node = @createTextNode token
         p.contents.push node
       when T_INTERPOLATION
+        @customTagReset token, p
         node = @createInterpolationNode token, p
         p.contents.push node
       when T_TAG_SELF
         node = @createTagNode token, p
+        @customTagOpenOther token, p
+        @customTagOpen node, p
         p.contents.push node
       when T_TAG_OPEN
         node = @createTagNode token, p
+        @customTagOpenOther token, p
+        @customTagOpen node, p
         p.contents.push node
         parents.unshift node
       when T_TAG_CLOSE
         if token.name == p.name
-          parents.shift()
+          _p = parents.shift()
+          @customTagCloseOther token, p, _p
+          @customTagClose token, p, _p
         else
           throw new Error 'Parse error'
 
