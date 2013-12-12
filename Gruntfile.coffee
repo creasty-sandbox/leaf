@@ -48,6 +48,7 @@ module.exports = (grunt) ->
       'template/template.coffee'
       'template/tokenizer.coffee'
       'template/parser.coffee'
+      'template/custom_tags.coffee'
     ].map fn
     core: [
       'core/object.coffee'

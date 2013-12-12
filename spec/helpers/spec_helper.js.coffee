@@ -16,9 +16,9 @@ beforeEach ->
   toHaveContents = (a, b) ->
     if a == b
       true
-    else if b && b.constructor == Array
+    else if a && b && b.constructor == Array
       a.length == b.length && b.every (_, i) -> toHaveContents a[i], b[i]
-    else if b && b.constructor == Object
+    else if a && b && b.constructor == Object
       return false unless Object.keys(a).length == Object.keys(b).length
       for key, val of b
         if !a[key]? && !toHaveContents a[key], val

@@ -1,68 +1,4 @@
 
-#  Custom tags
-#-----------------------------------------------
-Leaf.Template.registerTag 'if',
-  reset: (node, parent) ->
-    parent.context.if = null
-
-  openOther: (node, parent) ->
-    return if node.name == 'elseif' || node.name == 'else'
-    parent.context.if = null
-
-  closeOther: (node, parent) ->
-    return if node.name == 'elseif' || node.name == 'else'
-    parent.context.if = null
-
-  open: (node, parent) ->
-    unless node.localeBindings.condition
-      throw new Error 'Parse error: if should have $condition'
-
-    node.condition = node.localeBindings.condition
-    node.localeBindings.condition = undefined
-    node.scope.condition = undefined
-    parent.context.if = node
-
-Leaf.Template.registerTag 'else',
-  open: (node, parent) ->
-    unless parent.context.if
-      throw new Error 'Context error: cannot resolve else'
-
-    n = parent.context.if
-    node.condition = "!(#{n.condition})"
-    parent.context.if = null
-
-Leaf.Template.registerTag 'elseif',
-  open: (node, parent) ->
-    unless parent.context.if
-      throw new Error 'Context error: cannot resolve elseif'
-
-    unless node.localeBindings.condition
-      throw new Error 'Parse error: if should have $condition'
-
-    node.condition = node.localeBindings.condition
-    node.localeBindings.condition = undefined
-    node.scope.condition = undefined
-
-    n = parent.context.if
-    node.condition = "!(#{n.condition}) && (#{node.condition})"
-    parent.context.if = node
-
-
-Leaf.Template.registerTag 'each',
-  open: (node, parent) ->
-    node.iterators = []
-
-    for key, val of node.localeBindings when val.match /\w+\[\]/
-      ik = "#{key}Index"
-      val = val.replace '[]', "[#{ik}]"
-      node.localeBindings[key] = undefined
-      node.scope[key] = val
-      node.iterators.push ik
-
-    unless node.iterators.length
-      throw new Error 'Parse error: each should have one or more iterators'
-
-
 #  Attribute patterns
 #-----------------------------------------------
 ATTR_REGEXP = ///
@@ -162,13 +98,14 @@ ATTR_PRESERVED =
 class Leaf.Template.Parser
 
   constructor: (@buffer) ->
-    return unless @buffer
+    unless @buffer
+      throw new Error 'Instansiation without buffer'
 
     formatter = new Leaf.Formatter.HTML @buffer
     formatter.minify()
     @buffer = formatter.getHtml()
 
-    @t = new Leaf.Template.Tokenizer @buffer
+    @tokenizer = new Leaf.Template.Tokenizer @buffer
 
     @bindings = {}
 
@@ -179,11 +116,6 @@ class Leaf.Template.Parser
       context: {}
 
     @parents = [@root]
-
-  createNewScope: (node, parent) ->
-    node.scope = _.merge _.clone(node.localeBindings), parent.scope
-
-  parseKeypath: (path, parent) ->
 
   customTagOpen: (node, parent) ->
     opens = Leaf.Template.customTags.opens
@@ -202,7 +134,7 @@ class Leaf.Template.Parser
   customTagCloseOther: (node, parent) ->
     r.fn node, parent for r in Leaf.Template.customTags.closeOthers when r.tag != node.tag
 
-  parseTagAttrs: (node, attrs, tag) ->
+  parseTagAttrs: (node, attrs) ->
     node.attrs = {}
     node.attrBindings = {}
     node.localeBindings = {}
@@ -221,7 +153,7 @@ class Leaf.Template.Parser
 
       if '$' == binding
         globalAttrs = ATTR_PRESERVED['*']
-        tagSpecificAttrs = ATTR_PRESERVED[tag]
+        tagSpecificAttrs = ATTR_PRESERVED[node.name]
 
         if key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
           node.attrBindings[key] = val
@@ -234,13 +166,16 @@ class Leaf.Template.Parser
 
     ATTR_REGEXP.lastIndex = 0
 
+  createNewScope: (node, parent) ->
+    node.scope = _.merge _.clone(node.localeBindings), parent.scope
+
   createTagNode: (token, parent) ->
     node = {}
     node.type = token.type
     node.contents = []
     node.context = {}
     node.name = token.name
-    @parseTagAttrs node, token.attrPart, token.name
+    @parseTagAttrs node, token.attrPart
     @createNewScope node, parent
     node
 
@@ -289,14 +224,14 @@ class Leaf.Template.Parser
           throw new Error 'Parse error'
 
   parseTree: (parents) ->
-    token = @t.getToken()
+    token = @tokenizer.getToken()
     return if T_NONE == token.type
     @parseNode parents, token
     @parseTree parents
 
   getTree: ->
     return @parsedTree if @parsedTree
-    @parseTree @parents, @states
+    @parseTree @parents
     @parsedTree = @root.contents
 
   clone: ->
