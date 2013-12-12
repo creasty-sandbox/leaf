@@ -250,7 +250,7 @@ describe 'parser', ->
 
       result = [
         {
-          type: 1
+          type: T_TAG_OPEN
           context: { 'if': null }
           name: 'section'
           attrs: {}
@@ -260,7 +260,7 @@ describe 'parser', ->
           scope: {}
           contents: [
             {
-              type: 1
+              type: T_TAG_OPEN
               contents: []
               context: { 'if': null }
               name: 'div'
@@ -283,7 +283,7 @@ describe 'parser', ->
 
       result = [
         {
-          type: 1
+          type: T_TAG_OPEN
           context: { 'if': null }
           name: 'div'
           attrs: {}
@@ -293,7 +293,7 @@ describe 'parser', ->
           scope: { 'var1': 'foo.var1' }
           contents: [
             {
-              type: 1
+              type: T_TAG_OPEN
               contents: []
               context: { 'if': null }
               name: 'div'

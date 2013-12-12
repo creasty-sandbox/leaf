@@ -1,12 +1,12 @@
 
 #  Token types
 #-----------------------------------------------
-T_NONE = 0
-T_TAG_OPEN = 1
-T_TAG_CLOSE = 2
-T_TAG_SELF = 3
-T_TEXT = 4
-T_INTERPOLATION = 5
+T_NONE          = 'T_NONE'
+T_TAG_OPEN      = 'T_TAG_OPEN'
+T_TAG_CLOSE     = 'T_TAG_CLOSE'
+T_TAG_SELF      = 'T_TAG_SELF'
+T_TEXT          = 'T_TEXT'
+T_INTERPOLATION = 'T_INTERPOLATION'
 
 
 #  Patterns

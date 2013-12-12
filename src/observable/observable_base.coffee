@@ -79,6 +79,7 @@ class Leaf.ObservableBase extends Leaf.Object
     return { obj: @ } unless keypath?
 
     keypath += ''
+    keypath = keypath.replace /\[(\d+)\]/g, '.$1'
     path = keypath.split '.'
     len = path.length
 

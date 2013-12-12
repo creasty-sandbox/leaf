@@ -134,6 +134,33 @@ class Leaf.Template.Parser
   customTagCloseOther: (node, parent) ->
     r.fn node, parent for r in Leaf.Template.customTags.closeOthers when r.tag != node.tag
 
+  parseExpression: (expr) ->
+    return [] unless expr
+
+    buf = ''
+    i = 0
+    len = expr.length
+
+    # Strip string tokens
+    while i < len
+      c = expr[i]
+
+      if '\'' == c || '"' == c
+        idx = i + 1
+        true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
+        i = idx
+        buf += c + '#'
+        break if i == -1 # error: unbalanced quote
+      else
+        buf += c
+        i++
+
+    expr = buf
+      .replace(/#.+#("|')$/, '')     # remove error fragment
+      .replace(/({|,)\s*\w+:/g, '#') # omit hash keys
+
+    expr.match(/(\b[a-z][\w]*(?:\.\w+|\[\w+\])*)/gi) ? []
+
   parseTagAttrs: (node, attrs) ->
     node.attrs = {}
     node.attrBindings = {}
