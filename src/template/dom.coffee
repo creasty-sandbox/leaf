@@ -44,19 +44,26 @@ class Leaf.Template.DOM
     $text.appendTo $parent
 
   createInterpolationNode: (node, $parent) ->
-    $marker = @createMarker 'interpolation'
-    $marker.appendTo $parent
-
-    $el = null
     binder = @bind node
-    binder (result) ->
-      if $el
-        $el.remove()
-        $el = null
 
-      result = _.escape result if node.escape
-      $el = $ $.parseHTML result
-      $el.insertAfter $marker
+    if node.escape
+      el = doc.createTextNode ''
+      $el = $el
+      $el.appendTo $parent
+
+      binder (result) -> el.nodeValue = result
+    else
+      $marker = @createMarker 'interpolation'
+      $marker.appendTo $parent
+      $el = null
+
+      binder (result) ->
+        if $el
+          $el.remove()
+          $el = null
+
+        $el = $ $.parseHTML result
+        $el.insertAfter $marker
 
   createNode: ($parent, node) ->
     if _.isArray node
