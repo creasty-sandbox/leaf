@@ -110,10 +110,10 @@ JS_GLOBAL_VARIABLES = ///
   )$
 ///
 
-JS_HASH_KEY_REGEXP         = /({|,)\s*\w+:/g
-JS_BRACKET_ACCESSOR_REGEXP = /[\[\]\(\)]/g
-JS_DOT_ACCESSOR_REGEXP     = /\.[a-z]\w*(?:\.\w+)*\b/g
-JS_SINGLE_VAR_REGEXP       = /\b[a-z]\w*/g
+JS_HASH_KEY_REGEXP     = /({|,)\s*\w+:/g
+JS_SPERATOR_REGEXP     = /[\[\]\(\)]/g
+JS_DOT_ACCESSOR_REGEXP = /\.[a-z]\w*(?:\.\w+)*\b/g
+JS_SINGLE_VAR_REGEXP   = /\b[a-z]\w*/g
 
 
 #  Parser
@@ -243,7 +243,8 @@ class Leaf.Template.Parser
     node = {}
     node.type = token.type
     node.escape = token.textBinding.escape
-    @parseExpression node, token.textBinding.val
+    expr = _.unescape token.textBinding.val
+    @parseExpression node, expr
     node
 
   parseNode: (parents, token) ->

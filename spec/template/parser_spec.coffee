@@ -61,7 +61,7 @@ describe 'parser', ->
       psr = new Leaf.Template.Parser 'foo'
 
       node = {}
-      expr = 'foo.bar[xxx.yy].baz'
+      expr = 'foo.bar[xx.yy].baz'
 
       psr.parseExpression node, expr
 
@@ -71,7 +71,7 @@ describe 'parser', ->
       psr = new Leaf.Template.Parser 'foo'
 
       node = {}
-      expr = 'foo.bar(xxx.yy).baz'
+      expr = 'foo.bar(xx.yy).baz'
 
       psr.parseExpression node, expr
 

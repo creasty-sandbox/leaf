@@ -6,19 +6,29 @@ class Leaf.Template.DOM
   constructor: (@tree, @obj) ->
     @$parent = $ doc.createElement 'body'
 
-  bind: ($el, node) ->
+  bind: (node) ->
     value = new Function node.vars..., "return (#{node.expr})"
-    getArgs = => node.vars (v) => @obj._get v
+
+    evaluate = =>
+      args = node.vars.map (v) => @obj._get v
+      value.apply null, args
+
     binder = (routine) =>
-      args = getArgs()
       @obj._beginTrack 'getter' unless value._dependents
-      result = value.apply null, args
+
+      result = evaluate()
 
       if (dependents = @obj._endTrack 'getter')
         value._dependents = dependents
-        @obj.observe d, binder for d in dependents
+        @obj.observe d, (-> routine evaluate()) for d in dependents
 
       routine result
+
+  createMarker: (name = '') ->
+    if Leaf.develop
+      $ doc.createComment 'leaf: ' + name
+    else
+      $ doc.createTextNode ''
 
   createElement: (node, $parent) ->
     $el = $ doc.createElement node.name
@@ -27,16 +37,26 @@ class Leaf.Template.DOM
     for event, handler of node.actions
       $el.on event, (e) -> $el.trigger handler, [e]
 
-    $el
+    $el.appendTo $parent
 
-  createTextNode: (node, parent) ->
-    $ doc.createTextNode node.buffer
+  createTextNode: (node, $parent) ->
+    $text = $ doc.createTextNode node.buffer
+    $text.appendTo $parent
 
-  createInterpolationNode: (node, parent) ->
-    $el = $ doc.createTextNode ''
-    binder = @bind $el, node
-    binder (result) -> el.nodeValue result
-    $el
+  createInterpolationNode: (node, $parent) ->
+    $marker = @createMarker 'interpolation'
+    $marker.appendTo $parent
+
+    $el = null
+    binder = @bind node
+    binder (result) ->
+      if $el
+        $el.remove()
+        $el = null
+
+      result = _.escape result if node.escape
+      $el = $ $.parseHTML result
+      $el.insertAfter $marker
 
   createNode: ($parent, node) ->
     if _.isArray node
@@ -47,16 +67,12 @@ class Leaf.Template.DOM
       when T_TAG_OPEN
         $el = @createElement node, $parent
         @createNode $el, node.contents
-        $parent.append $el
       when T_TAG_SELF
-        $el = @createElement node, $parent
-        $parent.append $el
+        @createElement node, $parent
       when T_TEXT
-        $text = @createTextNode node, $parent
-        $parent.append $text
+        @createTextNode node, $parent
       when T_INTERPOLATION
-        $interp = @createInterpolationNode node, $parent
-        $parent.append $interp
+        @createInterpolationNode node, $parent
 
   getDOM: ->
     @createNode @$parent, @tree
