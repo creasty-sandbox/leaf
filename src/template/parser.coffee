@@ -93,6 +93,29 @@ ATTR_PRESERVED =
   'video': /^(src|crossorigin|poster|preload|autoplay|mediagroup|loop|muted|controls|width|height)$/
 
 
+#  JavaScript
+#-----------------------------------------------
+JS_RESERVED_WORDS = ///
+  ^(
+    break|case|catch|continue|debugger|default|delete|do|else|finally|for|function|if
+    |in|instanceof|new|return|switch|this|throw|try|typeof|var|void|while|with|class|enum
+    |export|extends|import|super|implements|interface|let|package|private|protected|public
+    |static|yield|null|true|false
+  )$
+///
+
+JS_GLOBAL_VARIABLES = ///
+  ^(
+    window|document|$|_
+  )$
+///
+
+JS_HASH_KEY_REGEXP         = /({|,)\s*\w+:/g
+JS_BRACKET_ACCESSOR_REGEXP = /[\[\]\(\)]/g
+JS_DOT_ACCESSOR_REGEXP     = /\.[a-z]\w*(?:\.\w+)*\b/g
+JS_SINGLE_VAR_REGEXP       = /\b[a-z]\w*/g
+
+
 #  Parser
 #-----------------------------------------------
 class Leaf.Template.Parser
@@ -134,32 +157,36 @@ class Leaf.Template.Parser
   customTagCloseOther: (node, parent) ->
     r.fn node, parent for r in Leaf.Template.customTags.closeOthers when r.tag != node.tag
 
-  parseExpression: (expr) ->
-    return [] unless expr
+  parseExpression: (node, expr) ->
+    node.expr = expr
+    node.vars = []
+
+    return unless expr
 
     buf = ''
     i = 0
     len = expr.length
 
-    # Strip string tokens
+    # strip string and regexp literal
     while i < len
-      c = expr[i]
+      buf += (c = expr[i])
 
-      if '\'' == c || '"' == c
+      if '\'' == c || '"' == c || '/' == c
         idx = i + 1
         true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
-        i = idx
-        buf += c + '#'
-        break if i == -1 # error: unbalanced quote
+        return if (i = idx) == -1 # unbalance error
       else
-        buf += c
         i++
 
     expr = buf
-      .replace(/#.+#("|')$/, '')     # remove error fragment
-      .replace(/({|,)\s*\w+:/g, '#') # omit hash keys
+      .replace(JS_HASH_KEY_REGEXP, '#')     # hash keys
+      .replace(JS_SPERATOR_REGEXP, '#')     # force sperate around []()
+      .replace(JS_DOT_ACCESSOR_REGEXP, '#') # property accessors with dot
 
-    expr.match(/(\b[a-z][\w]*(?:\.\w+|\[\w+\])*)/gi) ? []
+    return unless (m = expr.match JS_SINGLE_VAR_REGEXP)
+
+    node.vars = m.filter (arg) ->
+      !arg.match(JS_RESERVED_WORDS) && !arg.match(JS_GLOBAL_VARIABLES)
 
   parseTagAttrs: (node, attrs) ->
     node.attrs = {}
@@ -215,8 +242,8 @@ class Leaf.Template.Parser
   createInterpolationNode: (token, parent) ->
     node = {}
     node.type = token.type
-    node.val = token.textBinding.val
     node.escape = token.textBinding.escape
+    @parseExpression node, token.textBinding.val
     node
 
   parseNode: (parents, token) ->

@@ -34,14 +34,14 @@ class Leaf.ObservableBase extends Leaf.Object
     tracked = @_tracked[name]
     @_tracked[name] = []
     @_tracking[name] = false
-    tracked
+    _.unique tracked
 
   beginBatch: ->
     @_beginTrack 'setter'
 
   endBatch: ->
     if (tracked = @_endTrack 'setter')
-      _(tracked).unique().forEach (prop) =>
+      _(tracked).forEach (prop) =>
         @_update prop
 
   _getComputed: (prop) ->
@@ -94,10 +94,22 @@ class Leaf.ObservableBase extends Leaf.Object
     else
       prop = path.pop()
       ref = @
-      ref = ref.get?(p) ? ref[p] while ref && (p = path.shift())
-      { obj: ref, prop }
+      exist = obj: @, keypath: []
+
+      while ref && (p = path.shift())
+        if ref.isObservable
+          exist.obj = ref
+          exist.keypath
+
+        exist.keypath.push p
+        ref = ref.get?(p) ? ref[p]
+
+      exist.keypath.pop()
+
+      { obj: ref, prop, exist }
 
   _set: (prop, val, options = {}) ->
+    return unless prop
     options = _.defaults { notify: true }, options
 
     if _.isFunction @_data[prop]
@@ -118,7 +130,6 @@ class Leaf.ObservableBase extends Leaf.Object
     { keypath, val, options, pairs } = Leaf.Utils.polymorphic
       'oo?':  'pairs options'
       's.o?': 'keypath val options'
-      '.':    'val'
     , arguments
 
     if pairs
