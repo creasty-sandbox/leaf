@@ -54,6 +54,15 @@ describe 'parser', ->
 
       expect(node.vars.length).toBe 0
 
+    it 'should ignore variables starting with underscore', ->
+      psr = new Leaf.Template.Parser 'foo'
+
+      expr = '_tmp_var'
+
+      node = psr.parseExpression expr
+
+      expect(node.vars.length).toBe 0
+
     it 'should handle property accessor with brackets', ->
       psr = new Leaf.Template.Parser 'foo'
 

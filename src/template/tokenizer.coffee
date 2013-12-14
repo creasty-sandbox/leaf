@@ -53,7 +53,7 @@ class Leaf.Template.Tokenizer
     t.buffer = m[0]
     t.index = m.index
     t.length = t.buffer.length
-    t.name = m[2]
+    t.name = m[2].toLowerCase()
     t.type =
       if m[1]
         T_TAG_CLOSE

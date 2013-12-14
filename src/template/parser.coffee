@@ -110,10 +110,22 @@ JS_GLOBAL_VARIABLES = ///
   )$
 ///
 
-JS_HASH_KEY_REGEXP     = /({|,)\s*\w+:/g
-JS_SPERATOR_REGEXP     = /[\[\]\(\)]/g
-JS_DOT_ACCESSOR_REGEXP = /\.[a-z]\w*(?:\.\w+)*\b/g
-JS_SINGLE_VAR_REGEXP   = /\b[a-z]\w*/g
+JS_NON_VARIABLE_REGEXP = ///
+  (?: # hash key literals
+    ({|,)
+    \s*
+    \w+:
+  )
+  |
+  (?: # property access by dot notations
+    \.
+    [a-z]\w*
+    (?:\.\w+)*
+    \b
+  )
+///g
+
+JS_VARIABLE_REGEXP = /\b[a-z]\w*/g
 
 
 #  Parser
@@ -186,15 +198,14 @@ class Leaf.Template.Parser
       else
         i++
 
-    expr = buf
-      .replace(JS_HASH_KEY_REGEXP, '#')     # hash keys
-      .replace(JS_SPERATOR_REGEXP, '#')     # force sperate around []()
-      .replace(JS_DOT_ACCESSOR_REGEXP, '#') # property accessors with dot
+    expr = buf.replace JS_NON_VARIABLE_REGEXP, '#'
 
-    return node unless (m = expr.match JS_SINGLE_VAR_REGEXP)
+    return node unless (m = expr.match JS_VARIABLE_REGEXP)
 
     node.vars = m.filter (arg) ->
       !arg.match(JS_RESERVED_WORDS) && !arg.match(JS_GLOBAL_VARIABLES)
+
+    node.vars = _.uniq node.vars
 
     node
 
