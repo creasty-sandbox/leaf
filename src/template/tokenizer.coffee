@@ -73,7 +73,7 @@ class Leaf.Template.Tokenizer
     t = {}
     t.type = T_INTERPOLATION
     t.buffer = m[2] # since m[1] is a hack
-    t.index = m.index - m[1].length
+    t.index = m.index + m[1].length
     t.length = t.buffer.length
 
     t.textBinding =

@@ -2,6 +2,8 @@
 #  if ... elseif ... else
 #-----------------------------------------------
 Leaf.Template.registerTag 'if',
+  structure: true
+
   reset: (node, parent) ->
     parent.context.if = null
 
@@ -17,21 +19,30 @@ Leaf.Template.registerTag 'if',
     unless node.localeBindings.condition
       throw new Error 'Parse error: if should have $condition'
 
-    node.condition = node.localeBindings.condition
-    node.localeBindings.condition = undefined
-    node.scope.condition = undefined
+    cond = node.localeBindings.condition
+    stack = ["(#{cond.expr})"]
+
+    node.condition =
+      stack: stack
+      expr: stack.join '&&'
+      vars: cond.vars
+
     parent.context.if = node
 
-Leaf.Template.registerTag 'else',
-  open: (node, parent) ->
-    unless parent.context.if
-      throw new Error 'Context error: cannot resolve else'
+  create: (node, $marker, $parent, obj) ->
+    psr = new Leaf.Template.DOM node.contents, obj
+    $el = psr.getDOM()
+    binder = psr.bind node.condition
 
-    n = parent.context.if
-    node.condition = "!(#{n.condition})"
-    parent.context.if = null
+    binder (result) ->
+      if !!result
+        $el.insertAfter $marker
+      else
+        $el.detach()
 
 Leaf.Template.registerTag 'elseif',
+  structure: true
+
   open: (node, parent) ->
     unless parent.context.if
       throw new Error 'Context error: cannot resolve elseif'
@@ -39,13 +50,61 @@ Leaf.Template.registerTag 'elseif',
     unless node.localeBindings.condition
       throw new Error 'Parse error: if should have $condition'
 
-    node.condition = node.localeBindings.condition
-    node.localeBindings.condition = undefined
-    node.scope.condition = undefined
+    cond = node.localeBindings.condition
 
     n = parent.context.if
-    node.condition = "!(#{n.condition}) && (#{node.condition})"
+    stack = n.condition.stack
+    prev = stack.pop()
+    stack.push '!' + prev
+    stack.push "(#{cond.expr})"
+
+    node.condition =
+      stack: stack
+      expr: stack.join '&&'
+      vars: _.union n.condition.vars, cond.vars
+
     parent.context.if = node
+
+  create: (node, $marker, $parent, obj) ->
+    psr = new Leaf.Template.DOM node.contents, obj
+    $el = psr.getDOM()
+    binder = psr.bind node.condition
+
+    binder (result) ->
+      if !!result
+        $el.insertAfter $marker
+      else
+        $el.detach()
+
+Leaf.Template.registerTag 'else',
+  structure: true
+
+  open: (node, parent) ->
+    unless parent.context.if
+      throw new Error 'Context error: cannot resolve else'
+
+    n = parent.context.if
+    stack = n.condition.stack
+    prev = stack.pop()
+    stack.push '!' + prev
+
+    node.condition =
+      stack: stack
+      expr: stack.join '&&'
+      vars: n.condition.vars
+
+    parent.context.if = null
+
+  create: (node, $marker, $parent, obj) ->
+    psr = new Leaf.Template.DOM node.contents, obj
+    $el = psr.getDOM()
+    binder = psr.bind node.condition
+
+    binder (result) ->
+      if !!result
+        $el.insertAfter $marker
+      else
+        $el.detach()
 
 
 #  each

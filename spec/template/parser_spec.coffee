@@ -30,97 +30,87 @@ describe 'parser', ->
     it 'should return top level variables', ->
       psr = new Leaf.Template.Parser 'foo'
 
-      node = {}
       expr = 'foo.bar.baz'
 
-      psr.parseExpression node, expr
+      node = psr.parseExpression expr
 
       expect(node.vars).toHaveContents ['foo']
 
     it 'should ignore JavaScript\'s keywords and reserved words', ->
       psr = new Leaf.Template.Parser 'foo'
 
-      node = {}
       expr = 'window.location.href + document.title'
 
-      psr.parseExpression node, expr
+      node = psr.parseExpression expr
 
       expect(node.vars.length).toBe 0
 
     it 'should ignore variables starting with a capital letter', ->
       psr = new Leaf.Template.Parser 'foo'
 
-      node = {}
       expr = 'new Date() + OFFSET'
 
-      psr.parseExpression node, expr
+      node = psr.parseExpression expr
 
       expect(node.vars.length).toBe 0
 
     it 'should handle property accessor with brackets', ->
       psr = new Leaf.Template.Parser 'foo'
 
-      node = {}
       expr = 'foo.bar[xx.yy].baz'
 
-      psr.parseExpression node, expr
+      node = psr.parseExpression expr
 
       expect(node.vars).toHaveContents ['foo', 'xx']
 
     it 'should handle function call', ->
       psr = new Leaf.Template.Parser 'foo'
 
-      node = {}
       expr = 'foo.bar(xx.yy).baz'
 
-      psr.parseExpression node, expr
+      node = psr.parseExpression expr
 
       expect(node.vars).toHaveContents ['foo', 'xx']
 
     it 'should omit hash key literals', ->
       psr = new Leaf.Template.Parser 'foo'
 
-      node = {}
       expr = '{ key1: val1, key2: val2.val21 }'
 
-      psr.parseExpression node, expr
+      node = psr.parseExpression expr
 
       expect(node.vars).toHaveContents ['val1', 'val2']
 
     it 'should omit string literals', ->
       psr = new Leaf.Template.Parser 'foo'
 
-      n1 = {}
       e1 = 'foo + "this string"'
 
-      psr.parseExpression n1, e1
+      n1 = psr.parseExpression e1
 
       expect(n1.vars).toHaveContents ['foo']
 
-      n1 = {}
-      e1 = "foo + 'this string'"
+      e2 = "foo + 'this string'"
 
-      psr.parseExpression n1, e1
+      n2 = psr.parseExpression e2
 
-      expect(n1.vars).toHaveContents ['foo']
+      expect(n2.vars).toHaveContents ['foo']
 
     it 'should omit string literals with escaped quotes', ->
       psr = new Leaf.Template.Parser 'foo'
 
-      node = {}
       expr = 'foo + "this \\"st\'ring" + bar + \'this "is \\\' string\''
 
-      psr.parseExpression node, expr
+      node = psr.parseExpression expr
 
       expect(node.vars).toHaveContents ['foo', 'bar']
 
     it 'should omit regexp literals', ->
       psr = new Leaf.Template.Parser 'foo'
 
-      node = {}
       expr = '/\\d+\\/\\d+/.exec(foo)'
 
-      psr.parseExpression node, expr
+      node = psr.parseExpression expr
 
       expect(node.vars).toHaveContents ['foo']
 
@@ -144,9 +134,12 @@ describe 'parser', ->
 
       token =
         attrs: { 'id': 'foo' }
-        attrBindings: { 'class': 'bar' }
-        localeBindings: { 'my': 'baz' }
-        actions: { 'click': 'alert' }
+        attrBindings:
+          'class': { expr: 'bar', vars: ['bar'] }
+        localeBindings:
+          'my': { expr: 'baz', vars: ['baz'] }
+        actions:
+          'click': 'alert'
 
       expect(node).toHaveContents token
 
@@ -157,13 +150,13 @@ describe 'parser', ->
       psr.parseTagAttrs n1, '$href="link"'
 
       expect(n1.attrBindings).toBeDefined()
-      expect(n1.attrBindings.href).toBe 'link'
+      expect(n1.attrBindings.href).toBeDefined()
 
       n2 = name: 'div'
       psr.parseTagAttrs n2, '$href="link"'
 
       expect(n2.localeBindings).toBeDefined()
-      expect(n2.localeBindings.href).toBe 'link'
+      expect(n2.localeBindings.href).toBeDefined()
 
 
   describe '#parseNode(parents, token)', ->
@@ -202,9 +195,10 @@ describe 'parser', ->
 
       node =
         type: T_INTERPOLATION
-        expr: 'interpolation'
+        value:
+          expr: 'interpolation'
+          vars: ['interpolation']
         escape: true
-        vars: ['interpolation']
 
       expect(psr.root.contents.length).toBe 1
       expect(psr.root.contents[0]).toHaveContents node
@@ -364,7 +358,7 @@ describe 'parser', ->
             {
               type: T_TAG_OPEN
               contents: []
-              context: { 'if': null }
+              context: {}
               name: 'div'
               attrs: {}
               attrBindings: {}
@@ -390,20 +384,25 @@ describe 'parser', ->
           name: 'div'
           attrs: {}
           attrBindings: {}
-          localeBindings: { 'var1': 'foo.var1' }
+          localeBindings:
+            'var1': { expr: 'foo.var1', vars: ['foo'] }
           actions: {}
-          scope: { 'var1': 'foo.var1' }
+          scope:
+            'var1': { expr: 'foo.var1', vars: ['foo'] }
           contents: [
             {
               type: T_TAG_OPEN
               contents: []
-              context: { 'if': null }
+              context: {}
               name: 'div'
               attrs: {}
               attrBindings: {}
-              localeBindings: { 'var2': 'foo.var2' }
+              localeBindings:
+                'var2': { expr: 'foo.var2', vars: ['foo'] }
               actions: {}
-              scope: { 'var1': 'foo.var1', 'var2': 'foo.var2' }
+              scope:
+                'var1': { expr: 'foo.var1', vars: ['foo'] }
+                'var2': { expr: 'foo.var2', vars: ['foo'] }
             }
           ]
         }

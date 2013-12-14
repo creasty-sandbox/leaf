@@ -5,15 +5,14 @@ class Leaf.Template
     resets: []
     openOthers: []
     closeOthers: []
-    opens:  {}
-    closes: {}
+    def: {}
 
   @customAttrs: []
 
   @registerTag: (name, def) ->
-    @customTags.resets.push def.reset if def.reset
-    @customTags.openOthers.push { tag: name, fn: def.openOther } if def.openOther
-    @customTags.closeOthers.push { tag: name, fn: def.closeOther } if def.closeOther
-    @customTags.opens[name] = def.open if def.open
-    @customTags.closes[name] = def.close if def.close
+    @customTags.def[name] = def
+
+    @customTags.resets.push name if def.reset
+    @customTags.openOthers.push name if def.openOther
+    @customTags.closeOthers.push name if def.closeOther
 

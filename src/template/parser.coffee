@@ -120,6 +120,8 @@ JS_SINGLE_VAR_REGEXP   = /\b[a-z]\w*/g
 #-----------------------------------------------
 class Leaf.Template.Parser
 
+  customTags = Leaf.Template.customTags
+
   constructor: (@buffer) ->
     unless @buffer
       throw new Error 'Instansiation without buffer'
@@ -141,27 +143,33 @@ class Leaf.Template.Parser
     @parents = [@root]
 
   customTagOpen: (node, parent) ->
-    opens = Leaf.Template.customTags.opens
-    opens[node.name]? node, parent
+    c = customTags.def[node.name]
+    return unless c && c.open
+    c.open node, parent
 
   customTagClose: (node, parent) ->
-    closes = Leaf.Template.customTags.closes
-    closes[node.name]? node, parent
+    c = customTags.def[node.name]
+    return unless c && c.close
+    c.close node, parent
 
   customTagReset: (node, parent) ->
-    r node, parent for r in Leaf.Template.customTags.resets
+    for r in customTags.resets
+      customTags.def[r].reset node, parent
 
   customTagOpenOther: (node, parent) ->
-    r.fn node, parent for r in Leaf.Template.customTags.openOthers when r.tag != node.tag
+    for r in customTags.openOthers when r != node.name
+      customTags.def[r].openOther node, parent
 
   customTagCloseOther: (node, parent) ->
-    r.fn node, parent for r in Leaf.Template.customTags.closeOthers when r.tag != node.tag
+    for r in customTags.closeOthers when r != node.name
+      customTags.def[r].closeOther node, parent
 
-  parseExpression: (node, expr) ->
+  parseExpression: (expr) ->
+    node = {}
     node.expr = expr
     node.vars = []
 
-    return unless expr
+    return node unless expr
 
     buf = ''
     i = 0
@@ -174,7 +182,7 @@ class Leaf.Template.Parser
       if '\'' == c || '"' == c || '/' == c
         idx = i + 1
         true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
-        return if (i = idx) == -1 # unbalance error
+        return node if (i = idx) == -1 # unbalance error
       else
         i++
 
@@ -183,10 +191,12 @@ class Leaf.Template.Parser
       .replace(JS_SPERATOR_REGEXP, '#')     # force sperate around []()
       .replace(JS_DOT_ACCESSOR_REGEXP, '#') # property accessors with dot
 
-    return unless (m = expr.match JS_SINGLE_VAR_REGEXP)
+    return node unless (m = expr.match JS_SINGLE_VAR_REGEXP)
 
     node.vars = m.filter (arg) ->
       !arg.match(JS_RESERVED_WORDS) && !arg.match(JS_GLOBAL_VARIABLES)
+
+    node
 
   parseTagAttrs: (node, attrs) ->
     node.attrs = {}
@@ -210,9 +220,9 @@ class Leaf.Template.Parser
         tagSpecificAttrs = ATTR_PRESERVED[node.name]
 
         if key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
-          node.attrBindings[key] = val
+          node.attrBindings[key] = @parseExpression val
         else
-          node.localeBindings[key] = val
+          node.localeBindings[key] = @parseExpression val
       else if '@' == binding
         node.actions[key] = val
       else
@@ -244,7 +254,7 @@ class Leaf.Template.Parser
     node.type = token.type
     node.escape = token.textBinding.escape
     expr = _.unescape token.textBinding.val
-    @parseExpression node, expr
+    node.value = @parseExpression expr
     node
 
   parseNode: (parents, token) ->
@@ -273,8 +283,9 @@ class Leaf.Template.Parser
       when T_TAG_CLOSE
         if token.name == p.name
           _p = parents.shift()
-          @customTagCloseOther token, p, _p
-          @customTagClose token, p, _p
+          p = parents[0]
+          @customTagCloseOther _p, p
+          @customTagClose _p, p
         else
           throw new Error 'Parse error'
 

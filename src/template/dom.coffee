@@ -3,14 +3,16 @@ class Leaf.Template.DOM
 
   doc = document # copying global variable to local make js faster
 
+  customTags = Leaf.Template.customTags
+
   constructor: (@tree, @obj) ->
     @$parent = $ doc.createElement 'body'
 
-  bind: (node) ->
-    value = new Function node.vars..., "return (#{node.expr})"
+  bind: ({ expr, vars }) ->
+    value = new Function vars..., "return (#{expr})"
 
     evaluate = =>
-      args = node.vars.map (v) => @obj._get v
+      args = vars.map (v) => @obj._get v
       value.apply null, args
 
     binder = (routine) =>
@@ -24,6 +26,13 @@ class Leaf.Template.DOM
 
       routine result
 
+  bindAttributes: ($el, attrs) ->
+  bindLocales: ($el, attrs) ->
+
+  registerActions: ($el, actions) ->
+    for event, handler of actions
+      $el.on event, (e) -> $el.trigger handler, [e]
+
   createMarker: (name = '') ->
     if Leaf.develop
       $ doc.createComment 'leaf: ' + name
@@ -31,20 +40,33 @@ class Leaf.Template.DOM
       $ doc.createTextNode ''
 
   createElement: (node, $parent) ->
+    c = customTags.def[node.name] ? {}
+
+    if c.structure
+      $marker = @createMarker node.name
+      $marker.appendTo $parent
+      c.create? node, $marker, $parent, @obj
+      return
+
     $el = $ doc.createElement node.name
     $el.attr node.attrs
 
-    for event, handler of node.actions
-      $el.on event, (e) -> $el.trigger handler, [e]
-
+    @bindAttributes $el, node.attrBindings
+    @bindLocales $el, node.localeBindings
+    @registerActions $el, node.actions
     $el.appendTo $parent
+
+    if c.block
+      c.create? node, $el, $parent, @obj
+    else
+      @createNode $el, node.contents
 
   createTextNode: (node, $parent) ->
     $text = $ doc.createTextNode node.buffer
     $text.appendTo $parent
 
   createInterpolationNode: (node, $parent) ->
-    binder = @bind node
+    binder = @bind node.value
 
     if node.escape
       el = doc.createTextNode ''
@@ -72,8 +94,7 @@ class Leaf.Template.DOM
 
     switch node.type
       when T_TAG_OPEN
-        $el = @createElement node, $parent
-        @createNode $el, node.contents
+        @createElement node, $parent
       when T_TAG_SELF
         @createElement node, $parent
       when T_TEXT
@@ -83,5 +104,5 @@ class Leaf.Template.DOM
 
   getDOM: ->
     @createNode @$parent, @tree
-    @$parent.children()
+    @$parent.contents()
 
