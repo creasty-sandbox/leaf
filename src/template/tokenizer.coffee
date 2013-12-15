@@ -25,12 +25,25 @@ INTERPOLATION_REGEXP = ///
 
 TAG_REGEXP = ///
   <
-    (/?)    # closing tag
-    (\w+)   # tag name
-    ([^>]*) # attributes
-    (/?)    # self closing
+    (/?)  # closing tag
+    (\w+) # tag name
+    (     # attributes
+      (?:
+        \s+         # need spaces seperater
+        (?:\$|\@|)  # $ or @ or nothing
+        (?:[\w\-]+) # property name
+        (?:         # has value?
+          =
+          (?:
+            (?:\"(?:[^\"]*?)\")   # double quotes
+            | (?:\'(?:[^\']*?)\') # single quotes
+          )
+        )?
+      )*
+    )
+    (/?) # self closing
   >
-///
+///i
 
 TAG_SELF_CLOSING = /^(img|input|hr|br|wbr|outlet|render|component)$/
 

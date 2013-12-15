@@ -5,11 +5,13 @@ ATTR_REGEXP = ///
   \s+       # need spaces seperater
   (\$|\@|)  # $ or @ or nothing
   ([\w\-]+) # property name
-  =
-  (?:
-    (?:\"([^\"]+?)\")   # double quotes
-    | (?:\'([^\']+?)\') # single quotes
-  )
+  (?:       # has value?
+    =
+    (?:
+      (?:\"([^\"]+?)\")   # double quotes
+      | (?:\'([^\']+?)\') # single quotes
+    )
+  )?
 ///g
 
 ATTR_PRESERVED =

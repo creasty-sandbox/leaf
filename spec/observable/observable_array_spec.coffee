@@ -311,7 +311,7 @@ describe 'observableArray', ->
     describe '#reduceRight(func)', ->
 
       it 'should apply a function against an accumulator and each value of the array (from right-to-left) as to reduce it to a single value', ->
-        res = oba.reduceRight ((a, b, i) -> console.log a, b, i; a + i * b)
+        res = oba.reduceRight (a, b, i) -> a + i * b
 
         expect(res).toBe 3 + 1 * 2 + 0 * 1
 
