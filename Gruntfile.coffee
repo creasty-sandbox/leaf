@@ -63,7 +63,7 @@ FILE_DEPENDENCIES =
   template: [
     'headers'
     'utils'
-    'formatter'
+    'formatters'
     'observable'
   ]
   core: [

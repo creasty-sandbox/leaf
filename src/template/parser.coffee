@@ -94,6 +94,7 @@ ATTR_PRESERVED =
   'track': /^(kind|src|srclang|label|default)$/
   'video': /^(src|crossorigin|poster|preload|autoplay|mediagroup|loop|muted|controls|width|height)$/
 
+ATTR_BOOLEANS = /^(disabled|selected|checked|contenteditable)$/
 
 #  JavaScript
 #-----------------------------------------------
@@ -113,17 +114,21 @@ JS_GLOBAL_VARIABLES = ///
 ///
 
 JS_NON_VARIABLE_REGEXP = ///
-  (?: # hash key literals
+  (?: # hash key literal
     ({|,)
     \s*
     \w+:
   )
   |
-  (?: # property access by dot notations
+  (?: # property access by dot notation
     \.
     [a-z]\w*
     (?:\.\w+)*
     \b
+  )
+  |
+  (?: # function call
+    \w+\s*\(
   )
 ///g
 
