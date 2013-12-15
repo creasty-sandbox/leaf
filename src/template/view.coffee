@@ -18,7 +18,7 @@ class Leaf.Template.View
 
     evaluate = =>
       args = vars.map (v) => @obj._get v
-      value.apply null, args
+      try value.apply null, args
 
     binder = (routine) =>
       @obj._beginTrack 'getter' unless value._dependents
@@ -32,7 +32,13 @@ class Leaf.Template.View
       routine result
 
   bindAttributes: ($el, attrs) ->
+    _(attrs).forEach (val, key) =>
+      binder = @bind val
+      binder (result) -> $el.attr key, result
+
   bindLocales: ($el, attrs) ->
+    # TODO
+    $el.data 'leaf-locale', attrs
 
   registerActions: ($el, actions) ->
     for event, handler of actions
@@ -54,11 +60,12 @@ class Leaf.Template.View
       return
 
     $el = $ doc.createElement node.name
-    $el.attr node.attrs
 
+    $el.attr node.attrs
     @bindAttributes $el, node.attrBindings
     @bindLocales $el, node.localeBindings
     @registerActions $el, node.actions
+
     $el.appendTo $parent
 
     if c.block
@@ -108,6 +115,7 @@ class Leaf.Template.View
         @createInterpolationNode node, $parent
 
   getDOM: ->
+    return @dom if @dom
     @createNode @$parent, @tree
-    @$parent.contents()
+    @dom = @$parent.contents()
 
