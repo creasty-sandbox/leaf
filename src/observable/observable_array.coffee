@@ -4,6 +4,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
   toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v._leafObject then v.toLeafID() else v
 
   init: ->
+    @_data ?= []
     super()
     @_saveCurrentMap()
     @_lastOperation = {}
@@ -44,7 +45,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_data.push elements...
     @_map.push toLeafIDs(elements)...
     @_update()
-    @
+    @length
 
   unshift: (elements...) ->
     len = elements.length
@@ -62,7 +63,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_data.unshift elements...
     @_map.unshift toLeafIDs(elements)...
     @_update()
-    @
+    @length
 
   pop: ->
     @_recordOperation
@@ -170,7 +171,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     return true for i in [0...@length] by 1 when fn @get(i), i
     false
 
-  filter: ->
+  filter: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
 
     result = new @constructor
@@ -183,13 +184,13 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   reduce: (fn, initialValue) ->
     result = initialValue ? @get 0
-    result = fn result, @get(i), index, @ for i in [0...@length] by 1
+    result = fn result, @get(i), i, @ for i in [0...@length] by 1
     result
 
-  reduceRight: ->
-    result = initialValue ? @get(@length - 1)
+  reduceRight: (fn) ->
     i = @length
-    result = fn result, @get(i - 1), i - 1, @ while i--
+    result = @get i - 1
+    result = fn result, @get(i - 1), i - 1, @ while --i
     result
 
   getPatch: ->

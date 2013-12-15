@@ -39,7 +39,12 @@ TAG_SELF_CLOSING = /^(img|input|hr|br|wbr|outlet|render|component)$/
 #-----------------------------------------------
 class Leaf.Template.Tokenizer
 
-  constructor: (@buffer) ->
+  constructor: ->
+
+  init: (@buffer) ->
+    unless @buffer?
+      throw new Error 'Initialization without buffer'
+
     @_buffer = @buffer
     @tokens = {}
     @index = 0

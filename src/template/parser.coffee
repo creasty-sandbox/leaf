@@ -134,15 +134,17 @@ class Leaf.Template.Parser
 
   customTags = Leaf.Template.customTags
 
-  constructor: (@buffer) ->
-    unless @buffer
-      throw new Error 'Instansiation without buffer'
+  constructor: ->
 
-    formatter = new Leaf.Formatter.HTML @buffer
-    formatter.minify()
-    @buffer = formatter.getHtml()
+  init: (@buffer) ->
+    unless @buffer?
+      throw new Error 'Initialization without buffer'
 
-    @tokenizer = new Leaf.Template.Tokenizer @buffer
+    formatter = Leaf.Formatter.HTML
+    @buffer = formatter.minify @buffer
+
+    @tokenizer = new Leaf.Template.Tokenizer()
+    @tokenizer.init @buffer
 
     @bindings = {}
 
@@ -153,6 +155,8 @@ class Leaf.Template.Parser
       context: {}
 
     @parents = [@root]
+
+    @parsedTree = null
 
   customTagOpen: (node, parent) ->
     c = customTags.def[node.name]

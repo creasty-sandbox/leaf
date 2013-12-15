@@ -1,12 +1,10 @@
 
 class Leaf.Formatter.HTML
 
-  constructor: (@html) ->
-
-  minify: ->
-    @html = @html
+  @minify: (html) ->
+    html = html
       .replace(/\s+/g, ' ')
       .replace />\s+</g, '><'
 
-  getHtml: -> @html
+    html
 

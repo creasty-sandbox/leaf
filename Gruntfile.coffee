@@ -1,4 +1,81 @@
 
+#=== Files
+#==============================================================================================
+SRC_DIR  = 'src/'
+TMP_DIR = 'tmp/'
+SPEC_DIR = 'spec/'
+VENDOR_DIR = 'vendors/'
+
+FILES =
+  _headers: [
+    'leaf.coffee'
+    'constants.coffee'
+  ]
+  utils: [
+    'utils.coffee'
+    'inflection.coffee'
+    'event.coffee'
+    'cache.coffee'
+    'object.coffee'
+    'array_diff_patch.coffee'
+  ]
+  formatters: [
+    'formatter.coffee'
+    'html.coffee'
+  ]
+  observable: [
+    'observable_base.coffee'
+    'observable_object.coffee'
+    'observable_array.coffee'
+    'observable.coffee'
+  ]
+  template: [
+    'template.coffee'
+    'tokenizer.coffee'
+    'parser.coffee'
+    'custom_tags.coffee'
+    'view.coffee'
+  ]
+  core: [
+    'object.coffee'
+    'router.coffee'
+    'navigator.coffee'
+    'model.coffee'
+    'controller.coffee'
+    'view.coffee'
+    'app.coffee'
+  ]
+
+VENDOR_FILES = [
+  'jquery/jquery.min.js'
+  'lodash/dist/lodash.min.js'
+]
+
+FILE_DEPENDENCIES =
+  utils: [
+    'headers'
+  ]
+  observable: [
+    'headers'
+    'utils'
+  ]
+  template: [
+    'headers'
+    'utils'
+    'formatter'
+    'observable'
+  ]
+  core: [
+    'headers'
+    'utils'
+    'formatters'
+    'observable'
+    'template'
+  ]
+
+
+#=== Grunt
+#==============================================================================================
 module.exports = (grunt) ->
 
   #  Load npm tasks
@@ -9,66 +86,35 @@ module.exports = (grunt) ->
   #-----------------------------------------------
   filter = grunt.option 'filter'
 
-  #  File list
+  #  Files
   #-----------------------------------------------
-  SRC_DIR  = 'src/'
-  TEMP_DIR = 'tmp/'
-  VENDOR_DIR = 'vendors/'
+  files = do ->
+    f =
+      src: {}
+      tmp: {}
+      specSrc: {}
+      specTmp: {}
 
-  files = (tmp) ->
-    base = ''
-    base += TEMP_DIR if tmp
-    base += SRC_DIR
+    for name, set of FILES
+      if '_' == name[0]
+        name = name[1..]
+        dir = ''
+      else
+        dir = name + '/'
 
-    fn = (path) -> base + (if tmp then path.replace('.coffee', '.js') else path)
+      f.src[name] = set.map (path) ->
+        SRC_DIR + dir + path
+      f.tmp[name] = set.map (path) ->
+        TMP_DIR + SRC_DIR + dir + path.replace('.coffee', '.js')
+      f.specSrc[name] = set.map (path) ->
+        SPEC_DIR + dir + path.replace('.coffee', '_spec.coffee')
+      f.specTmp[name] = set.map (path) ->
+        TMP_DIR + SPEC_DIR + dir + path.replace('.coffee', '_spec.js')
 
-    headers: [
-      'leaf.coffee'
-      'constants.coffee'
-    ].map fn
-    utils: [
-      'utils/utils.coffee'
-      'utils/inflection.coffee'
-      'utils/event.coffee'
-      'utils/cache.coffee'
-      'utils/object.coffee'
-      'utils/array_diff_patch.coffee'
-    ].map fn
-    formatters: [
-      'formatters/formatter.coffee'
-      'formatters/html.coffee'
-    ].map fn
-    observable: [
-      'observable/observable_base.coffee'
-      'observable/observable_object.coffee'
-      'observable/observable_array.coffee'
-      'observable/observable.coffee'
-    ].map fn
-    template: [
-      'template/template.coffee'
-      'template/tokenizer.coffee'
-      'template/parser.coffee'
-      'template/custom_tags.coffee'
-      'template/dom.coffee'
-    ].map fn
-    core: [
-      'core/object.coffee'
-      'core/router.coffee'
-      'core/navigator.coffee'
-      'core/model.coffee'
-      'core/controller.coffee'
-      'core/view.coffee'
-      'core/app.coffee'
-    ].map fn
+    f.vendor = VENDOR_FILES.map (path) ->
+      VENDOR_DIR + path
 
-  files.src = files false
-  files.tmp = files true
-
-  files.vendor = [
-    "#{VENDOR_DIR}jquery/jquery.min.js"
-    "#{VENDOR_DIR}lodash/dist/lodash.min.js"
-  ]
-
+    f
 
   #  Config
   #-----------------------------------------------
@@ -156,7 +202,7 @@ module.exports = (grunt) ->
           files.tmp.utils...
         ]
         options:
-          specs: ['tmp/spec/utils/*.js']
+          specs: files.specTmp.utils
 
       observable:
         src: [
@@ -165,7 +211,7 @@ module.exports = (grunt) ->
           files.tmp.observable...
         ]
         options:
-          specs: ['tmp/spec/observable/*.js']
+          specs: files.specTmp.observable
 
       template:
         src: [
@@ -176,7 +222,7 @@ module.exports = (grunt) ->
           files.tmp.template...
         ]
         options:
-          specs: ['tmp/spec/template/*.js']
+          specs: files.specTmp.template
 
       core:
         src: [
@@ -188,7 +234,7 @@ module.exports = (grunt) ->
           files.tmp.core...
         ]
         options:
-          specs: ['tmp/spec/core/*.js']
+          specs: files.specTmp.core
 
     # Watch
     watch:

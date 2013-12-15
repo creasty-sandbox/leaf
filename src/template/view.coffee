@@ -1,11 +1,16 @@
 
-class Leaf.Template.DOM
+class Leaf.Template.View
 
   doc = document # copying global variable to local make js faster
 
   customTags = Leaf.Template.customTags
 
-  constructor: (@tree, @obj) ->
+  constructor: ->
+
+  init: (@tree, @obj) ->
+    unless @tree && @obj
+      throw new Error 'error'
+
     @$parent = $ doc.createElement 'body'
 
   bind: ({ expr, vars }) ->

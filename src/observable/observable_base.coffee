@@ -189,7 +189,12 @@ class Leaf.ObservableBase extends Leaf.Object
   _unobserve: (prop, callback) ->
     $(window).off @_getEventName(prop), callback._binded ? callback
 
-  unobserve: (keypath, callback) ->
+  unobserve: ->
+    { keypath, callback } = Leaf.Utils.polymorphic
+      'f':  'callback'
+      'sf': 'keypath callback'
+    , arguments
+
     { obj, prop } = @getParent keypath
     obj._unobserve prop, callback
 
