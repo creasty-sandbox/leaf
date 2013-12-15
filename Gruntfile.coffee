@@ -1,9 +1,10 @@
 
 #=== Files
 #==============================================================================================
-SRC_DIR  = 'src/'
-TMP_DIR = 'tmp/'
-SPEC_DIR = 'spec/'
+DIST_DIR   = 'dist/'
+SRC_DIR    = 'src/'
+TMP_DIR    = 'tmp/'
+SPEC_DIR   = 'spec/'
 VENDOR_DIR = 'vendors/'
 
 FILES =
@@ -33,8 +34,8 @@ FILES =
     'template.coffee'
     'tokenizer.coffee'
     'parser.coffee'
-    'custom_tags.coffee'
     'view.coffee'
+    'custom_tags.coffee'
   ]
   core: [
     'object.coffee'
@@ -116,6 +117,14 @@ module.exports = (grunt) ->
 
     f
 
+  files.all = (name, type = 'tmp') ->
+    all = []
+
+    all.push files[type][dep]... for dep in FILE_DEPENDENCIES[name] ? []
+    all.push files[type][name]...
+
+    all
+
   #  Config
   #-----------------------------------------------
   grunt.initConfig
@@ -144,30 +153,23 @@ module.exports = (grunt) ->
         options:
           bare: true
         expand: true
-        cwd: 'src'
+        cwd: SRC_DIR
+        dest: TMP_DIR + SRC_DIR
         src: ['**/*.coffee']
-        dest: 'tmp/src'
         ext: '.js'
 
       test:
         expand: true
-        cwd: 'spec'
+        cwd: SPEC_DIR
+        dest: TMP_DIR + SPEC_DIR
         src: ['**/*.coffee']
-        dest: 'tmp/spec'
         ext: '.js'
 
       release:
         options:
           join: true
         files:
-          'dist/leaf.js': [
-            files.src.headers...
-            files.src.utils...
-            # files.src.formatters...
-            files.src.observable...
-            # files.src.template...
-            # files.src.core...
-          ]
+          'dist/leaf.js': files.all 'observable', 'src'
 
     # Concat
     concat:
@@ -175,7 +177,9 @@ module.exports = (grunt) ->
         options:
           banner: '<%= meta.banner %>'
         files:
-          'dist/leaf.js': ['dist/leaf.js']
+          cwd: DIST_DIR
+          dest: DIST_DIR
+          src: ['leaf.js']
 
     # Uglify
     uglify:
@@ -184,55 +188,38 @@ module.exports = (grunt) ->
           banner: '<%= meta.banner %>'
           report: 'gzip'
         files:
-          'dist/leaf.min.js': ['dist/leaf.js']
+          cwd: DIST_DIR
+          dest: DIST_DIR
+          src: ['leaf.js']
+          ext: '.min.js'
 
     # Jasmine
     jasmine:
       options:
         helpers: [
-          'vendors/jasmine-jquery/lib/jasmine-jquery.js'
-          'tmp/spec/helpers/*.js'
+          "#{VENDOR_DIR}jasmine-jquery/lib/jasmine-jquery.js"
+          "#{TMP_DIR}#{SPEC_DIR}helpers/*.js"
         ]
         keepRunner: true
         vendor: files.vendor
 
       utils:
-        src: [
-          files.tmp.headers...
-          files.tmp.utils...
-        ]
+        src: files.all 'utils'
         options:
           specs: files.specTmp.utils
 
       observable:
-        src: [
-          files.tmp.headers...
-          files.tmp.utils...
-          files.tmp.observable...
-        ]
+        src: files.all 'observable'
         options:
           specs: files.specTmp.observable
 
       template:
-        src: [
-          files.tmp.headers...
-          files.tmp.utils...
-          files.tmp.formatters...
-          files.tmp.observable...
-          files.tmp.template...
-        ]
+        src: files.all 'template'
         options:
           specs: files.specTmp.template
 
       core:
-        src: [
-          files.tmp.headers...
-          files.tmp.utils...
-          files.tmp.formatters...
-          files.tmp.observable...
-          files.tmp.template...
-          files.tmp.core...
-        ]
+        src: files.all 'core'
         options:
           specs: files.specTmp.core
 
@@ -242,15 +229,18 @@ module.exports = (grunt) ->
         spawn: false
 
       coffee:
-        files: 'src/**/*.coffee'
+        files: "#{SRC_DIR}**/*.coffee"
         tasks: ['coffee:src']
 
       coffee_test:
-        files: 'spec/**/*.coffee'
+        files: "#{SPEC_DIR}**/*.coffee"
         tasks: ['coffee:test']
 
       jasmine:
-        files: ['tmp/spec/**/*.js', 'tmp/src/**/*.js']
+        files: [
+          "#{TMP_DIR}#{SPEC_DIR}**/*.js"
+          "#{TMP_DIR}#{SRC_DIR}**/*.js"
+        ]
         tasks: ['filtered_test']
 
 
