@@ -2,12 +2,16 @@
 ###
 
 buffer = '<p>{{ name.toUpperCase() + 234 }}</p>'
-psr = new Leaf.Template.Parser buffer
+
+psr = new Leaf.Template.Parser()
+psr.init buffer
+
 tree = psr.getTree()
 
 obj = new Leaf.Observable name: 'John'
 
 dom = new Leaf.Template.View tree, obj
+
 dom.getView()
 
 ###
@@ -104,7 +108,7 @@ describe 'view', ->
 
       expect($el).toHaveAttr 'id', 'user_1'
 
-    it 'should update a value of attribute when the object value is change', ->
+    it 'should update a value of attribute when the object value is changed', ->
       view.bindAttributes $el, attrs
 
       obj.set 'id', 2
@@ -119,21 +123,96 @@ describe 'view', ->
 
   describe '#registerActions($el, actions)', ->
 
-    # TODO
+    it 'should register view action to user action', ->
+      view.init DUMMY_TREE, DUMMY_OBJ
+
+      $el = $ '<div/>'
+
+      isClicked = false
+      $el.on 'myClickEvent', -> isClicked = true
+
+      actions = click: 'myClickEvent'
+
+      view.registerActions $el, actions
+
+      $el.trigger 'click'
+
+      expect(isClicked).toBe true
 
 
   describe '#createElement(node, $parent)', ->
 
-    # TODO
+    it 'should append an element node to `$parent`', ->
+      view.init DUMMY_TREE, DUMMY_OBJ
+
+      $parent = $ '<div/>'
+      node =
+        name: 'span'
+        attrs: 'class': 'foo'
+
+      view.createElement node, $parent
+
+      expect($parent).toHaveHtml '<span class="foo"></span>'
 
 
   describe '#createTextNode(node, $parent)', ->
 
-    # TODO
+    it 'should append a text node to `$parent`', ->
+      view.init DUMMY_TREE, DUMMY_OBJ
+
+      $parent = $ '<div/>'
+      node = buffer: 'code is poetry'
+      view.createTextNode node, $parent
+
+      expect($parent).toHaveText node.buffer
 
 
   describe '#createInterpolationNode(node, $parent)', ->
 
-    # TODO
+    $parent = null
 
+    beforeEach ->
+      view.init DUMMY_TREE, obj
+      $parent = $ '<div/>'
+
+
+    it 'should append a text node with escaped-interpolation', ->
+      node =
+        value: { expr: 'name.toUpperCase()', vars: ['name'] }
+        escape: true
+
+      view.createInterpolationNode node, $el
+
+      expect($parent).toHaveText 'JOHN'
+
+    it 'should append parsed html with unescaped-interpolation', ->
+      node =
+        value: { expr: "'<b>' + name.toUpperCase() + '</b>'", vars: ['name'] }
+        escape: false
+
+      view.createInterpolationNode node, $el
+
+      expect($parent).toHaveHTML '<b>JOHN</b>'
+
+    it 'should update value of text node when the object value is changed', ->
+      node =
+        value: { expr: 'name.toUpperCase()', vars: ['name'] }
+        escape: true
+
+      view.createInterpolationNode node, $el
+
+      obj.set 'name', 'David'
+
+      expect($parent).toHaveText 'DAVID'
+
+    it 'should update value of text node when the object value is changed', ->
+      node =
+        value: { expr: "'<b>' + name.toUpperCase() + '</b>'", vars: ['name'] }
+        escape: false
+
+      view.createInterpolationNode node, $el
+
+      obj.set 'name', 'David'
+
+      expect($parent).toHaveText '<b>DAVID</b>'
 
