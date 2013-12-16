@@ -112,55 +112,75 @@ Leaf.Template.registerTag 'else',
 
 #  each
 #-----------------------------------------------
+class IteratedItemView extends Leaf.Object
+  constructor: (@item, @obj, @tree, @iteratorName) ->
+    @_viewCache = new Leaf.Cache 'views'
+    cachedView = @_viewCache.get @item.toLeafID()
+
+    return cachedView if cachedView
+    @_viewCache.set @item.toLeafID(), @
+
+    @_objectBaseInit()
+    @init()
+
+  init: ->
+    view = new Leaf.Template.View()
+    scope = {}
+    scope[@iteratorName] = @item
+    view.init _.cloneDeep(@tree), @obj, scope
+    @$view = view.getDOM()
+
+  destroy: ->
+    @$view.detach()
+
+
 Leaf.Template.registerTag 'each',
   structure: true
 
   open: (node, parent) ->
     node.iterator = null
 
-    for key, value of node.localeBindings when value.expr.match /\w+\[\]/
+    for key, value of node.localeBindings when value.expr.match /\w+\[\]$/
       ik = "#{key}Index"
-      value.expr = value.expr.replace '[]', "[#{ik}]"
+      value.expr = value.expr.replace '[]', ''
       value.vars.push ik
 
       node.localeBindings[key] = undefined
       node.scope[key] = value
-      node.iterator = value
+      node.iterator = key
       break
 
     unless node.iterator
       throw new Error 'Parse error: each should have one or more iterators'
 
   create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.View()
-    view.init node.contents, obj
-    $el = view.getDOM()
-    binder = view.bind node.iterator
+    ite = node.scope[node.iterator]
+    collection = obj.get ite.expr
+    collectionViews = new Leaf.ObservableArray []
 
-    binder (result) ->
-    ###
-    for i in [0...collection.length] by 1
-      view = new modelview collection[i], collection
-      view.$view.appendTo $container
+    createView = (item) ->
+      new IteratedItemView item, obj, node.contents, node.iterator
+
+    collection.forEach (item) ->
+      view = createView item
+      view.$view.insertBefore $marker
+      collectionViews.push view
 
     collection.observe (models) ->
       for op in models.getPatch()
         switch op.method
           when 'insertAt'
-            index = op.args[0]
-            added = op.args[1][0]
-            view = new modelview added, collection
+            view = createView op.element
 
-            if (indexView = collection.views[index])
+            if (indexView = collectionViews[op.index])
               view.$view.insertBefore indexView.$view
             else
-              view.$view.appendTo $container
+              view.$view.insertBefore $marker
 
-            collection.views.insertAt index, [view]
+            collectionViews.insertAt op.index, [view]
           when 'removeAt'
-            index = op.args[0]
-            if view = collection.views[index]
+            console.log collectionViews
+            if (view = collectionViews[op.index])
               view.destroy()
-              collection.views.removeAt index
-    ###
+              collectionViews.removeAt op.index
 

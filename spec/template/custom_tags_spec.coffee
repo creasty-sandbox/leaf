@@ -183,11 +183,14 @@ describe '<each $model="collection[]">', ->
         { id: 3, title: 'Gamma' }
       ]
 
+
   it 'should iterate a view for each item of a collection', ->
     buffer = '''
-      <each $post="posts[]">
-        <div class="post"></div>
-      </each>
+      <div>
+        <each $post="posts[]">
+          <div class="post"></div>
+        </each>
+      </div>
     '''
 
     $el = createDOM obj, buffer
@@ -198,11 +201,13 @@ describe '<each $model="collection[]">', ->
 
   it 'should bind model\'s values to each iterated-view', ->
     buffer = '''
-      <each $post="posts[]">
-        <div class="post" $id="'post_' + post.id">
-          <h2>{{ post.title }}</h2>
-        </div>
-      </each>
+      <div>
+        <each $post="posts[]">
+          <div class="post" $id="'post_' + post.id">
+            <h2>{{ post.title }}</h2>
+          </div>
+        </each>
+      </div>
     '''
 
     $el = createDOM obj, buffer
@@ -211,7 +216,14 @@ describe '<each $model="collection[]">', ->
     expect($el).toContain '#post_2'
     expect($el).toContain '#post_3'
 
-    expect($el).toHaveText 'Alpha'
-    expect($el).toHaveText 'Beta'
-    expect($el).toHaveText 'Gamma'
+    expect($el.find('#post_1 h2')).toHaveText 'Alpha'
+    expect($el.find('#post_2 h2')).toHaveText 'Beta'
+    expect($el.find('#post_3 h2')).toHaveText 'Gamma'
+
+
+  describe 'Special variable: modelIndex', ->
+
+    it 'should return current index of an item in the collection', ->
+      expect(1 == 0).toBe true
+
 

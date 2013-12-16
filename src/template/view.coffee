@@ -7,7 +7,7 @@ class Leaf.Template.View
 
   constructor: ->
 
-  init: (@tree, @obj) ->
+  init: (@tree, @obj, @scope = {}) ->
     unless @tree && @obj
       throw new Error 'error'
 
@@ -17,7 +17,7 @@ class Leaf.Template.View
     value = new Function vars..., "return (#{expr})"
 
     evaluate = =>
-      args = vars.map (v) => @obj._get v
+      args = vars.map (v) => @scope[v] ? @obj._get v
       try value.apply null, args
 
     binder = (routine) =>
