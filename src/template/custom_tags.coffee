@@ -30,9 +30,10 @@ Leaf.Template.registerTag 'if',
     parent.context.if = node
 
   create: (node, $marker, $parent, obj) ->
-    psr = new Leaf.Template.DOM node.contents, obj
-    $el = psr.getDOM()
-    binder = psr.bind node.condition
+    view = new Leaf.Template.View()
+    view.init node.contents, obj
+    $el = view.getDOM()
+    binder = view.bind node.condition
 
     binder (result) ->
       if !!result
@@ -66,9 +67,10 @@ Leaf.Template.registerTag 'elseif',
     parent.context.if = node
 
   create: (node, $marker, $parent, obj) ->
-    psr = new Leaf.Template.DOM node.contents, obj
-    $el = psr.getDOM()
-    binder = psr.bind node.condition
+    view = new Leaf.Template.View()
+    view.init node.contents, obj
+    $el = view.getDOM()
+    binder = view.bind node.condition
 
     binder (result) ->
       if !!result
@@ -96,9 +98,10 @@ Leaf.Template.registerTag 'else',
     parent.context.if = null
 
   create: (node, $marker, $parent, obj) ->
-    psr = new Leaf.Template.DOM node.contents, obj
-    $el = psr.getDOM()
-    binder = psr.bind node.condition
+    view = new Leaf.Template.View()
+    view.init node.contents, obj
+    $el = view.getDOM()
+    binder = view.bind node.condition
 
     binder (result) ->
       if !!result
@@ -110,17 +113,54 @@ Leaf.Template.registerTag 'else',
 #  each
 #-----------------------------------------------
 Leaf.Template.registerTag 'each',
+  structure: true
+
   open: (node, parent) ->
-    node.iterators = []
+    node.iterator = null
 
-    for key, val of node.localeBindings when val.match /\w+\[\]/
+    for key, value of node.localeBindings when value.expr.match /\w+\[\]/
       ik = "#{key}Index"
-      val = val.replace '[]', "[#{ik}]"
-      node.localeBindings[key] = undefined
-      node.scope[key] = val
-      node.iterators.push ik
+      value.expr = value.expr.replace '[]', "[#{ik}]"
+      value.vars.push ik
 
-    unless node.iterators.length
+      node.localeBindings[key] = undefined
+      node.scope[key] = value
+      node.iterator = value
+      break
+
+    unless node.iterator
       throw new Error 'Parse error: each should have one or more iterators'
 
+  create: (node, $marker, $parent, obj) ->
+    view = new Leaf.Template.View()
+    view.init node.contents, obj
+    $el = view.getDOM()
+    binder = view.bind node.iterator
+
+    binder (result) ->
+    ###
+    for i in [0...collection.length] by 1
+      view = new modelview collection[i], collection
+      view.$view.appendTo $container
+
+    collection.observe (models) ->
+      for op in models.getPatch()
+        switch op.method
+          when 'insertAt'
+            index = op.args[0]
+            added = op.args[1][0]
+            view = new modelview added, collection
+
+            if (indexView = collection.views[index])
+              view.$view.insertBefore indexView.$view
+            else
+              view.$view.appendTo $container
+
+            collection.views.insertAt index, [view]
+          when 'removeAt'
+            index = op.args[0]
+            if view = collection.views[index]
+              view.destroy()
+              collection.views.removeAt index
+    ###
 

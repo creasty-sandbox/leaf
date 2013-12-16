@@ -1,21 +1,4 @@
 
-###
-
-buffer = '<p>{{ name.toUpperCase() + 234 }}</p>'
-
-psr = new Leaf.Template.Parser()
-psr.init buffer
-
-tree = psr.getTree()
-
-obj = new Leaf.Observable name: 'John'
-
-dom = new Leaf.Template.View tree, obj
-
-dom.getView()
-
-###
-
 describe 'Leaf.Template.View', ->
 
   it 'should be defined', ->
@@ -147,8 +130,13 @@ describe 'view', ->
 
       $parent = $ '<div/>'
       node =
+        type: T_TAG_OPEN
         name: 'span'
         attrs: 'class': 'foo'
+        attrBindings: {}
+        localeBindings: {}
+        actions: {}
+        contents: []
 
       view.createElement node, $parent
 
@@ -181,7 +169,7 @@ describe 'view', ->
         value: { expr: 'name.toUpperCase()', vars: ['name'] }
         escape: true
 
-      view.createInterpolationNode node, $el
+      view.createInterpolationNode node, $parent
 
       expect($parent).toHaveText 'JOHN'
 
@@ -190,29 +178,29 @@ describe 'view', ->
         value: { expr: "'<b>' + name.toUpperCase() + '</b>'", vars: ['name'] }
         escape: false
 
-      view.createInterpolationNode node, $el
+      view.createInterpolationNode node, $parent
 
-      expect($parent).toHaveHTML '<b>JOHN</b>'
+      expect($parent).toHaveHtml '<b>JOHN</b>'
 
-    it 'should update value of text node when the object value is changed', ->
+    it 'should update the value of text node when the object value is changed', ->
       node =
         value: { expr: 'name.toUpperCase()', vars: ['name'] }
         escape: true
 
-      view.createInterpolationNode node, $el
+      view.createInterpolationNode node, $parent
 
       obj.set 'name', 'David'
 
       expect($parent).toHaveText 'DAVID'
 
-    it 'should update value of text node when the object value is changed', ->
+    it 'should update html when the object value is changed', ->
       node =
         value: { expr: "'<b>' + name.toUpperCase() + '</b>'", vars: ['name'] }
         escape: false
 
-      view.createInterpolationNode node, $el
+      view.createInterpolationNode node, $parent
 
       obj.set 'name', 'David'
 
-      expect($parent).toHaveText '<b>DAVID</b>'
+      expect($parent).toHaveHtml '<b>DAVID</b>'
 

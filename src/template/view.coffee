@@ -82,7 +82,7 @@ class Leaf.Template.View
 
     if node.escape
       el = doc.createTextNode ''
-      $el = $el
+      $el = $ el
       $el.appendTo $parent
 
       binder (result) -> el.nodeValue = result
