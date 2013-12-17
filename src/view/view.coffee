@@ -61,7 +61,7 @@ class Leaf.View extends Leaf.Object
 
     return unless name || handler
 
-    uid = "_binded_#{@_id}"
+    uid = "_binded_#{@_leafID}"
     handler[uid] ?= handler.bind @
     handler = handler[uid]
 
@@ -86,7 +86,7 @@ class Leaf.View extends Leaf.Object
 
     return unless name
 
-    uid = "_binded_#{@_id}"
+    uid = "_binded_#{@_leafID}"
     handler = handler[uid] if handler && handler[uid]
 
     if $el

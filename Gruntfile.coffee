@@ -35,7 +35,14 @@ FILES =
     'tokenizer.coffee'
     'parser.coffee'
     'dom_generator.coffee'
-    'custom_tags.coffee'
+  ]
+  view: [
+    'view.coffee'
+    'conditional_view.coffee'
+    'iterator_view.coffee'
+    'component.coffee'
+    'render.coffee'
+    'outlet.coffee'
   ]
   core: [
     'object.coffee'
@@ -43,7 +50,6 @@ FILES =
     'navigator.coffee'
     'model.coffee'
     'controller.coffee'
-    'view.coffee'
     'app.coffee'
   ]
 
@@ -65,6 +71,13 @@ FILE_DEPENDENCIES =
     'utils'
     'formatters'
     'observable'
+  ]
+  view: [
+    'headers'
+    'utils'
+    'formatters'
+    'observable'
+    'template'
   ]
   core: [
     'headers'
@@ -217,6 +230,11 @@ module.exports = (grunt) ->
         src: files.all 'template'
         options:
           specs: files.specTmp.template
+
+      view:
+        src: files.all 'view'
+        options:
+          specs: files.specTmp.view
 
       core:
         src: files.all 'core'
