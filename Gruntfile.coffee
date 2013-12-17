@@ -182,7 +182,7 @@ module.exports = (grunt) ->
         options:
           join: true
         files:
-          'dist/leaf.js': files.all 'observable', 'src'
+          'dist/leaf.js': files.all 'view', 'src'
 
     # Concat
     concat:
@@ -190,9 +190,7 @@ module.exports = (grunt) ->
         options:
           banner: '<%= meta.banner %>'
         files:
-          cwd: DIST_DIR
-          dest: DIST_DIR
-          src: ['leaf.js']
+          'dist/leaf.js': ['dist/leaf.js']
 
     # Uglify
     uglify:
@@ -201,10 +199,7 @@ module.exports = (grunt) ->
           banner: '<%= meta.banner %>'
           report: 'gzip'
         files:
-          cwd: DIST_DIR
-          dest: DIST_DIR
-          src: ['leaf.js']
-          ext: '.min.js'
+          'dist/leaf.min.js': ['dist/leaf.js']
 
     # Jasmine
     jasmine:
