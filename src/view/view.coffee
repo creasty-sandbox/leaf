@@ -5,15 +5,31 @@ class Leaf.View extends Leaf.Object
 
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/i
 
-  constructor: (@controller) ->
-    super()
+  constructor: (@$view, @obj) ->
+    @_objectBaseInit()
 
     @elements ?= {}
     @events ?= {}
+    @$view ?= $ 'body'
 
     @_setupElements()
     @setup()
     @_subscribeEvents()
+
+  fromParsedTree: (tree, obj, scope) ->
+    view = new Leaf.Template.DOMGenerator()
+    view.init _.cloneDeep(tree), @obj, scope
+    view.getDOM()
+
+  getCachedView: (obj) ->
+    viewCache = new Leaf.Cache 'views'
+    id = obj.toLeafID()
+
+    if (cachedView = viewCache.get id)
+      cachedView
+    else
+      viewCache.set id, @
+      null
 
   setup: ->
 
@@ -55,8 +71,7 @@ class Leaf.View extends Leaf.Object
 
   subscribeEvent: ->
     { $el, name, handler } = Leaf.Utils.polymorphic
-      'sf':  'name handler'
-      'osf': '$el name handler'
+      'o?sf':  '$el name handler'
     , arguments
 
     return unless name || handler
@@ -78,10 +93,7 @@ class Leaf.View extends Leaf.Object
 
   unsubscribeEvent: ->
     { $el, name, handler } = Leaf.Utils.polymorphic
-      's':   'name'
-      'sf':  'name handler'
-      'os':  '$el name'
-      'osf': '$el name handler'
+      'o?sf?': '$el name handler'
     , arguments
 
     return unless name
@@ -97,7 +109,11 @@ class Leaf.View extends Leaf.Object
   send: ->
     # TODO
 
+  remove: ->
+    @$view.detach()
+
   destroy: ->
+    @$view = null
     @_unsubscribeEvents()
 
 

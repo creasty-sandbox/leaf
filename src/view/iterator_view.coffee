@@ -1,30 +1,11 @@
 
-class IteratedItemView extends Leaf.Object
-  constructor: (@item, @obj, @tree, @iteratorName) ->
-    @_viewCache = new Leaf.Cache 'views'
-    cachedView = @_viewCache.get @item.toLeafID()
+#  Iterator
+#-----------------------------------------------
+class IteratorView extends Leaf.Object
 
-    return cachedView if cachedView
-    @_viewCache.set @item.toLeafID(), @
+  @structure: true
 
-    @_objectBaseInit()
-    @init()
-
-  init: ->
-    view = new Leaf.Template.DOMGenerator()
-    scope = {}
-    scope[@iteratorName] = @item
-    view.init _.cloneDeep(@tree), @obj, scope
-    @$view = view.getDOM()
-
-  destroy: ->
-    @$view.detach()
-
-
-Leaf.Template.registerTag 'each',
-  structure: true
-
-  open: (node, parent) ->
+  @open: (node, parent) ->
     node.iterator = null
 
     for key, value of node.localeBindings when value.expr.match /\w+\[\]$/
@@ -40,34 +21,61 @@ Leaf.Template.registerTag 'each',
     unless node.iterator
       throw new Error 'Parse error: each should have one or more iterators'
 
-  create: (node, $marker, $parent, obj) ->
-    ite = node.scope[node.iterator]
-    collection = obj.get ite.expr
-    collectionViews = new Leaf.ObservableArray []
+  @create: (node, $marker, $parent, obj) ->
+    iv = new IteratorView()
+    iv.init node, $marker, $parent, obj
 
-    createView = (item) ->
-      new IteratedItemView item, obj, node.contents, node.iterator
+  init: (@node, @$marker, @$parent, @obj) ->
+    ite = @node.scope[@node.iterator]
 
-    collection.forEach (item) ->
-      view = createView item
-      view.$view.insertBefore $marker
-      collectionViews.push view
+    @collection = obj.get ite.expr
+    @collectionViews = new Leaf.ObservableArray []
 
-    collection.observe (models) ->
-      for op in models.getPatch()
-        switch op.method
-          when 'insertAt'
-            view = createView op.element
+    @collection.forEach @addOne
+    @collection.observe @update
 
-            if (indexView = collectionViews[op.index])
-              view.$view.insertBefore indexView.$view
-            else
-              view.$view.insertBefore $marker
+  addOne: (item) =>
+    view = @createView item
+    view.$view.insertBefore @$marker
+    @collectionViews.push view
 
-            collectionViews.insertAt op.index, [view]
-          when 'removeAt'
-            console.log collectionViews
-            if (view = collectionViews[op.index])
-              view.destroy()
-              collectionViews.removeAt op.index
+  createView: (item) ->
+    new IteratorItemView @node, item, @obj
+
+  update: (models) =>
+    @applyPatch op for op in models.getPatch()
+
+  applyPatch: ({ method, index, element }) ->
+    switch method
+      when 'insertAt'
+        view = @createView element
+
+        $idx = @collectionViews[index]?.$view ? @$marker
+
+        view.$view.insertBefore $idx
+
+        @collectionViews.insertAt index, [view]
+      when 'removeAt'
+        if (cv = @collectionViews[index])
+          cv.remove()
+          @collectionViews.removeAt index
+
+
+#  Iterator item
+#-----------------------------------------------
+class IteratorItemView extends Leaf.View
+
+  constructor: (@node, @item, @obj) ->
+    return cached if (cached = @getCachedView @item)
+
+    scope = {}
+    scope[@node.iterator] = @item
+    @$view = @fromParsedTree @node.contents, @obj, scope
+
+    super @$view
+
+
+#  Registeration
+#-----------------------------------------------
+Leaf.Template.registerTag 'each', IteratorView
 

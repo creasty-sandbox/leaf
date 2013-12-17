@@ -179,8 +179,7 @@ class Leaf.ObservableBase extends Leaf.Object
 
   observe: ->
     { keypath, callback } = Leaf.Utils.polymorphic
-      'f':  'callback'
-      'sf': 'keypath callback'
+      's?f': 'keypath callback'
     , arguments
 
     { obj, prop } = @getParent keypath
@@ -191,8 +190,7 @@ class Leaf.ObservableBase extends Leaf.Object
 
   unobserve: ->
     { keypath, callback } = Leaf.Utils.polymorphic
-      'f':  'callback'
-      'sf': 'keypath callback'
+      's?f': 'keypath callback'
     , arguments
 
     { obj, prop } = @getParent keypath

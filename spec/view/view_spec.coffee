@@ -12,7 +12,7 @@ describe 'Leaf.View', ->
 
 describe 'view', ->
 
-  class window.TestView extends Leaf.View
+  class TestView extends Leaf.View
 
     elements:
       'container':  '#test_container'
