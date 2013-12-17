@@ -45,7 +45,7 @@ describe 'view', ->
     @view = new TestView()
 
   afterEach ->
-    @view.destroy()
+    @view._destroyView()
 
 
   it 'should call `#setup` on initialization', ->

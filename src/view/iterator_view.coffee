@@ -57,7 +57,7 @@ class IteratorView extends Leaf.Object
         @collectionViews.insertAt index, [view]
       when 'removeAt'
         if (cv = @collectionViews[index])
-          cv.remove()
+          cv._removeView()
           @collectionViews.removeAt index
 
 

@@ -110,7 +110,10 @@ class Leaf.ObservableBase extends Leaf.Object
 
   _set: (prop, val, options = {}) ->
     return unless prop
-    options = _.defaults { notify: true }, options
+
+    options = _.defaults options,
+      notify: true
+      bubbling: false
 
     if _.isFunction @_data[prop]
       @_data[prop].call @, val

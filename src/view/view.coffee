@@ -5,11 +5,13 @@ class Leaf.View extends Leaf.Object
 
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/i
 
-  constructor: (@$view, @obj) ->
+  constructor: (@$view) ->
     @_objectBaseInit()
 
-    @elements ?= {}
-    @events ?= {}
+    superClass = @constructor.__super__
+    @elements = _.extend superClass.elements, @elements ? {} if superClass
+    @events = _.extend superClass.events, @events ? {} if superClass
+
     @$view ?= $ 'body'
 
     @_setupElements()
@@ -18,7 +20,7 @@ class Leaf.View extends Leaf.Object
 
   fromParsedTree: (tree, obj, scope) ->
     view = new Leaf.Template.DOMGenerator()
-    view.init _.cloneDeep(tree), @obj, scope
+    view.init _.cloneDeep(tree), obj, scope
     view.getDOM()
 
   getCachedView: (obj) ->
@@ -41,7 +43,7 @@ class Leaf.View extends Leaf.Object
         if $find
           $find.find selector
         else
-          $ selector
+          @$view.find selector
 
       @setElement name, $el
       dfd = (pending[name] ?= $.Deferred())
@@ -109,10 +111,10 @@ class Leaf.View extends Leaf.Object
   send: ->
     # TODO
 
-  remove: ->
+  _removeView: ->
     @$view.detach()
 
-  destroy: ->
+  _destroyView: ->
     @$view = null
     @_unsubscribeEvents()
 
