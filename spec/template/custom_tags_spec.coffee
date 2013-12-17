@@ -3,9 +3,9 @@ createDOM = (obj, buffer) ->
   psr = new Leaf.Template.Parser()
   psr.init buffer
 
-  view = new Leaf.Template.View()
-  view.init psr.getTree(), obj
-  view.getDOM()
+  gen = new Leaf.Template.DOMGenerator()
+  gen.init psr.getTree(), obj
+  gen.getDOM()
 
 
 describe 'Conditional statements', ->

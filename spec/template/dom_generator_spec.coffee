@@ -1,21 +1,21 @@
 
-describe 'Leaf.Template.View', ->
+describe 'Leaf.Template.DOMGenerator', ->
 
   it 'should be defined', ->
-    expect(Leaf.Template.View).toBeDefined()
+    expect(Leaf.Template.DOMGenerator).toBeDefined()
 
   it 'should create instance', ->
-    pr = new Leaf.Template.View()
-    expect(pr).not.toBeNull()
-    expect(pr.constructor).toBe Leaf.Template.View
+    gen = new Leaf.Template.DOMGenerator()
+    expect(gen).not.toBeNull()
+    expect(gen.constructor).toBe Leaf.Template.DOMGenerator
 
 
-describe 'view', ->
+describe 'domGenerator', ->
 
   DUMMY_TREE = []
   DUMMY_OBJ = {}
 
-  view = null
+  gen = null
   obj = null
 
 
@@ -25,34 +25,34 @@ describe 'view', ->
       name: 'John'
       age: 27
 
-    view = new Leaf.Template.View()
+    gen = new Leaf.Template.DOMGenerator()
 
 
   describe '#init(tree, obj)', ->
 
     it 'should throw an exception if neither `tree` nor `obj` are given', ->
       ctx = ->
-        view.init()
+        gen.init()
 
       expect(ctx).toThrow()
 
     it 'should create new parent node', ->
-      view.init DUMMY_TREE, DUMMY_OBJ
-      expect(view.$parent).toBeDefined()
+      gen.init DUMMY_TREE, DUMMY_OBJ
+      expect(gen.$parent).toBeDefined()
 
 
   describe '#bind({ expr, vars })', ->
 
     beforeEach ->
-      view.init DUMMY_TREE, obj
+      gen.init DUMMY_TREE, obj
 
     it 'should return a binder function', ->
-      binder = view.bind expr: 'name.toUpperCase()', vars: ['name']
+      binder = gen.bind expr: 'name.toUpperCase()', vars: ['name']
 
       expect(typeof binder).toBe 'function'
 
     it 'should evaluate an expression with values of the object and call a routine function with a result', ->
-      binder = view.bind expr: 'name.toUpperCase()', vars: ['name']
+      binder = gen.bind expr: 'name.toUpperCase()', vars: ['name']
 
       res = null
 
@@ -61,7 +61,7 @@ describe 'view', ->
       expect(res).toBe 'JOHN'
 
     it 'should re-evaluate expression and call a routine function when dependents value of the object are updated', ->
-      binder = view.bind expr: 'name.toUpperCase()', vars: ['name']
+      binder = gen.bind expr: 'name.toUpperCase()', vars: ['name']
 
       res = null
 
@@ -78,7 +78,7 @@ describe 'view', ->
     attrs = null
 
     beforeEach ->
-      view.init DUMMY_TREE, obj
+      gen.init DUMMY_TREE, obj
 
       $el = $ '<div/>'
 
@@ -87,12 +87,12 @@ describe 'view', ->
 
 
     it 'should set attributes to an element', ->
-      view.bindAttributes $el, attrs
+      gen.bindAttributes $el, attrs
 
       expect($el).toHaveAttr 'id', 'user_1'
 
     it 'should update a value of attribute when the object value is changed', ->
-      view.bindAttributes $el, attrs
+      gen.bindAttributes $el, attrs
 
       obj.set 'id', 2
 
@@ -107,7 +107,7 @@ describe 'view', ->
   describe '#registerActions($el, actions)', ->
 
     it 'should register view action to user action', ->
-      view.init DUMMY_TREE, DUMMY_OBJ
+      gen.init DUMMY_TREE, DUMMY_OBJ
 
       $el = $ '<div/>'
 
@@ -116,7 +116,7 @@ describe 'view', ->
 
       actions = click: 'myClickEvent'
 
-      view.registerActions $el, actions
+      gen.registerActions $el, actions
 
       $el.trigger 'click'
 
@@ -126,7 +126,7 @@ describe 'view', ->
   describe '#createElement(node, $parent)', ->
 
     it 'should append an element node to `$parent`', ->
-      view.init DUMMY_TREE, DUMMY_OBJ
+      gen.init DUMMY_TREE, DUMMY_OBJ
 
       $parent = $ '<div/>'
       node =
@@ -138,7 +138,7 @@ describe 'view', ->
         actions: {}
         contents: []
 
-      view.createElement node, $parent
+      gen.createElement node, $parent
 
       expect($parent).toHaveHtml '<span class="foo"></span>'
 
@@ -146,11 +146,11 @@ describe 'view', ->
   describe '#createTextNode(node, $parent)', ->
 
     it 'should append a text node to `$parent`', ->
-      view.init DUMMY_TREE, DUMMY_OBJ
+      gen.init DUMMY_TREE, DUMMY_OBJ
 
       $parent = $ '<div/>'
       node = buffer: 'code is poetry'
-      view.createTextNode node, $parent
+      gen.createTextNode node, $parent
 
       expect($parent).toHaveText node.buffer
 
@@ -160,7 +160,7 @@ describe 'view', ->
     $parent = null
 
     beforeEach ->
-      view.init DUMMY_TREE, obj
+      gen.init DUMMY_TREE, obj
       $parent = $ '<div/>'
 
 
@@ -169,7 +169,7 @@ describe 'view', ->
         value: { expr: 'name.toUpperCase()', vars: ['name'] }
         escape: true
 
-      view.createInterpolationNode node, $parent
+      gen.createInterpolationNode node, $parent
 
       expect($parent).toHaveText 'JOHN'
 
@@ -178,7 +178,7 @@ describe 'view', ->
         value: { expr: "'<b>' + name.toUpperCase() + '</b>'", vars: ['name'] }
         escape: false
 
-      view.createInterpolationNode node, $parent
+      gen.createInterpolationNode node, $parent
 
       expect($parent).toHaveHtml '<b>JOHN</b>'
 
@@ -187,7 +187,7 @@ describe 'view', ->
         value: { expr: 'name.toUpperCase()', vars: ['name'] }
         escape: true
 
-      view.createInterpolationNode node, $parent
+      gen.createInterpolationNode node, $parent
 
       obj.set 'name', 'David'
 
@@ -198,7 +198,7 @@ describe 'view', ->
         value: { expr: "'<b>' + name.toUpperCase() + '</b>'", vars: ['name'] }
         escape: false
 
-      view.createInterpolationNode node, $parent
+      gen.createInterpolationNode node, $parent
 
       obj.set 'name', 'David'
 

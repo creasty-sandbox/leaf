@@ -30,7 +30,7 @@ Leaf.Template.registerTag 'if',
     parent.context.if = node
 
   create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.View()
+    view = new Leaf.Template.DOMGenerator()
     view.init node.contents, obj
     $el = view.getDOM()
     binder = view.bind node.condition
@@ -67,7 +67,7 @@ Leaf.Template.registerTag 'elseif',
     parent.context.if = node
 
   create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.View()
+    view = new Leaf.Template.DOMGenerator()
     view.init node.contents, obj
     $el = view.getDOM()
     binder = view.bind node.condition
@@ -98,7 +98,7 @@ Leaf.Template.registerTag 'else',
     parent.context.if = null
 
   create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.View()
+    view = new Leaf.Template.DOMGenerator()
     view.init node.contents, obj
     $el = view.getDOM()
     binder = view.bind node.condition
@@ -124,7 +124,7 @@ class IteratedItemView extends Leaf.Object
     @init()
 
   init: ->
-    view = new Leaf.Template.View()
+    view = new Leaf.Template.DOMGenerator()
     scope = {}
     scope[@iteratorName] = @item
     view.init _.cloneDeep(@tree), @obj, scope

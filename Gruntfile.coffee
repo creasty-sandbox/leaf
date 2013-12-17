@@ -34,7 +34,7 @@ FILES =
     'template.coffee'
     'tokenizer.coffee'
     'parser.coffee'
-    'view.coffee'
+    'dom_generator.coffee'
     'custom_tags.coffee'
   ]
   core: [

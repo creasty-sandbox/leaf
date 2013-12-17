@@ -1,5 +1,5 @@
 
-class Leaf.Template.View
+class Leaf.Template.DOMGenerator
 
   doc = document # copying global variable to local make js faster
 
