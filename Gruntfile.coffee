@@ -13,7 +13,7 @@ FILES =
     'constants.coffee'
   ]
   utils: [
-    'utils.coffee'
+    'lodash/*.coffee'
     'inflector.coffee'
     'event.coffee'
     'cache.coffee'

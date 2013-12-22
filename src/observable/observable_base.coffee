@@ -130,7 +130,7 @@ class Leaf.ObservableBase extends Leaf.Object
     val
 
   set: ->
-    { keypath, val, options, pairs } = Leaf.Utils.polymorphic
+    { keypath, val, options, pairs } = _.polymorphic
       'oo?':  'pairs options'
       's.o?': 'keypath val options'
     , arguments
@@ -181,7 +181,7 @@ class Leaf.ObservableBase extends Leaf.Object
     $(window).on @_getEventName(prop), fn
 
   observe: ->
-    { keypath, callback } = Leaf.Utils.polymorphic
+    { keypath, callback } = _.polymorphic
       's?f': 'keypath callback'
     , arguments
 
@@ -192,7 +192,7 @@ class Leaf.ObservableBase extends Leaf.Object
     $(window).off @_getEventName(prop), callback._binded ? callback
 
   unobserve: ->
-    { keypath, callback } = Leaf.Utils.polymorphic
+    { keypath, callback } = _.polymorphic
       's?f': 'keypath callback'
     , arguments
 

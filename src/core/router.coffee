@@ -109,3 +109,25 @@ class Leaf.Router
 
       @table.push def
 
+  @regulateUrl: (path) ->
+    path = path.replace /\/+/g, '/'
+    path = path.replace /([^\/]+)\/\1/g, '$1'
+    path
+
+  @filter: ({ only, except }) ->
+    permit =
+      index: true
+      show: true
+      edit: true
+
+    if only
+      only = [only] unless _.isArray only
+      permit[p] = true for p in only
+
+    if except
+      except = [except] unless _.isArray except
+      permit[p] = false for p in except
+
+    permit
+
+

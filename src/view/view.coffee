@@ -3,7 +3,7 @@ class Leaf.View extends Leaf.Object
 
   @_objectType = 'View'
 
-  VAR_SELECTOR = /^\$(\w+)\s*(.+)/i
+  VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
   constructor: (@$view) ->
     @_objectBaseInit()
@@ -11,7 +11,8 @@ class Leaf.View extends Leaf.Object
     @inherit 'elements'
     @inherit 'events'
 
-    @$view ?= $ 'body'
+    @$body = $ 'body'
+    @$view ?= @$body
 
     @_setupElements()
     @setup()
@@ -38,6 +39,10 @@ class Leaf.View extends Leaf.Object
     pending = {}
 
     resolve = (name, selector, $find = @$view) =>
+      if '@' == name[0]
+        name = name[1..]
+        $find = $ document
+
       $el = $find.find selector
       @setElement name, $el
       dfd = (pending[name] ?= $.Deferred())
@@ -50,8 +55,7 @@ class Leaf.View extends Leaf.Object
       else
         selector = selector
           .replace(/^\\\$/, '$')
-          .replace /\$(\w+)/g, (_0, _1) =>
-            @elements[_1]
+          .replace /\$(\w+)/g, (_0, _1) => @elements[_1]
 
         resolve name, selector
 
@@ -66,8 +70,8 @@ class Leaf.View extends Leaf.Object
       @subscribeEvent @getElement(el), name, fn
 
   subscribeEvent: ->
-    { $el, name, handler } = Leaf.Utils.polymorphic
-      'o?sf':  '$el name handler'
+    { $el, name, handler } = _.polymorphic
+      'o?sf': '$el name handler'
     , arguments
 
     return unless name || handler
@@ -88,7 +92,7 @@ class Leaf.View extends Leaf.Object
       @getElement(el).off name
 
   unsubscribeEvent: ->
-    { $el, name, handler } = Leaf.Utils.polymorphic
+    { $el, name, handler } = _.polymorphic
       'o?sf?': '$el name handler'
     , arguments
 

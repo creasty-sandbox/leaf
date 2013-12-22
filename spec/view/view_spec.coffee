@@ -5,9 +5,9 @@ describe 'Leaf.View', ->
     expect(Leaf.View).toBeDefined()
 
   it 'should create instance', ->
-    gen = new Leaf.View()
-    expect(gen).not.toBeNull()
-    expect(gen.constructor).toBe Leaf.View
+    view = new Leaf.View()
+    expect(view).not.toBeNull()
+    expect(view.constructor).toBe Leaf.View
 
 
 describe 'view', ->
@@ -15,11 +15,11 @@ describe 'view', ->
   class TestView extends Leaf.View
 
     elements:
-      'container':  '#test_container'
-      'container2': 'body $container'
-      'inner':      '$container > .inner'
-      'inner2':     '$inner > .inner2'
-      'btn':        '$container > .btn'
+      'container':   '#test_container'
+      '@container2': 'body $container'
+      'inner':       '$container > .inner'
+      'inner2':      '$inner > .inner2'
+      'btn':         '$container > .btn'
 
     events:
       'btn click': 'btnClick'
@@ -30,22 +30,26 @@ describe 'view', ->
     btnClick: ->
       @test.btnClick = true
 
+
   beforeEach ->
-    unless $('#test_container').length
-      $test = $ """
+    @$el = $ '''
+      <div>
         <div id="test_container" data-ck="1">
           <div class="inner" data-ck="2">
             <div class="inner2" data-ck="3"></div>
           </div>
           <div class="btn" data-ck="4"></div>
         </div>
-      """
-      $test.appendTo $ 'body'
+      </div>
+    '''
+    @$el.appendTo $ 'body'
 
-    @view = new TestView()
+    @view = new TestView @$el
+    console.log @view
 
   afterEach ->
     @view._destroyView()
+    @$el.remove()
 
 
   it 'should call `#setup` on initialization', ->

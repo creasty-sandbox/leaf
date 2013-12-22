@@ -112,7 +112,7 @@ describe 'Leaf.Inflector', ->
       expect(Leaf.Inflector.pluralize('number')).toEqual 'numb3rs'
 
     it 'should add a rule to singularize the special case', ->
-      Leaf.Inflector.irregular 'numb3rs', 'number'
+      Leaf.Inflector.irregular 'number', 'numb3rs'
 
       expect(Leaf.Inflector.singularize('numb3rs')).toEqual 'number'
 
@@ -136,14 +136,14 @@ describe 'Leaf.Inflector', ->
   describe '.reset()', ->
 
     it 'should be defined', ->
-      expect(Leaf.Inflector.resetInflections).toBeDefined()
+      expect(Leaf.Inflector.reset).toBeDefined()
 
     it 'should reset the default inflections', ->
       Leaf.Inflector.plural 'number', 'numb3rs'
 
       expect(Leaf.Inflector.pluralize('number')).toEqual 'numb3rs'
 
-      Leaf.Inflector.resetInflections()
+      Leaf.Inflector.reset()
 
       expect(Leaf.Inflector.pluralize('number')).toEqual 'numbers'
 
