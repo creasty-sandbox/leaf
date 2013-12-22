@@ -8,8 +8,11 @@ class Leaf.Template.DOMGenerator
   constructor: ->
 
   init: (@tree, @obj, @scope = {}) ->
-    unless @tree && @obj
-      throw new Error 'error'
+    unless @tree
+      throw new RequiredArgumentsError('tree')
+
+    unless @obj
+      throw new RequiredArgumentsError('obj')
 
     @$parent = $ doc.createElement 'body'
 

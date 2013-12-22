@@ -45,7 +45,6 @@ describe 'view', ->
     @$el.appendTo $ 'body'
 
     @view = new TestView @$el
-    console.log @view
 
   afterEach ->
     @view._destroyView()

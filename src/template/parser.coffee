@@ -96,6 +96,7 @@ ATTR_PRESERVED =
 
 ATTR_BOOLEANS = /^(disabled|selected|checked|contenteditable)$/
 
+
 #  JavaScript
 #-----------------------------------------------
 JS_RESERVED_WORDS = ///
@@ -135,6 +136,11 @@ JS_NON_VARIABLE_REGEXP = ///
 JS_VARIABLE_REGEXP = /\b[a-z]\w*/g
 
 
+#  Errors
+#-----------------------------------------------
+class UnbalancedTagParseError extends Leaf.Error
+
+
 #  Parser
 #-----------------------------------------------
 class Leaf.Template.Parser
@@ -145,7 +151,7 @@ class Leaf.Template.Parser
 
   init: (@buffer) ->
     unless @buffer?
-      throw new Error 'Initialization without buffer'
+      throw new RequiredArgumentsError('buffer')
 
     formatter = Leaf.Formatter.HTML
     @buffer = formatter.minify @buffer
@@ -309,7 +315,7 @@ class Leaf.Template.Parser
           @customTagCloseOther _p, p
           @customTagClose _p, p
         else
-          throw new Error 'Parse error'
+          throw new UnbalancedTagParseError()
 
   parseTree: (parents) ->
     token = @tokenizer.getToken()
@@ -325,4 +331,5 @@ class Leaf.Template.Parser
   clone: ->
     tree = @getTree()
     _.cloneDeep tree
+
 

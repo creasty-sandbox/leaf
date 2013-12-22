@@ -56,7 +56,7 @@ class Leaf.Template.Tokenizer
 
   init: (@buffer) ->
     unless @buffer?
-      throw new Error 'Initialization without buffer'
+      throw new RequiredArguments 'buffer'
 
     @_buffer = @buffer
     @tokens = {}

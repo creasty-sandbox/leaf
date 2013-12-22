@@ -11,6 +11,7 @@ FILES =
   _headers: [
     'leaf.coffee'
     'constants.coffee'
+    'errors.coffee'
   ]
   utils: [
     'lodash/*.coffee'
