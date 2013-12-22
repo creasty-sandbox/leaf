@@ -14,7 +14,7 @@ FILES =
   ]
   utils: [
     'utils.coffee'
-    'inflection.coffee'
+    'inflector.coffee'
     'event.coffee'
     'cache.coffee'
     'object.coffee'

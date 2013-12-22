@@ -13,9 +13,15 @@ class Leaf.Object extends PlainObject
     @_leafObject = true
     @_leafID = ++_leafID
     @_c = @constructor
+    @_superClass = @constructor.__super__
     @_cache = new Leaf.Cache()
     @_cache.set @toLeafID(), @
     @_accessors = {}
+
+  inherit: (property) ->
+    return unless @_superClass
+    self = @[property] ? {}
+    @[property] = _.defaults self, @_superClass[property]
 
   accessors: (accessors, obj = @) ->
     return unless accessors

@@ -8,9 +8,8 @@ class Leaf.View extends Leaf.Object
   constructor: (@$view) ->
     @_objectBaseInit()
 
-    superClass = @constructor.__super__
-    @elements = _.extend superClass.elements, @elements ? {} if superClass
-    @events = _.extend superClass.events, @events ? {} if superClass
+    @inherit 'elements'
+    @inherit 'events'
 
     @$view ?= $ 'body'
 
@@ -38,13 +37,8 @@ class Leaf.View extends Leaf.Object
   _setupElements: ->
     pending = {}
 
-    resolve = (name, selector, $find) =>
-      $el =
-        if $find
-          $find.find selector
-        else
-          @$view.find selector
-
+    resolve = (name, selector, $find = @$view) =>
+      $el = $find.find selector
       @setElement name, $el
       dfd = (pending[name] ?= $.Deferred())
       dfd.resolve $el
