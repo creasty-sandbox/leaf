@@ -244,11 +244,11 @@ module.exports = (grunt) ->
 
       coffee:
         files: "#{SRC_DIR}**/*.coffee"
-        tasks: ['coffee:src']
+        tasks: ['newer:coffee:src']
 
       coffee_test:
         files: "#{SPEC_DIR}**/*.coffee"
-        tasks: ['coffee:test']
+        tasks: ['newer:coffee:test']
 
       jasmine:
         files: [

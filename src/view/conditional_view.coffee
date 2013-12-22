@@ -1,4 +1,10 @@
 
+#  Error
+#-----------------------------------------------
+class NoConditionBindingsParseError extends Leaf.Error
+class InvalidIfContextError extends Leaf.Error
+
+
 #  if
 #-----------------------------------------------
 Leaf.Template.registerTag 'if',
@@ -17,7 +23,7 @@ Leaf.Template.registerTag 'if',
 
   open: (node, parent) ->
     unless node.localeBindings.condition
-      throw new Error 'Parse error: if should have $condition'
+      throw new NoConditionBindingsParseError()
 
     cond = node.localeBindings.condition
     stack = ["(#{cond.expr})"]
@@ -48,10 +54,10 @@ Leaf.Template.registerTag 'elseif',
 
   open: (node, parent) ->
     unless parent.context.if
-      throw new Error 'Context error: cannot resolve elseif'
+      throw new InvalidIfContextError()
 
     unless node.localeBindings.condition
-      throw new Error 'Parse error: if should have $condition'
+      throw new NoConditionBindingsParseError()
 
     cond = node.localeBindings.condition
 
@@ -87,7 +93,7 @@ Leaf.Template.registerTag 'else',
 
   open: (node, parent) ->
     unless parent.context.if
-      throw new Error 'Context error: cannot resolve else'
+      throw new InvalidIfContextError()
 
     n = parent.context.if
     stack = n.condition.stack

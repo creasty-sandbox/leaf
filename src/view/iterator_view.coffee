@@ -1,4 +1,9 @@
 
+#  Error
+#-----------------------------------------------
+class NoIteratorBindingsError extends Leaf.Error
+
+
 #  Iterator
 #-----------------------------------------------
 class IteratorView extends Leaf.Object
@@ -19,7 +24,7 @@ class IteratorView extends Leaf.Object
       break
 
     unless node.iterator
-      throw new Error 'Parse error: each should have one or more iterators'
+      throw new NoIteratorBindingsError()
 
   @create: (node, $marker, $parent, obj) ->
     iv = new IteratorView()
