@@ -20,6 +20,15 @@ describe 'Conditional statements', ->
       </div>
     '''
 
+    it 'should throw an exception when $condition binding is not set', ->
+      bufferWithError = '<if></if>'
+      obj = {}
+
+      ctx = ->
+        createDOM obj, bufferWithError
+
+      expect(ctx).toThrow()
+
     it 'should create DOM if `$condition` is falsy', ->
       obj = new Leaf.Observable age: 18
       $el = createDOM obj, buffer
