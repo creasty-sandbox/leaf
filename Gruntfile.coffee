@@ -89,6 +89,145 @@ FILE_DEPENDENCIES =
   ]
 
 
+#=== Utils
+#==============================================================================================
+files = do ->
+  f =
+    src: {}
+    tmp: {}
+    specSrc: {}
+    specTmp: {}
+
+  for name, set of FILES
+    if '_' == name[0]
+      name = name[1..]
+      dir = ''
+    else
+      dir = name + '/'
+
+    f.src[name] = set.map (path) ->
+      SRC_DIR + dir + path
+    f.tmp[name] = set.map (path) ->
+      TMP_DIR + SRC_DIR + dir + path.replace('.coffee', '.js')
+    f.specSrc[name] = set.map (path) ->
+      SPEC_DIR + dir + path.replace('.coffee', '_spec.coffee')
+    f.specTmp[name] = set.map (path) ->
+      TMP_DIR + SPEC_DIR + dir + path.replace('.coffee', '_spec.js')
+
+  f.vendor = VENDOR_FILES.map (path) ->
+    VENDOR_DIR + path
+
+  f
+
+files.all = (name, type = 'tmp') ->
+  all = []
+
+  all.push files[type][dep]... for dep in FILE_DEPENDENCIES[name] ? []
+  all.push files[type][name]...
+
+  all
+
+
+#=== Task config
+#==============================================================================================
+gruntConfig = {}
+
+# Coffee
+gruntConfig.coffee =
+  src:
+    options:
+      bare: true
+    expand: true
+    cwd: SRC_DIR
+    dest: TMP_DIR + SRC_DIR
+    src: ['**/*.coffee']
+    ext: '.js'
+
+  test:
+    expand: true
+    cwd: SPEC_DIR
+    dest: TMP_DIR + SPEC_DIR
+    src: ['**/*.coffee']
+    ext: '.js'
+
+  release:
+    options:
+      join: true
+    files:
+      'dist/leaf.js': files.all 'view', 'src'
+
+# Concat
+gruntConfig.concat =
+  src:
+    options:
+      banner: '<%= meta.banner %>'
+    files:
+      'dist/leaf.js': ['dist/leaf.js']
+
+# Uglify
+gruntConfig.uglify =
+  src:
+    options:
+      banner: '<%= meta.banner %>'
+      report: 'gzip'
+    files:
+      'dist/leaf.min.js': ['dist/leaf.js']
+
+# Jasmine
+gruntConfig.jasmine =
+  options:
+    helpers: [
+      "#{VENDOR_DIR}jasmine-jquery/lib/jasmine-jquery.js"
+      "#{TMP_DIR}#{SPEC_DIR}helpers/*.js"
+    ]
+    keepRunner: true
+    vendor: files.vendor
+
+do ->
+  c = gruntConfig.jasmine
+
+  for name of FILE_DEPENDENCIES
+    c[name] =
+      src: files.all name
+      options:
+        specs: files.specTmp[name]
+
+# Watch
+gruntConfig.watch =
+  options:
+    spawn: false
+
+  coffee:
+    files: "#{SRC_DIR}**/*.coffee"
+    tasks: ['newer:coffee:src']
+
+  coffee_test:
+    files: "#{SPEC_DIR}**/*.coffee"
+    tasks: ['newer:coffee:test']
+
+  jasmine:
+    files: [
+      "#{TMP_DIR}#{SPEC_DIR}**/*.js"
+      "#{TMP_DIR}#{SRC_DIR}**/*.js"
+    ]
+    tasks: ['filtered_test']
+
+
+#=== Banner
+#==============================================================================================
+BANNER =  """
+  /*!
+   * <%= pkg.title || pkg.name %> - v<%= pkg.version %> (<%= grunt.template.today("yyyy-mm-dd") %>)
+   *
+   * @author <%= pkg.author %>
+   * @url <%= pkg.url %>
+   * @copyright <%= grunt.template.today("yyyy") %> <%= pkg.author %>
+   * @license <%= pkg.license %>
+   */
+
+  """
+
+
 #=== Grunt
 #==============================================================================================
 module.exports = (grunt) ->
@@ -101,162 +240,11 @@ module.exports = (grunt) ->
   #-----------------------------------------------
   filter = grunt.option 'filter'
 
-  #  Files
-  #-----------------------------------------------
-  files = do ->
-    f =
-      src: {}
-      tmp: {}
-      specSrc: {}
-      specTmp: {}
-
-    for name, set of FILES
-      if '_' == name[0]
-        name = name[1..]
-        dir = ''
-      else
-        dir = name + '/'
-
-      f.src[name] = set.map (path) ->
-        SRC_DIR + dir + path
-      f.tmp[name] = set.map (path) ->
-        TMP_DIR + SRC_DIR + dir + path.replace('.coffee', '.js')
-      f.specSrc[name] = set.map (path) ->
-        SPEC_DIR + dir + path.replace('.coffee', '_spec.coffee')
-      f.specTmp[name] = set.map (path) ->
-        TMP_DIR + SPEC_DIR + dir + path.replace('.coffee', '_spec.js')
-
-    f.vendor = VENDOR_FILES.map (path) ->
-      VENDOR_DIR + path
-
-    f
-
-  files.all = (name, type = 'tmp') ->
-    all = []
-
-    all.push files[type][dep]... for dep in FILE_DEPENDENCIES[name] ? []
-    all.push files[type][name]...
-
-    all
-
   #  Config
   #-----------------------------------------------
-  grunt.initConfig
-
-    # Package
-    pkg: grunt.file.readJSON 'package.json'
-
-    # Meta
-    meta:
-     banner:
-        """
-        /*!
-         * <%= pkg.title || pkg.name %> - v<%= pkg.version %> (<%= grunt.template.today("yyyy-mm-dd") %>)
-         *
-         * @author <%= pkg.author %>
-         * @url <%= pkg.url %>
-         * @copyright <%= grunt.template.today("yyyy") %> <%= pkg.author %>
-         * @license <%= pkg.license %>
-         */
-
-        """
-
-    # Coffee
-    coffee:
-      src:
-        options:
-          bare: true
-        expand: true
-        cwd: SRC_DIR
-        dest: TMP_DIR + SRC_DIR
-        src: ['**/*.coffee']
-        ext: '.js'
-
-      test:
-        expand: true
-        cwd: SPEC_DIR
-        dest: TMP_DIR + SPEC_DIR
-        src: ['**/*.coffee']
-        ext: '.js'
-
-      release:
-        options:
-          join: true
-        files:
-          'dist/leaf.js': files.all 'view', 'src'
-
-    # Concat
-    concat:
-      src:
-        options:
-          banner: '<%= meta.banner %>'
-        files:
-          'dist/leaf.js': ['dist/leaf.js']
-
-    # Uglify
-    uglify:
-      src:
-        options:
-          banner: '<%= meta.banner %>'
-          report: 'gzip'
-        files:
-          'dist/leaf.min.js': ['dist/leaf.js']
-
-    # Jasmine
-    jasmine:
-      options:
-        helpers: [
-          "#{VENDOR_DIR}jasmine-jquery/lib/jasmine-jquery.js"
-          "#{TMP_DIR}#{SPEC_DIR}helpers/*.js"
-        ]
-        keepRunner: true
-        vendor: files.vendor
-
-      utils:
-        src: files.all 'utils'
-        options:
-          specs: files.specTmp.utils
-
-      observable:
-        src: files.all 'observable'
-        options:
-          specs: files.specTmp.observable
-
-      template:
-        src: files.all 'template'
-        options:
-          specs: files.specTmp.template
-
-      view:
-        src: files.all 'view'
-        options:
-          specs: files.specTmp.view
-
-      core:
-        src: files.all 'core'
-        options:
-          specs: files.specTmp.core
-
-    # Watch
-    watch:
-      options:
-        spawn: false
-
-      coffee:
-        files: "#{SRC_DIR}**/*.coffee"
-        tasks: ['newer:coffee:src']
-
-      coffee_test:
-        files: "#{SPEC_DIR}**/*.coffee"
-        tasks: ['newer:coffee:test']
-
-      jasmine:
-        files: [
-          "#{TMP_DIR}#{SPEC_DIR}**/*.js"
-          "#{TMP_DIR}#{SRC_DIR}**/*.js"
-        ]
-        tasks: ['filtered_test']
-
+  gruntConfig.pkg = grunt.file.readJSON 'package.json'
+  gruntConfig.meta = banner: BANNER
+  grunt.initConfig gruntConfig
 
   #  Tasks
   #-----------------------------------------------

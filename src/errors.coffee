@@ -9,13 +9,13 @@ class Leaf.Error extends Error
   constructor: (args...) ->
     msg = []
     msg.push @constructor.prefix
-    msg.push @getErrorType() + ':'
+    msg.push @getErrorType()
+    msg.push ':' if args.length > 0
     msg.push @setMessage args...
     @message = _.compact(msg).join ' '
 
   getErrorType: ->
     @constructor.name
-    .replace(/_([a-z])/ig, '::$1')
     .replace /([a-z])([A-Z])/g, (_0, _1, _2) ->
       "#{_1} #{_2.toLowerCase()}"
 
