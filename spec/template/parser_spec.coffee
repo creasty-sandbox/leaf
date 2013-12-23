@@ -337,7 +337,7 @@ describe 'parser', ->
       result = [
         {
           type: T_TAG_OPEN
-          context: { 'if': null }
+          context: {}
           name: 'div'
           attrs: {}
           attrBindings: {}
@@ -363,7 +363,7 @@ describe 'parser', ->
       result = [
         {
           type: T_TAG_OPEN
-          context: { 'if': null }
+          context: {}
           name: 'section'
           attrs: {}
           attrBindings: {}
@@ -396,7 +396,7 @@ describe 'parser', ->
       result = [
         {
           type: T_TAG_OPEN
-          context: { 'if': null }
+          context: {}
           name: 'div'
           attrs: {}
           attrBindings: {}
