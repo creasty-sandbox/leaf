@@ -14,7 +14,7 @@ class Leaf.Component
 
 #  Error
 #-----------------------------------------------
-class NoNameAttributeWithCompoentTagError extends Leaf.Error
+class NoNameAttributeWithComponentTagError extends Leaf.Error
 
 
 #  Component view
@@ -39,7 +39,7 @@ Leaf.Template.registerTag 'componet',
     { name } = node.attrs
 
     unless name
-      throw new NoNameAttributeWithCompoentTagError()
+      throw new NoNameAttributeWithComponentTagError()
 
     Leaf.Component.register name, node
 

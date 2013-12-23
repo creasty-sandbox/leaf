@@ -1,14 +1,14 @@
 
-createDOM = (obj, buffer) ->
-  psr = new Leaf.Template.Parser()
-  psr.init buffer
-
-  gen = new Leaf.Template.DOMGenerator()
-  gen.init psr.getTree(), obj
-  gen.getDOM()
-
-
 describe 'Conditional statements', ->
+
+  createDOM = (obj, buffer) ->
+    psr = new Leaf.Template.Parser()
+    psr.init buffer
+
+    gen = new Leaf.Template.DOMGenerator()
+    gen.init psr.getTree(), obj
+    gen.getDOM()
+
 
   describe '<if $condition="expr">', ->
 

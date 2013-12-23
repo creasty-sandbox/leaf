@@ -27,6 +27,15 @@ describe 'Leaf.Component', ->
 
 describe 'Component views', ->
 
+  createDOM = (obj, buffer) ->
+    psr = new Leaf.Template.Parser()
+    psr.init buffer
+
+    gen = new Leaf.Template.DOMGenerator()
+    gen.init psr.getTree(), obj
+    gen.getDOM()
+
+
   describe '<component name="foo">', ->
 
     it 'should throw an exception when name attribute is not set', ->

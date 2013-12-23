@@ -13,47 +13,46 @@ describe 'Leaf.Template.Tokenizer', ->
 describe 'tokenizer', ->
 
   DUMMY_BUFFER = 'buffer'
-  tk = null
 
   beforeEach ->
-    tk = new Leaf.Template.Tokenizer()
+    @tk = new Leaf.Template.Tokenizer()
 
 
   describe '#init(buffer)', ->
 
     it 'should throw an exception if `buffer` is not given', ->
-      ctx = -> tk.init()
+      ctx = => @tk.init()
       expect(ctx).toThrow()
 
     it 'should initialize index pointer and token queues', ->
-      tk.init 'buffer'
-      expect(tk.index).toBe 0
-      expect(tk.tokens).toEqual {}
+      @tk.init 'buffer'
+      expect(@tk.index).toBe 0
+      expect(@tk.tokens).toEqual {}
 
 
   describe '#eat', ->
 
     it 'should pop buffer by a length of token and return token', ->
-      tk.init '1234$'
+      @tk.init '1234$'
 
-      expect(tk.buffer).toEqual '1234$'
+      expect(@tk.buffer).toEqual '1234$'
 
       token = length: 4
-      ate = tk.eat token
+      ate = @tk.eat token
 
       expect(ate).toBe token
-      expect(tk.buffer).toEqual '$'
+      expect(@tk.buffer).toEqual '$'
 
 
   describe '#getText(buffer)', ->
 
     it 'should return T_NONE token when `buffer` is empty', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
       token = type: T_NONE
-      expect(tk.getText('')).toHaveContents token
+      expect(@tk.getText('')).toHaveContents token
 
     it 'should return T_TEXT token when `buffer` is not empty', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
 
       buffer = 'text text'
       token =
@@ -62,29 +61,29 @@ describe 'tokenizer', ->
         index: 0
         length: buffer.length
 
-      expect(tk.getText(buffer)).toHaveContents token
+      expect(@tk.getText(buffer)).toHaveContents token
 
 
   describe '#getInterpolation(buffer)', ->
 
     it 'should return T_NONE token when there is no interpolations in `buffer`', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
 
       buffer = 'no interpolations in here'
       token = type: T_NONE
 
-      expect(tk.getInterpolation(buffer)).toHaveContents token
+      expect(@tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_NONE token for backslash-escaped interpolations', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
 
       buffer = 'no \\{{ interpolations }} in here'
       token = type: T_NONE
 
-      expect(tk.getInterpolation(buffer)).toHaveContents token
+      expect(@tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_INTERPOLATION token when `buffer` contains interpolations', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
 
       buffer = 'here goes an {{ interpolation }}'
       token =
@@ -96,10 +95,10 @@ describe 'tokenizer', ->
           val: 'interpolation'
           escape: true
 
-      expect(tk.getInterpolation(buffer)).toHaveContents token
+      expect(@tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_INTERPOLATION token with no escape option for raw interpolations', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
 
       buffer = 'it is {{{ raw }}}'
       token =
@@ -111,18 +110,18 @@ describe 'tokenizer', ->
           val: 'raw'
           escape: false
 
-      expect(tk.getInterpolation(buffer)).toHaveContents token
+      expect(@tk.getInterpolation(buffer)).toHaveContents token
 
 
   describe '#getTag(buffer)', ->
 
     it 'should return T_NONE token when `buffer` is empty', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
       token = type: T_NONE
-      expect(tk.getTag('')).toHaveContents token
+      expect(@tk.getTag('')).toHaveContents token
 
     it 'should return T_TAG_OPEN token for opening tags', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
 
       buffer = 'text <div id="foo">'
       token =
@@ -133,10 +132,10 @@ describe 'tokenizer', ->
         index: 5
         length: 14
 
-      expect(tk.getTag(buffer)).toHaveContents token
+      expect(@tk.getTag(buffer)).toHaveContents token
 
     it 'should return T_TAG_CLOSE token for closing tag', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
 
       buffer = 'text</div>'
       token =
@@ -146,10 +145,10 @@ describe 'tokenizer', ->
         index: 4
         length: 6
 
-      expect(tk.getTag(buffer)).toHaveContents token
+      expect(@tk.getTag(buffer)).toHaveContents token
 
     it 'should return T_TAG_SELF token for self closing tag', ->
-      tk.init DUMMY_BUFFER
+      @tk.init DUMMY_BUFFER
 
       buffer = 'text <img src="img.gif">'
       token =
@@ -160,22 +159,22 @@ describe 'tokenizer', ->
         index: 5
         length: 19
 
-      expect(tk.getTag(buffer)).toHaveContents token
+      expect(@tk.getTag(buffer)).toHaveContents token
 
 
   describe '#getToken', ->
 
     getTokenizer = (buffer) ->
       formatter = Leaf.Formatter.HTML
-      tk = new Leaf.Template.Tokenizer()
+      @tk = new Leaf.Template.Tokenizer()
 
-      tk.init formatter.minify(buffer)
-      tk
+      @tk.init formatter.minify(buffer)
+      @tk
 
 
     it 'should return T_NONE token when the buffer given is empty', ->
-      tk = getTokenizer ''
-      expect(tk.getToken()).toHaveContents { type: T_NONE }
+      @tk = getTokenizer ''
+      expect(@tk.getToken()).toHaveContents { type: T_NONE }
 
     it 'should return tag element and text node tokens', ->
       html = """
@@ -241,8 +240,8 @@ describe 'tokenizer', ->
         }
       ]
 
-      tk = getTokenizer html
+      @tk = getTokenizer html
 
-      expect(tk.getToken()).toHaveContents token for token in tokens
+      expect(@tk.getToken()).toHaveContents token for token in tokens
 
 
