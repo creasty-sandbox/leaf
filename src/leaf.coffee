@@ -1,4 +1,19 @@
 
+class Leaf
+
+  develop: false
+
+  log: (args...) ->
+    return unless @develop
+    msg = ['[Leaf] Log:', args...]
+    console.log msg...
+
+  warn: (args...) ->
+    return unless @develop
+    msg = ['[Leaf] Warn:', args...]
+    console.error msg...
+
+
 # Framework namespace
-window.Leaf = {}
+window.Leaf = new Leaf()
 

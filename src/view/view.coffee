@@ -3,30 +3,47 @@ class Leaf.View extends Leaf.Object
 
   @_objectType = 'View'
 
-  VAR_SELECTOR = /^\$(\w+)\s*(.+)/i
+  VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
-  constructor: (@controller) ->
-    super()
+  constructor: (@$view) ->
+    @_objectBaseInit()
 
-    @elements ?= {}
-    @events ?= {}
+    @inherit 'elements'
+    @inherit 'events'
+
+    @$body = $ 'body'
+    @$view ?= @$body
 
     @_setupElements()
     @setup()
     @_subscribeEvents()
+
+  fromParsedTree: (tree, obj, scope) ->
+    view = new Leaf.Template.DOMGenerator()
+    view.init _.cloneDeep(tree), obj, scope
+    view.getDOM()
+
+  getCachedView: (obj) ->
+    viewCache = new Leaf.Cache 'views'
+    id = obj.toLeafID()
+
+    if (cachedView = viewCache.get id)
+      cachedView
+    else
+      viewCache.set id, @
+      null
 
   setup: ->
 
   _setupElements: ->
     pending = {}
 
-    resolve = (name, selector, $find) =>
-      $el =
-        if $find
-          $find.find selector
-        else
-          $ selector
+    resolve = (name, selector, $find = @$view) =>
+      if '@' == name[0]
+        name = name[1..]
+        $find = $ document
 
+      $el = $find.find selector
       @setElement name, $el
       dfd = (pending[name] ?= $.Deferred())
       dfd.resolve $el
@@ -38,8 +55,7 @@ class Leaf.View extends Leaf.Object
       else
         selector = selector
           .replace(/^\\\$/, '$')
-          .replace /\$(\w+)/g, (_0, _1) =>
-            @elements[_1]
+          .replace /\$(\w+)/g, (_0, _1) => @elements[_1]
 
         resolve name, selector
 
@@ -54,14 +70,13 @@ class Leaf.View extends Leaf.Object
       @subscribeEvent @getElement(el), name, fn
 
   subscribeEvent: ->
-    { $el, name, handler } = Leaf.Utils.polymorphic
-      'sf':  'name handler'
-      'osf': '$el name handler'
+    { $el, name, handler } = _.polymorphic
+      'o?sf': '$el name handler'
     , arguments
 
     return unless name || handler
 
-    uid = "_binded_#{@_id}"
+    uid = "_binded_#{@_leafID}"
     handler[uid] ?= handler.bind @
     handler = handler[uid]
 
@@ -77,16 +92,13 @@ class Leaf.View extends Leaf.Object
       @getElement(el).off name
 
   unsubscribeEvent: ->
-    { $el, name, handler } = Leaf.Utils.polymorphic
-      's':   'name'
-      'sf':  'name handler'
-      'os':  '$el name'
-      'osf': '$el name handler'
+    { $el, name, handler } = _.polymorphic
+      'o?sf?': '$el name handler'
     , arguments
 
     return unless name
 
-    uid = "_binded_#{@_id}"
+    uid = "_binded_#{@_leafID}"
     handler = handler[uid] if handler && handler[uid]
 
     if $el
@@ -97,7 +109,11 @@ class Leaf.View extends Leaf.Object
   send: ->
     # TODO
 
-  destroy: ->
+  _removeView: ->
+    @$view.detach()
+
+  _destroyView: ->
+    @$view = null
     @_unsubscribeEvents()
 
 

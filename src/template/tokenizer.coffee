@@ -1,12 +1,12 @@
 
 #  Token types
 #-----------------------------------------------
-T_NONE = 0
-T_TAG_OPEN = 1
-T_TAG_CLOSE = 2
-T_TAG_SELF = 3
-T_TEXT = 4
-T_INTERPOLATION = 5
+T_NONE          = 'T_NONE'
+T_TAG_OPEN      = 'T_TAG_OPEN'
+T_TAG_CLOSE     = 'T_TAG_CLOSE'
+T_TAG_SELF      = 'T_TAG_SELF'
+T_TEXT          = 'T_TEXT'
+T_INTERPOLATION = 'T_INTERPOLATION'
 
 
 #  Patterns
@@ -25,12 +25,25 @@ INTERPOLATION_REGEXP = ///
 
 TAG_REGEXP = ///
   <
-    (/?)    # closing tag
-    (\w+)   # tag name
-    ([^>]*) # attributes
-    (/?)    # self closing
+    (/?)  # closing tag
+    (\w+) # tag name
+    (     # attributes
+      (?:
+        \s+         # need spaces seperater
+        (?:\$|\@|)  # $ or @ or nothing
+        (?:[\w\-]+) # property name
+        (?:         # has value?
+          =
+          (?:
+            (?:\"(?:[^\"]*?)\")   # double quotes
+            | (?:\'(?:[^\']*?)\') # single quotes
+          )
+        )?
+      )*
+    )
+    (/?) # self closing
   >
-///
+///i
 
 TAG_SELF_CLOSING = /^(img|input|hr|br|wbr|outlet|render|component)$/
 
@@ -39,7 +52,12 @@ TAG_SELF_CLOSING = /^(img|input|hr|br|wbr|outlet|render|component)$/
 #-----------------------------------------------
 class Leaf.Template.Tokenizer
 
-  constructor: (@buffer) ->
+  constructor: ->
+
+  init: (@buffer) ->
+    unless @buffer?
+      throw new RequiredArguments 'buffer'
+
     @_buffer = @buffer
     @tokens = {}
     @index = 0
@@ -53,7 +71,7 @@ class Leaf.Template.Tokenizer
     t.buffer = m[0]
     t.index = m.index
     t.length = t.buffer.length
-    t.name = m[2]
+    t.name = m[2].toLowerCase()
     t.type =
       if m[1]
         T_TAG_CLOSE
@@ -73,7 +91,7 @@ class Leaf.Template.Tokenizer
     t = {}
     t.type = T_INTERPOLATION
     t.buffer = m[2] # since m[1] is a hack
-    t.index = m.index - m[1].length
+    t.index = m.index + m[1].length
     t.length = t.buffer.length
 
     t.textBinding =

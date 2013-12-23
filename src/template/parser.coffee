@@ -5,11 +5,13 @@ ATTR_REGEXP = ///
   \s+       # need spaces seperater
   (\$|\@|)  # $ or @ or nothing
   ([\w\-]+) # property name
-  =
-  (?:
-    (?:\"([^\"]+?)\")   # double quotes
-    | (?:\'([^\']+?)\') # single quotes
-  )
+  (?:       # has value?
+    =
+    (?:
+      (?:\"([^\"]+?)\")   # double quotes
+      | (?:\'([^\']+?)\') # single quotes
+    )
+  )?
 ///g
 
 ATTR_PRESERVED =
@@ -92,20 +94,70 @@ ATTR_PRESERVED =
   'track': /^(kind|src|srclang|label|default)$/
   'video': /^(src|crossorigin|poster|preload|autoplay|mediagroup|loop|muted|controls|width|height)$/
 
+ATTR_BOOLEANS = /^(disabled|selected|checked|contenteditable)$/
+
+
+#  JavaScript
+#-----------------------------------------------
+JS_RESERVED_WORDS = ///
+  ^(
+    break|case|catch|continue|debugger|default|delete|do|else|finally|for|function|if
+    |in|instanceof|new|return|switch|this|throw|try|typeof|var|void|while|with|class|enum
+    |export|extends|import|super|implements|interface|let|package|private|protected|public
+    |static|yield|null|true|false
+  )$
+///
+
+JS_GLOBAL_VARIABLES = ///
+  ^(
+    window|document|$|_
+  )$
+///
+
+JS_NON_VARIABLE_REGEXP = ///
+  (?: # hash key literal
+    ({|,)
+    \s*
+    \w+:
+  )
+  |
+  (?: # property access by dot notation
+    \.
+    [a-z]\w*
+    (?:\.\w+)*
+    \b
+  )
+  |
+  (?: # function call
+    \w+\s*\(
+  )
+///g
+
+JS_VARIABLE_REGEXP = /\b[a-z]\w*/g
+
+
+#  Errors
+#-----------------------------------------------
+class UnbalancedTagParseError extends Leaf.Error
+
 
 #  Parser
 #-----------------------------------------------
 class Leaf.Template.Parser
 
-  constructor: (@buffer) ->
-    unless @buffer
-      throw new Error 'Instansiation without buffer'
+  customTags = Leaf.Template.customTags
 
-    formatter = new Leaf.Formatter.HTML @buffer
-    formatter.minify()
-    @buffer = formatter.getHtml()
+  constructor: ->
 
-    @tokenizer = new Leaf.Template.Tokenizer @buffer
+  init: (@buffer) ->
+    unless @buffer?
+      throw new RequiredArgumentsError('buffer')
+
+    formatter = Leaf.Formatter.HTML
+    @buffer = formatter.minify @buffer
+
+    @tokenizer = new Leaf.Template.Tokenizer()
+    @tokenizer.init @buffer
 
     @bindings = {}
 
@@ -117,22 +169,62 @@ class Leaf.Template.Parser
 
     @parents = [@root]
 
+    @parsedTree = null
+
   customTagOpen: (node, parent) ->
-    opens = Leaf.Template.customTags.opens
-    opens[node.name]? node, parent
+    c = customTags.def[node.name]
+    return unless c && c.open
+    c.open node, parent
 
   customTagClose: (node, parent) ->
-    closes = Leaf.Template.customTags.closes
-    closes[node.name]? node, parent
+    c = customTags.def[node.name]
+    return unless c && c.close
+    c.close node, parent
 
   customTagReset: (node, parent) ->
-    r node, parent for r in Leaf.Template.customTags.resets
+    for r in customTags.resets
+      customTags.def[r].reset node, parent
 
   customTagOpenOther: (node, parent) ->
-    r.fn node, parent for r in Leaf.Template.customTags.openOthers when r.tag != node.tag
+    for r in customTags.openOthers when r != node.name
+      customTags.def[r].openOther node, parent
 
   customTagCloseOther: (node, parent) ->
-    r.fn node, parent for r in Leaf.Template.customTags.closeOthers when r.tag != node.tag
+    for r in customTags.closeOthers when r != node.name
+      customTags.def[r].closeOther node, parent
+
+  parseExpression: (expr) ->
+    node = {}
+    node.expr = expr
+    node.vars = []
+
+    return node unless expr
+
+    buf = ''
+    i = 0
+    len = expr.length
+
+    # strip string and regexp literal
+    while i < len
+      buf += (c = expr[i])
+
+      if '\'' == c || '"' == c || '/' == c
+        idx = i + 1
+        true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
+        return node if (i = idx) == -1 # unbalance error
+      else
+        i++
+
+    expr = buf.replace JS_NON_VARIABLE_REGEXP, '#'
+
+    return node unless (m = expr.match JS_VARIABLE_REGEXP)
+
+    node.vars = m.filter (arg) ->
+      !arg.match(JS_RESERVED_WORDS) && !arg.match(JS_GLOBAL_VARIABLES)
+
+    node.vars = _.uniq node.vars
+
+    node
 
   parseTagAttrs: (node, attrs) ->
     node.attrs = {}
@@ -156,9 +248,9 @@ class Leaf.Template.Parser
         tagSpecificAttrs = ATTR_PRESERVED[node.name]
 
         if key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
-          node.attrBindings[key] = val
+          node.attrBindings[key] = @parseExpression val
         else
-          node.localeBindings[key] = val
+          node.localeBindings[key] = @parseExpression val
       else if '@' == binding
         node.actions[key] = val
       else
@@ -188,8 +280,9 @@ class Leaf.Template.Parser
   createInterpolationNode: (token, parent) ->
     node = {}
     node.type = token.type
-    node.val = token.textBinding.val
     node.escape = token.textBinding.escape
+    expr = _.unescape token.textBinding.val
+    node.value = @parseExpression expr
     node
 
   parseNode: (parents, token) ->
@@ -218,10 +311,11 @@ class Leaf.Template.Parser
       when T_TAG_CLOSE
         if token.name == p.name
           _p = parents.shift()
-          @customTagCloseOther token, p, _p
-          @customTagClose token, p, _p
+          p = parents[0]
+          @customTagCloseOther _p, p
+          @customTagClose _p, p
         else
-          throw new Error 'Parse error'
+          throw new UnbalancedTagParseError()
 
   parseTree: (parents) ->
     token = @tokenizer.getToken()
@@ -237,4 +331,5 @@ class Leaf.Template.Parser
   clone: ->
     tree = @getTree()
     _.cloneDeep tree
+
 

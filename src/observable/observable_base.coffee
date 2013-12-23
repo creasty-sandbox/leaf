@@ -34,14 +34,14 @@ class Leaf.ObservableBase extends Leaf.Object
     tracked = @_tracked[name]
     @_tracked[name] = []
     @_tracking[name] = false
-    tracked
+    _.unique tracked
 
   beginBatch: ->
     @_beginTrack 'setter'
 
   endBatch: ->
     if (tracked = @_endTrack 'setter')
-      _(tracked).unique().forEach (prop) =>
+      _(tracked).forEach (prop) =>
         @_update prop
 
   _getComputed: (prop) ->
@@ -79,6 +79,7 @@ class Leaf.ObservableBase extends Leaf.Object
     return { obj: @ } unless keypath?
 
     keypath += ''
+    keypath = keypath.replace /\[(\d+)\]/g, '.$1'
     path = keypath.split '.'
     len = path.length
 
@@ -93,11 +94,26 @@ class Leaf.ObservableBase extends Leaf.Object
     else
       prop = path.pop()
       ref = @
-      ref = ref.get?(p) ? ref[p] while ref && (p = path.shift())
-      { obj: ref, prop }
+      exist = obj: @, keypath: []
+
+      while ref && (p = path.shift())
+        if ref.isObservable
+          exist.obj = ref
+          exist.keypath
+
+        exist.keypath.push p
+        ref = ref.get?(p) ? ref[p]
+
+      exist.keypath.pop()
+
+      { obj: ref, prop, exist }
 
   _set: (prop, val, options = {}) ->
-    options = _.defaults { notify: true }, options
+    return unless prop
+
+    options = _.defaults options,
+      notify: true
+      bubbling: false
 
     if _.isFunction @_data[prop]
       @_data[prop].call @, val
@@ -114,10 +130,9 @@ class Leaf.ObservableBase extends Leaf.Object
     val
 
   set: ->
-    { keypath, val, options, pairs } = Leaf.Utils.polymorphic
+    { keypath, val, options, pairs } = _.polymorphic
       'oo?':  'pairs options'
       's.o?': 'keypath val options'
-      '.':    'val'
     , arguments
 
     if pairs
@@ -166,9 +181,8 @@ class Leaf.ObservableBase extends Leaf.Object
     $(window).on @_getEventName(prop), fn
 
   observe: ->
-    { keypath, callback } = Leaf.Utils.polymorphic
-      'f':  'callback'
-      'sf': 'keypath callback'
+    { keypath, callback } = _.polymorphic
+      's?f': 'keypath callback'
     , arguments
 
     { obj, prop } = @getParent keypath
@@ -177,7 +191,11 @@ class Leaf.ObservableBase extends Leaf.Object
   _unobserve: (prop, callback) ->
     $(window).off @_getEventName(prop), callback._binded ? callback
 
-  unobserve: (keypath, callback) ->
+  unobserve: ->
+    { keypath, callback } = _.polymorphic
+      's?f': 'keypath callback'
+    , arguments
+
     { obj, prop } = @getParent keypath
     obj._unobserve prop, callback
 

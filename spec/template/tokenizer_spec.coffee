@@ -12,10 +12,29 @@ describe 'Leaf.Template.Tokenizer', ->
 
 describe 'tokenizer', ->
 
+  DUMMY_BUFFER = 'buffer'
+  tk = null
+
+  beforeEach ->
+    tk = new Leaf.Template.Tokenizer()
+
+
+  describe '#init(buffer)', ->
+
+    it 'should throw an exception if `buffer` is not given', ->
+      ctx = -> tk.init()
+      expect(ctx).toThrow()
+
+    it 'should initialize index pointer and token queues', ->
+      tk.init 'buffer'
+      expect(tk.index).toBe 0
+      expect(tk.tokens).toEqual {}
+
+
   describe '#eat', ->
 
     it 'should pop buffer by a length of token and return token', ->
-      tk = new Leaf.Template.Tokenizer '1234$'
+      tk.init '1234$'
 
       expect(tk.buffer).toEqual '1234$'
 
@@ -29,12 +48,12 @@ describe 'tokenizer', ->
   describe '#getText(buffer)', ->
 
     it 'should return T_NONE token when `buffer` is empty', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
       token = type: T_NONE
       expect(tk.getText('')).toHaveContents token
 
     it 'should return T_TEXT token when `buffer` is not empty', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
 
       buffer = 'text text'
       token =
@@ -49,7 +68,7 @@ describe 'tokenizer', ->
   describe '#getInterpolation(buffer)', ->
 
     it 'should return T_NONE token when there is no interpolations in `buffer`', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
 
       buffer = 'no interpolations in here'
       token = type: T_NONE
@@ -57,7 +76,7 @@ describe 'tokenizer', ->
       expect(tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_NONE token for backslash-escaped interpolations', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
 
       buffer = 'no \\{{ interpolations }} in here'
       token = type: T_NONE
@@ -65,7 +84,7 @@ describe 'tokenizer', ->
       expect(tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_INTERPOLATION token when `buffer` contains interpolations', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
 
       buffer = 'here goes an {{ interpolation }}'
       token =
@@ -80,7 +99,7 @@ describe 'tokenizer', ->
       expect(tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_INTERPOLATION token with no escape option for raw interpolations', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
 
       buffer = 'it is {{{ raw }}}'
       token =
@@ -98,12 +117,12 @@ describe 'tokenizer', ->
   describe '#getTag(buffer)', ->
 
     it 'should return T_NONE token when `buffer` is empty', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
       token = type: T_NONE
       expect(tk.getTag('')).toHaveContents token
 
     it 'should return T_TAG_OPEN token for opening tags', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
 
       buffer = 'text <div id="foo">'
       token =
@@ -117,7 +136,7 @@ describe 'tokenizer', ->
       expect(tk.getTag(buffer)).toHaveContents token
 
     it 'should return T_TAG_CLOSE token for closing tag', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
 
       buffer = 'text</div>'
       token =
@@ -130,7 +149,7 @@ describe 'tokenizer', ->
       expect(tk.getTag(buffer)).toHaveContents token
 
     it 'should return T_TAG_SELF token for self closing tag', ->
-      tk = new Leaf.Template.Tokenizer()
+      tk.init DUMMY_BUFFER
 
       buffer = 'text <img src="img.gif">'
       token =
@@ -146,12 +165,12 @@ describe 'tokenizer', ->
 
   describe '#getToken', ->
 
-    getTokenizer = (html) ->
-      pf = new Leaf.Formatter.HTML html
-      pf.minify()
+    getTokenizer = (buffer) ->
+      formatter = Leaf.Formatter.HTML
+      tk = new Leaf.Template.Tokenizer()
 
-      tokenizer = new Leaf.Template.Tokenizer pf.getHtml()
-      tokenizer
+      tk.init formatter.minify(buffer)
+      tk
 
 
     it 'should return T_NONE token when the buffer given is empty', ->

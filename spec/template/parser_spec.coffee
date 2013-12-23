@@ -1,74 +1,184 @@
 
-describe 'Leaf.Template.Parser(buffer)', ->
+describe 'Leaf.Template.Parser', ->
 
   it 'should be defined', ->
     expect(Leaf.Template.Parser).toBeDefined()
 
-  it 'should throw an exception if `buffer` is not given or is empty', ->
-    ctx = ->
-      psr = new Leaf.Template.Parser()
-
-    expect(ctx).toThrow()
-
-  it 'should create instance with buffer', ->
-    pr = new Leaf.Template.Parser 'foo'
+  it 'should create instance', ->
+    pr = new Leaf.Template.Parser()
     expect(pr).not.toBeNull()
     expect(pr.constructor).toBe Leaf.Template.Parser
 
 
 describe 'parser', ->
 
-  it 'should have root and parents stack', ->
-    psr = new Leaf.Template.Parser 'foo'
-    expect(psr.root).toBeDefined()
-    expect(psr.parents).toBeDefined()
-    expect(psr.parents[0]).toBe psr.root
+  DUMMY_BUFFER = 'buffer'
+  psr = null
+
+  beforeEach ->
+    psr = new Leaf.Template.Parser()
+
+
+  describe '#init(buffer)', ->
+
+    it 'should throw an exception if `buffer` is not given', ->
+      ctx = -> psr.init()
+      expect(ctx).toThrow()
+
+    it 'should have root and parents stack with initialization', ->
+      psr.init DUMMY_BUFFER
+      expect(psr.root).toBeDefined()
+      expect(psr.parents).toBeDefined()
+      expect(psr.parents[0]).toBe psr.root
+
+
+  describe '#parseExpression(node, expr)', ->
+
+    it 'should return top level variables', ->
+      psr.init DUMMY_BUFFER
+
+      expr = 'foo.bar.baz'
+
+      node = psr.parseExpression expr
+
+      expect(node.vars).toHaveContents ['foo']
+
+    it 'should ignore JavaScript\'s keywords and reserved words', ->
+      psr.init DUMMY_BUFFER
+
+      expr = 'window.location.href + document.title'
+
+      node = psr.parseExpression expr
+
+      expect(node.vars.length).toBe 0
+
+    it 'should ignore variables starting with a capital letter', ->
+      psr.init DUMMY_BUFFER
+
+      expr = 'new Date() + OFFSET'
+
+      node = psr.parseExpression expr
+
+      expect(node.vars.length).toBe 0
+
+    it 'should ignore variables starting with underscore', ->
+      psr.init DUMMY_BUFFER
+
+      expr = '_tmp_var'
+
+      node = psr.parseExpression expr
+
+      expect(node.vars.length).toBe 0
+
+    it 'should handle property accessor with brackets', ->
+      psr.init DUMMY_BUFFER
+
+      expr = 'foo.bar[xx.yy].baz'
+
+      node = psr.parseExpression expr
+
+      expect(node.vars).toHaveContents ['foo', 'xx']
+
+    it 'should handle function call', ->
+      psr.init DUMMY_BUFFER
+
+      expr = 'foo.bar(xx.yy).baz'
+
+      node = psr.parseExpression expr
+
+      expect(node.vars).toHaveContents ['foo', 'xx']
+
+    it 'should omit hash key literals', ->
+      psr.init DUMMY_BUFFER
+
+      expr = '{ key1: val1, key2: val2.val21 }'
+
+      node = psr.parseExpression expr
+
+      expect(node.vars).toHaveContents ['val1', 'val2']
+
+    it 'should omit string literals', ->
+      psr.init DUMMY_BUFFER
+
+      e1 = 'foo + "this string"'
+
+      n1 = psr.parseExpression e1
+
+      expect(n1.vars).toHaveContents ['foo']
+
+      e2 = "foo + 'this string'"
+
+      n2 = psr.parseExpression e2
+
+      expect(n2.vars).toHaveContents ['foo']
+
+    it 'should omit string literals with escaped quotes', ->
+      psr.init DUMMY_BUFFER
+
+      expr = 'foo + "this \\"st\'ring" + bar + \'this "is \\\' string\''
+
+      node = psr.parseExpression expr
+
+      expect(node.vars).toHaveContents ['foo', 'bar']
+
+    it 'should omit regexp literals', ->
+      psr.init DUMMY_BUFFER
+
+      expr = '/\\d+\\/\\d+/.exec(foo)'
+
+      node = psr.parseExpression expr
+
+      expect(node.vars).toHaveContents ['foo']
 
 
   describe '#parseTagAttrs(node, attrs)', ->
 
     it 'should create empty hash when `attrs` has no vaild definitions of attribute', ->
-      tk = new Leaf.Template.Parser 'foo'
+      psr.init DUMMY_BUFFER
 
-      t = {}
-      tk.parseTagAttrs t, '', ''
+      node = {}
+      psr.parseTagAttrs node, '', ''
 
-      expect(t.attrs).toBeDefined()
-      expect(Object.keys(t.attrs).length).toBe 0
+      expect(node.attrs).toBeDefined()
+      expect(Object.keys(node.attrs).length).toBe 0
 
     it 'should create hash object for each attributes, bindings and actions', ->
-      tk = new Leaf.Template.Parser 'foo'
+      psr.init DUMMY_BUFFER
 
-      t = {}
-      tk.parseTagAttrs t, 'id="foo" $class="bar" $my="baz" @click="alert"', ''
+      node = {}
+      psr.parseTagAttrs node, 'id="foo" $class="bar" $my="baz" @click="alert"', ''
+
       token =
         attrs: { 'id': 'foo' }
-        attrBindings: { 'class': 'bar' }
-        localeBindings: { 'my': 'baz' }
-        actions: { 'click': 'alert' }
+        attrBindings:
+          'class': { expr: 'bar', vars: ['bar'] }
+        localeBindings:
+          'my': { expr: 'baz', vars: ['baz'] }
+        actions:
+          'click': 'alert'
 
-      expect(t).toHaveContents token
+      expect(node).toHaveContents token
 
     it 'should treat attr as a locale binding if its name is not vaild for tag', ->
-      tk = new Leaf.Template.Parser 'foo'
+      psr.init DUMMY_BUFFER
 
-      t1 = name: 'a'
-      tk.parseTagAttrs t1, '$href="link"'
+      n1 = name: 'a'
+      psr.parseTagAttrs n1, '$href="link"'
 
-      expect(t1.attrBindings).toBeDefined()
-      expect(t1.attrBindings.href).toBe 'link'
+      expect(n1.attrBindings).toBeDefined()
+      expect(n1.attrBindings.href).toBeDefined()
 
-      t2 = name: 'div'
-      tk.parseTagAttrs t2, '$href="link"'
+      n2 = name: 'div'
+      psr.parseTagAttrs n2, '$href="link"'
 
-      expect(t2.localeBindings).toBeDefined()
-      expect(t2.localeBindings.href).toBe 'link'
+      expect(n2.localeBindings).toBeDefined()
+      expect(n2.localeBindings.href).toBeDefined()
 
 
   describe '#parseNode(parents, token)', ->
 
     it 'should should append text nodes to their parent', ->
-      psr = new Leaf.Template.Parser 'foo'
+      psr.init DUMMY_BUFFER
 
       token =
         type: T_TEXT
@@ -86,7 +196,7 @@ describe 'parser', ->
       expect(psr.root.contents[0]).toHaveContents node
 
     it 'should should append interpolation nodes to their parent', ->
-      psr = new Leaf.Template.Parser 'foo'
+      psr.init DUMMY_BUFFER
 
       token =
         type: T_INTERPOLATION
@@ -101,14 +211,16 @@ describe 'parser', ->
 
       node =
         type: T_INTERPOLATION
-        val: 'interpolation'
+        value:
+          expr: 'interpolation'
+          vars: ['interpolation']
         escape: true
 
       expect(psr.root.contents.length).toBe 1
       expect(psr.root.contents[0]).toHaveContents node
 
     it 'should should append self-closing tag nodes to their parent', ->
-      psr = new Leaf.Template.Parser 'foo'
+      psr.init DUMMY_BUFFER
 
       token =
         type: T_TAG_SELF
@@ -135,7 +247,7 @@ describe 'parser', ->
       expect(psr.root.contents[0]).toHaveContents node
 
     it 'should should append opening tag nodes to their parent and set current parent to self', ->
-      psr = new Leaf.Template.Parser 'foo'
+      psr.init DUMMY_BUFFER
 
       token =
         type: T_TAG_OPEN
@@ -164,7 +276,7 @@ describe 'parser', ->
 
     it 'should throw an exception when attempt to close tag which has not been open', ->
       ctx = ->
-        psr = new Leaf.Template.Parser 'foo'
+        psr.init DUMMY_BUFFER
 
         token =
           type: T_TAG_CLOSE
@@ -178,7 +290,7 @@ describe 'parser', ->
       expect(ctx).toThrow()
 
     it 'should close current parent and set current parent to self when closing tags appear', ->
-      psr = new Leaf.Template.Parser 'foo'
+      psr.init DUMMY_BUFFER
 
       tokenOpen =
         type: T_TAG_OPEN
@@ -219,13 +331,13 @@ describe 'parser', ->
 
     it 'should return parse tree of basic DOM structure', ->
       buffer = '<div>text</div>'
-      psr = new Leaf.Template.Parser buffer
+      psr.init buffer
       psr.parseTree psr.parents
 
       result = [
         {
           type: T_TAG_OPEN
-          context: { 'if': null }
+          context: {}
           name: 'div'
           attrs: {}
           attrBindings: {}
@@ -245,13 +357,13 @@ describe 'parser', ->
 
     it 'should return parse tree of nested tags', ->
       buffer = '<section><div></div></section>'
-      psr = new Leaf.Template.Parser buffer
+      psr.init buffer
       psr.parseTree psr.parents
 
       result = [
         {
-          type: 1
-          context: { 'if': null }
+          type: T_TAG_OPEN
+          context: {}
           name: 'section'
           attrs: {}
           attrBindings: {}
@@ -260,9 +372,9 @@ describe 'parser', ->
           scope: {}
           contents: [
             {
-              type: 1
+              type: T_TAG_OPEN
               contents: []
-              context: { 'if': null }
+              context: {}
               name: 'div'
               attrs: {}
               attrBindings: {}
@@ -278,30 +390,35 @@ describe 'parser', ->
 
     it 'should create a scope with locale bindings', ->
       buffer = '<div $var1="foo.var1"><div $var2="foo.var2"></div></div>'
-      psr = new Leaf.Template.Parser buffer
+      psr.init buffer
       psr.parseTree psr.parents
 
       result = [
         {
-          type: 1
-          context: { 'if': null }
+          type: T_TAG_OPEN
+          context: {}
           name: 'div'
           attrs: {}
           attrBindings: {}
-          localeBindings: { 'var1': 'foo.var1' }
+          localeBindings:
+            'var1': { expr: 'foo.var1', vars: ['foo'] }
           actions: {}
-          scope: { 'var1': 'foo.var1' }
+          scope:
+            'var1': { expr: 'foo.var1', vars: ['foo'] }
           contents: [
             {
-              type: 1
+              type: T_TAG_OPEN
               contents: []
-              context: { 'if': null }
+              context: {}
               name: 'div'
               attrs: {}
               attrBindings: {}
-              localeBindings: { 'var2': 'foo.var2' }
+              localeBindings:
+                'var2': { expr: 'foo.var2', vars: ['foo'] }
               actions: {}
-              scope: { 'var1': 'foo.var1', 'var2': 'foo.var2' }
+              scope:
+                'var1': { expr: 'foo.var1', vars: ['foo'] }
+                'var2': { expr: 'foo.var2', vars: ['foo'] }
             }
           ]
         }

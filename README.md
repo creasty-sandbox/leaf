@@ -20,6 +20,91 @@ Features
 
 
 
+Sample
+======
+
+```coffee
+class window.App extends Leaf.App
+```
+
+
+Model
+-----
+
+```coffee
+class App.Author extends Leaf.Model
+  
+  @accessors 'firstname', 'lastname'
+
+  @hasMany 'posts'
+
+  fullname: -> "#{@firstname} #{@lastname}"
+
+
+class App.Post extends Leaf.Model
+
+  @accessors 'title', 'content'
+
+  @hasMany 'comments'
+  @belongsTo 'author'
+
+
+class App.Comment extends Leaf.Model
+
+  @accessors 'email', 'name', 'content'
+
+  @belongsTo 'post'
+
+```
+
+
+View
+----
+
+```html
+<!-- posts/index.html -->
+<if $condition="posts.length > 0">
+  <each $post="posts[]">
+    <article>
+      <h3>{{ post.title }}</h3>
+      <p>{{ post.content.slice(0, 150) }}</p>
+    </article>
+  </each>
+</if>
+<else>
+  <p>No posts!</p>
+</else>
+```
+
+
+Controller
+----------
+
+```coffee
+class App.PostsController extends Leaf.Controller
+
+  index: ->
+    @posts = App.Post.orderBy 'created_at'
+
+```
+
+
+Routing
+-------
+
+```coffee
+App.routes ->
+
+  @root 'pages#home'
+
+  @resources 'posts', ->
+    @resources 'comments'
+
+```
+
+
+
+
 Building & Testing
 ==================
 
@@ -36,10 +121,11 @@ Available grunt commands are:
 # Development: do less, compile coffee
 $ grunt dev
 
-# Test: compile coffee and run test with jasmine on phantomjs
+# Test: compile coffee and run test with Jasmine on PhantomJS
 $ grunt test
+$ grunt test --filter group_name
 
-# Release: concatenate all files and minify them, finally cleanup trashes
+# Release: concatenate all files and create a minified version
 $ grunt release
 ```
 

@@ -1,4 +1,235 @@
 
+#=== Files
+#==============================================================================================
+DIST_DIR   = 'dist/'
+SRC_DIR    = 'src/'
+TMP_DIR    = 'tmp/'
+SPEC_DIR   = 'spec/'
+VENDOR_DIR = 'vendors/'
+
+FILES =
+  _headers: [
+    'leaf.coffee'
+    'constants.coffee'
+    'errors.coffee'
+  ]
+  utils: [
+    'lodash/*.coffee'
+    'inflector.coffee'
+    'event.coffee'
+    'cache.coffee'
+    'object.coffee'
+    'array_diff_patch.coffee'
+  ]
+  formatters: [
+    'formatter.coffee'
+    'html.coffee'
+  ]
+  observable: [
+    'observable_base.coffee'
+    'observable_object.coffee'
+    'observable_array.coffee'
+    'observable.coffee'
+  ]
+  template: [
+    'template.coffee'
+    'tokenizer.coffee'
+    'parser.coffee'
+    'dom_generator.coffee'
+  ]
+  view: [
+    'view.coffee'
+    'conditional_view.coffee'
+    'iterator_view.coffee'
+    'component.coffee'
+    'render.coffee'
+    'outlet.coffee'
+  ]
+  core: [
+    'object.coffee'
+    'router.coffee'
+    'navigator.coffee'
+    'model.coffee'
+    'controller.coffee'
+    'app.coffee'
+  ]
+
+VENDOR_FILES = [
+  'jquery/jquery.min.js'
+  'lodash/dist/lodash.min.js'
+]
+
+FILE_DEPENDENCIES =
+  utils: [
+    'headers'
+  ]
+  observable: [
+    'headers'
+    'utils'
+  ]
+  template: [
+    'headers'
+    'utils'
+    'formatters'
+    'observable'
+  ]
+  view: [
+    'headers'
+    'utils'
+    'formatters'
+    'observable'
+    'template'
+  ]
+  core: [
+    'headers'
+    'utils'
+    'formatters'
+    'observable'
+    'template'
+  ]
+
+
+#=== Utils
+#==============================================================================================
+files = do ->
+  f =
+    src: {}
+    tmp: {}
+    specSrc: {}
+    specTmp: {}
+
+  for name, set of FILES
+    if '_' == name[0]
+      name = name[1..]
+      dir = ''
+    else
+      dir = name + '/'
+
+    f.src[name] = set.map (path) ->
+      SRC_DIR + dir + path
+    f.tmp[name] = set.map (path) ->
+      TMP_DIR + SRC_DIR + dir + path.replace('.coffee', '.js')
+    f.specSrc[name] = set.map (path) ->
+      SPEC_DIR + dir + path.replace('.coffee', '_spec.coffee')
+    f.specTmp[name] = set.map (path) ->
+      TMP_DIR + SPEC_DIR + dir + path.replace('.coffee', '_spec.js')
+
+  f.vendor = VENDOR_FILES.map (path) ->
+    VENDOR_DIR + path
+
+  f
+
+files.all = (name, type = 'tmp') ->
+  all = []
+
+  all.push files[type][dep]... for dep in FILE_DEPENDENCIES[name] ? []
+  all.push files[type][name]...
+
+  all
+
+
+#=== Task config
+#==============================================================================================
+gruntConfig = {}
+
+# Coffee
+gruntConfig.coffee =
+  src:
+    options:
+      bare: true
+    expand: true
+    cwd: SRC_DIR
+    dest: TMP_DIR + SRC_DIR
+    src: ['**/*.coffee']
+    ext: '.js'
+
+  test:
+    expand: true
+    cwd: SPEC_DIR
+    dest: TMP_DIR + SPEC_DIR
+    src: ['**/*.coffee']
+    ext: '.js'
+
+  release:
+    options:
+      join: true
+    files:
+      'dist/leaf.js': files.all 'view', 'src'
+
+# Concat
+gruntConfig.concat =
+  src:
+    options:
+      banner: '<%= meta.banner %>'
+    files:
+      'dist/leaf.js': ['dist/leaf.js']
+
+# Uglify
+gruntConfig.uglify =
+  src:
+    options:
+      banner: '<%= meta.banner %>'
+      report: 'gzip'
+    files:
+      'dist/leaf.min.js': ['dist/leaf.js']
+
+# Jasmine
+gruntConfig.jasmine =
+  options:
+    helpers: [
+      "#{VENDOR_DIR}jasmine-jquery/lib/jasmine-jquery.js"
+      "#{TMP_DIR}#{SPEC_DIR}helpers/*.js"
+    ]
+    keepRunner: true
+    vendor: files.vendor
+
+do ->
+  c = gruntConfig.jasmine
+
+  for name of FILE_DEPENDENCIES
+    c[name] =
+      src: files.all name
+      options:
+        specs: files.specTmp[name]
+
+# Watch
+gruntConfig.watch =
+  options:
+    spawn: false
+
+  coffee:
+    files: "#{SRC_DIR}**/*.coffee"
+    tasks: ['newer:coffee:src']
+
+  coffee_test:
+    files: "#{SPEC_DIR}**/*.coffee"
+    tasks: ['newer:coffee:test']
+
+  jasmine:
+    files: [
+      "#{TMP_DIR}#{SPEC_DIR}**/*.js"
+      "#{TMP_DIR}#{SRC_DIR}**/*.js"
+    ]
+    tasks: ['filtered_test']
+
+
+#=== Banner
+#==============================================================================================
+BANNER =  """
+  /*!
+   * <%= pkg.title || pkg.name %> - v<%= pkg.version %> (<%= grunt.template.today("yyyy-mm-dd") %>)
+   *
+   * @author <%= pkg.author %>
+   * @url <%= pkg.url %>
+   * @copyright <%= grunt.template.today("yyyy") %> <%= pkg.author %>
+   * @license <%= pkg.license %>
+   */
+
+  """
+
+
+#=== Grunt
+#==============================================================================================
 module.exports = (grunt) ->
 
   #  Load npm tasks
@@ -9,203 +240,11 @@ module.exports = (grunt) ->
   #-----------------------------------------------
   filter = grunt.option 'filter'
 
-  #  File list
-  #-----------------------------------------------
-  SRC_DIR  = 'src/'
-  TEMP_DIR = 'tmp/'
-  VENDOR_DIR = 'vendors/'
-
-  files = (tmp) ->
-    base = ''
-    base += TEMP_DIR if tmp
-    base += SRC_DIR
-
-    fn = (path) -> base + (if tmp then path.replace('.coffee', '.js') else path)
-
-    headers: [
-      'leaf.coffee'
-      'constants.coffee'
-    ].map fn
-    utils: [
-      'utils/utils.coffee'
-      'utils/inflection.coffee'
-      'utils/event.coffee'
-      'utils/cache.coffee'
-      'utils/object.coffee'
-      'utils/array_diff_patch.coffee'
-    ].map fn
-    formatters: [
-      'formatters/formatter.coffee'
-      'formatters/html.coffee'
-    ].map fn
-    observable: [
-      'observable/observable_base.coffee'
-      'observable/observable_object.coffee'
-      'observable/observable_array.coffee'
-      'observable/observable.coffee'
-    ].map fn
-    template: [
-      'template/template.coffee'
-      'template/tokenizer.coffee'
-      'template/parser.coffee'
-      'template/custom_tags.coffee'
-    ].map fn
-    core: [
-      'core/object.coffee'
-      'core/router.coffee'
-      'core/navigator.coffee'
-      'core/model.coffee'
-      'core/controller.coffee'
-      'core/view.coffee'
-      'core/app.coffee'
-    ].map fn
-
-  files.src = files false
-  files.tmp = files true
-
-  files.vendor = [
-    "#{VENDOR_DIR}jquery/jquery.min.js"
-    "#{VENDOR_DIR}lodash/dist/lodash.min.js"
-  ]
-
-
   #  Config
   #-----------------------------------------------
-  grunt.initConfig
-
-    # Package
-    pkg: grunt.file.readJSON 'package.json'
-
-    # Meta
-    meta:
-     banner:
-        """
-        /*!
-         * <%= pkg.title || pkg.name %> - v<%= pkg.version %> (<%= grunt.template.today("yyyy-mm-dd") %>)
-         *
-         * @author <%= pkg.author %>
-         * @url <%= pkg.url %>
-         * @copyright <%= grunt.template.today("yyyy") %> <%= pkg.author %>
-         * @license <%= pkg.license %>
-         */
-
-        """
-
-    # Coffee
-    coffee:
-      src:
-        options:
-          bare: true
-        expand: true
-        cwd: 'src'
-        src: ['**/*.coffee']
-        dest: 'tmp/src'
-        ext: '.js'
-
-      test:
-        expand: true
-        cwd: 'spec'
-        src: ['**/*.coffee']
-        dest: 'tmp/spec'
-        ext: '.js'
-
-      release:
-        options:
-          join: true
-        files:
-          'dist/leaf.js': [
-            files.src.headers...
-            files.src.utils...
-            # files.src.formatters...
-            files.src.observable...
-            # files.src.template...
-            # files.src.core...
-          ]
-
-    # Concat
-    concat:
-      src:
-        options:
-          banner: '<%= meta.banner %>'
-        files:
-          'dist/leaf.js': ['dist/leaf.js']
-
-    # Uglify
-    uglify:
-      src:
-        options:
-          banner: '<%= meta.banner %>'
-          report: 'gzip'
-        files:
-          'dist/leaf.min.js': ['dist/leaf.js']
-
-    # Jasmine
-    jasmine:
-      options:
-        helpers: [
-          'vendors/jasmine-jquery/lib/jasmine-jquery.js'
-          'tmp/spec/helpers/*.js'
-        ]
-        keepRunner: true
-        vendor: files.vendor
-
-      utils:
-        src: [
-          files.tmp.headers...
-          files.tmp.utils...
-        ]
-        options:
-          specs: ['tmp/spec/utils/*.js']
-
-      observable:
-        src: [
-          files.tmp.headers...
-          files.tmp.utils...
-          files.tmp.observable...
-        ]
-        options:
-          specs: ['tmp/spec/observable/*.js']
-
-      template:
-        src: [
-          files.tmp.headers...
-          files.tmp.utils...
-          files.tmp.formatters...
-          files.tmp.observable...
-          files.tmp.template...
-        ]
-        options:
-          specs: ['tmp/spec/template/*.js']
-
-      core:
-        src: [
-          files.tmp.headers...
-          files.tmp.utils...
-          files.tmp.formatters...
-          files.tmp.observable...
-          files.tmp.template...
-          files.tmp.core...
-        ]
-        options:
-          specs: ['tmp/spec/core/*.js']
-
-    # Watch
-    watch:
-      options:
-        spawn: false
-
-      coffee:
-        files: 'src/**/*.coffee'
-        tasks: ['coffee:src']
-
-      coffee_test:
-        files: 'spec/**/*.coffee'
-        tasks: ['coffee:test']
-
-      jasmine:
-        files: ['tmp/spec/**/*.js', 'tmp/src/**/*.js']
-        tasks: ['filtered_test']
-
+  gruntConfig.pkg = grunt.file.readJSON 'package.json'
+  gruntConfig.meta = banner: BANNER
+  grunt.initConfig gruntConfig
 
   #  Tasks
   #-----------------------------------------------
