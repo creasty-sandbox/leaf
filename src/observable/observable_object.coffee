@@ -5,6 +5,7 @@ class Leaf.ObservableObject extends Leaf.ObservableBase
     super()
 
     for own key, val of @_data
-      @_data[key] = @_makeObservable val, @, key
+      obj = @_makeObservable val, @, key
+      @_data[key] = obj
       @_accessor key
 
