@@ -12,7 +12,6 @@ class Leaf.Object extends PlainObject
   _objectBaseInit: ->
     @_leafObject = true
     @_leafID = ++_leafID
-    @_c = @constructor
     @_superClass = @constructor.__super__
     @_cache = new Leaf.Cache()
     @_cache.set @toLeafID(), @
@@ -48,10 +47,10 @@ class Leaf.Object extends PlainObject
       configurable: true
       value: undefined
 
-  toString: -> "<#{@getLeafClass()}.#{@_c.name} #{@_leafID}>"
+  toString: -> "<#{@getLeafClass()}.#{@constructor.name} #{@_leafID}>"
   toLeafID: -> "__LEAF_ID_#{@_leafID}"
 
-  getLeafClass: -> "Leaf.#{@_c._objectType}"
+  getLeafClass: -> "Leaf.#{@constructor._objectType}"
 
   @isLeafID: (id) ->
     return false unless _.isString id

@@ -1,14 +1,14 @@
 
 class Leaf.ObservableBase extends Leaf.Object
 
-  @isObservable = true
+  isObservable: true
 
   constructor: (@_data) ->
     @init()
 
   init: ->
-    @isObservable = true
     @_objectBaseInit()
+
     @_dependents = {}
     @_tracked = {}
     @_tracking = {}
@@ -23,7 +23,7 @@ class Leaf.ObservableBase extends Leaf.Object
       o = new Leaf.ObservableObject o
       o.setParent parentObj, parentProp
       o
-    else if o && o.isObservable
+    else if o instanceof Leaf.ObservableBase
       o = o.clone()
       o.setParent parentObj, parentProp
       o
@@ -42,7 +42,7 @@ class Leaf.ObservableBase extends Leaf.Object
     @_parentObj = null
     @_parentProp = null
 
-  clone: -> @
+  clone: -> new @constructor @_data
 
   _beginTrack: (name) ->
     return if @_tracking[name]
@@ -65,7 +65,7 @@ class Leaf.ObservableBase extends Leaf.Object
     keypaths = _.unique tracked
     stacks = {}
 
-    # find terminal keypath:
+    # find terminal keypaths:
     # ['a.x', 'a.b.d', 'a.b.c.d']
     # in
     # ['a', 'a.b', 'a.x', 'a.b.c', 'a.b.d', 'a.b.c.d']
