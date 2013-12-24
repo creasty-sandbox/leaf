@@ -5,11 +5,19 @@ class Leaf.Component
 
   @components: {}
 
+  @regularateName: (name) ->
+    name
+    .replace(/([a-z])([A-Z])/g, ((_0, _1, _2) -> "#{_1}-#{_2.toLowerCase()}"))
+    .replace(/[^a-z\-\:]/ig, '')
+
   @register: (name, node) ->
+    name = @regularateName name
     Leaf.Component.componets[name] = node.contents
     Leaf.Template.registerTag name, ComponentView
 
-  @get: (name) -> Leaf.Component.componets[name]
+  @get: (name) ->
+    name = @regularateName name
+    Leaf.Component.componets[name]
 
 
 #  Error
@@ -25,7 +33,7 @@ class ComponentView
 
   @create: (node, $marker, $parent, obj) ->
     view = new Leaf.Template.DOMGenerator()
-    view.init Leaf.Component.get(node.tag), obj
+    view.init Leaf.Component.get(node.name), obj
     $el = view.getDOM()
     $el.appendTo $parent
 

@@ -1,4 +1,31 @@
 
+class Leaf.Template.Binder
+
+  @getFunction: (expr, vars) ->
+    new Function vars..., "return (#{expr})"
+
+  @getEvaluator: (fn, vars, obj) ->
+    evaluate = ->
+      args = vars.map (v) => obj._get v
+      try fn.apply null, args
+
+  @getBinder: ({ expr, vars }, obj) ->
+    value = @getFunction expr, vars
+
+    evaluate = @getEvaluator value, vars, obj
+
+    binder = (routine) =>
+      obj._beginTrack 'getter' unless value._dependents
+
+      result = evaluate()
+
+      if (dependents = obj._endTrack 'getter')
+        value._dependents = dependents
+        obj.observe d, (-> routine evaluate()) for d in dependents
+
+      routine result
+
+
 class Leaf.Template.DOMGenerator
 
   doc = document # copying global variable to local make js faster
@@ -16,23 +43,8 @@ class Leaf.Template.DOMGenerator
 
     @$parent = $ doc.createElement 'body'
 
-  bind: ({ expr, vars }) ->
-    value = new Function vars..., "return (#{expr})"
-
-    evaluate = =>
-      args = vars.map (v) => @scope[v] ? @obj._get v
-      try value.apply null, args
-
-    binder = (routine) =>
-      @obj._beginTrack 'getter' unless value._dependents
-
-      result = evaluate()
-
-      if (dependents = @obj._endTrack 'getter')
-        value._dependents = dependents
-        @obj.observe d, (-> routine evaluate()) for d in dependents
-
-      routine result
+  bind: (value) ->
+    Leaf.Template.Binder.getBinder value, @obj
 
   bindAttributes: ($el, attrs) ->
     _(attrs).forEach (val, key) =>

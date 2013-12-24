@@ -33,7 +33,8 @@ class IteratorView extends Leaf.Object
   init: (@node, @$marker, @$parent, @obj) ->
     ite = @node.scope[@node.iterator]
 
-    @collection = obj.get ite.expr
+    bind = Leaf.Template.Binder.getBinder ite, @obj
+    bind (value) => @collection = value
     @collectionViews = new Leaf.ObservableArray []
 
     @collection.forEach @addOne
@@ -70,12 +71,12 @@ class IteratorView extends Leaf.Object
 #-----------------------------------------------
 class IteratorItemView extends Leaf.View
 
-  constructor: (@node, @item, @obj) ->
+  constructor: (@node, @item, obj) ->
     return cached if (cached = @getCachedView @item)
 
-    scope = {}
-    scope[@node.iterator] = @item
-    @$view = @fromParsedTree @node.contents, @obj, scope
+    @obj = obj.clone()
+    @obj.set @node.iterator, @item
+    @$view = @fromParsedTree @node.contents, @obj
 
     super @$view
 
