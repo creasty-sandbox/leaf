@@ -23,10 +23,6 @@ class Leaf.ObservableBase extends Leaf.Object
       o = new Leaf.ObservableObject o
       o.setParent parentObj, parentProp
       o
-    else if o instanceof Leaf.ObservableBase
-      o = o.clone()
-      o.setParent parentObj, parentProp
-      o
     else
       o
 
