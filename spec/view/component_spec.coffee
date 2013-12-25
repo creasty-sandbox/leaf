@@ -118,7 +118,7 @@ describe 'Component views', ->
 
     it 'should throw an exception if component is not defined', ->
       buffer = '''
-        <component:zzz></component:zzz>
+        <component:zzz>
       '''
 
       ctx = =>

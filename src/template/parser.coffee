@@ -291,7 +291,7 @@ class Leaf.Template.Parser
     node.contents = []
     node.context = {}
     node.name = token.name
-    node.customTags = !node.name.match HTML5_TAGS
+    node.customTag = !node.name.match HTML5_TAGS
     @parseTagAttrs node, token.attrPart
     node
 
