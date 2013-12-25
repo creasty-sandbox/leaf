@@ -70,10 +70,12 @@ describe 'Iterator statements', ->
       expect($el.find('#post_2 h2')).toHaveText 'Beta'
       expect($el.find('#post_3 h2')).toHaveText 'Gamma'
 
-
+    ###
     describe 'Special variable: modelIndex', ->
 
       it 'should return current index of an item in the collection', ->
-        expect(1 == 0).toBe true
+        # TODO
+
+    ###
 
 

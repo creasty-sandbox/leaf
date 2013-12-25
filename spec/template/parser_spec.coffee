@@ -240,7 +240,6 @@ describe 'parser', ->
         attrBindings: {}
         localeBindings: {}
         actions: {}
-        scope: {}
 
       expect(@psr.root.contents.length).toBe 1
       expect(@psr.root.contents[0]).toHaveContents node
@@ -267,7 +266,6 @@ describe 'parser', ->
         attrBindings: {}
         localeBindings: {}
         actions: {}
-        scope: {}
 
       expect(@psr.root.contents.length).toBe 1
       expect(@psr.root.contents[0]).toHaveContents node
@@ -308,7 +306,6 @@ describe 'parser', ->
         attrBindings: {}
         localeBindings: {}
         actions: {}
-        scope: {}
 
       @psr.parseNode @psr.parents, tokenOpen
 
@@ -342,7 +339,6 @@ describe 'parser', ->
           attrBindings: {}
           localeBindings: {}
           actions: {}
-          scope: {}
           contents: [
             {
               type: T_TEXT
@@ -368,7 +364,6 @@ describe 'parser', ->
           attrBindings: {}
           localeBindings: {}
           actions: {}
-          scope: {}
           contents: [
             {
               type: T_TAG_OPEN
@@ -379,50 +374,10 @@ describe 'parser', ->
               attrBindings: {}
               localeBindings: {}
               actions: {}
-              scope: {}
             }
           ]
         }
       ]
 
       expect(@psr.root.contents).toHaveContents result
-
-    it 'should create a scope with locale bindings', ->
-      buffer = '<div $var1="foo.var1"><div $var2="foo.var2"></div></div>'
-      @psr.init buffer
-      @psr.parseTree @psr.parents
-
-      result = [
-        {
-          type: T_TAG_OPEN
-          context: {}
-          name: 'div'
-          attrs: {}
-          attrBindings: {}
-          localeBindings:
-            'var1': { expr: 'foo.var1', vars: ['foo'] }
-          actions: {}
-          scope:
-            'var1': { expr: 'foo.var1', vars: ['foo'] }
-          contents: [
-            {
-              type: T_TAG_OPEN
-              contents: []
-              context: {}
-              name: 'div'
-              attrs: {}
-              attrBindings: {}
-              localeBindings:
-                'var2': { expr: 'foo.var2', vars: ['foo'] }
-              actions: {}
-              scope:
-                'var1': { expr: 'foo.var1', vars: ['foo'] }
-                'var2': { expr: 'foo.var2', vars: ['foo'] }
-            }
-          ]
-        }
-      ]
-
-      expect(@psr.root.contents).toHaveContents result
-
 

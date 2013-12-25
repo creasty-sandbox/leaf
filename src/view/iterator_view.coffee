@@ -14,12 +14,7 @@ class IteratorView extends Leaf.Object
     node.iterator = null
 
     for key, value of node.localeBindings when value.expr.match /\w+\[\]$/
-      ik = "#{key}Index"
       value.expr = value.expr.replace '[]', ''
-      value.vars.push ik
-
-      node.localeBindings[key] = undefined
-      node.scope[key] = value
       node.iterator = key
       break
 
@@ -31,13 +26,12 @@ class IteratorView extends Leaf.Object
     iv.init node, $marker, $parent, obj
 
   init: (@node, @$marker, @$parent, @obj) ->
-    ite = @node.scope[@node.iterator]
-
-    binder = new Leaf.Template.Binder @obj
-    bind = binder.getBinder ite
-    bind (value) => @collection = value
     @collectionViews = new Leaf.ObservableArray []
 
+    binder = new Leaf.Template.Binder @obj
+    bindingObj = binder.getBindingObject @node.localeBindings
+
+    @collection = bindingObj.get @node.iterator
     @collection.forEach @addOne
     @collection.observe @update
 

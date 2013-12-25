@@ -51,13 +51,13 @@ class ComponentView
     view = new Leaf.Template.DOMGenerator()
 
     binder = new Leaf.Template.Binder obj
-    withScope = binder.getScopeObject node.localeBindings
+    bindingObj = binder.getBindingObject node.localeBindings
     tree = Leaf.Component.get node.name
 
     unless tree
       throw new UndefinedComponentTagError "<#{node.name}>"
 
-    view.init tree, withScope
+    view.init tree, bindingObj
 
     $el = view.getDOM()
     $el.appendTo $parent

@@ -37,16 +37,12 @@ class Leaf.Template.Binder
 
       routine result
 
-  mergeWithScope: (scope, obj = @obj) ->
-    withScope = obj.clone()
-
-    _(scope).forEach (value, name) =>
-      bind = @getBinder value
-      bind (result) -> withScope.set name, result
-
-    withScope
-
-  getScopeObject: (scope) ->
+  getBindingObject: (values) ->
     obj = new Leaf.Observable {}
-    @mergeWithScope scope, obj
+
+    _(values).forEach (value, name) =>
+      bind = @getBinder value
+      bind (result) -> obj.set name, result
+
+    obj
 

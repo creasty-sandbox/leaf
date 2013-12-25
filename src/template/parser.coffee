@@ -192,7 +192,6 @@ class Leaf.Template.Parser
     @root =
       name: '_root'
       contents: []
-      scope: {}
       context: {}
 
     @parents = [@root]
@@ -286,9 +285,6 @@ class Leaf.Template.Parser
 
     ATTR_REGEXP.lastIndex = 0
 
-  createNewScope: (node, parent) ->
-    node.scope = _.merge _.clone(node.localeBindings), parent.scope
-
   createTagNode: (token, parent) ->
     node = {}
     node.type = token.type
@@ -297,7 +293,6 @@ class Leaf.Template.Parser
     node.name = token.name
     node.customTags = !node.name.match HTML5_TAGS
     @parseTagAttrs node, token.attrPart
-    @createNewScope node, parent
     node
 
   createTextNode: (token) ->
