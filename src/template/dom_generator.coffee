@@ -1,4 +1,11 @@
 
+#  Errors
+#-----------------------------------------------
+class UndefinedCustomTagError extends Leaf.Error
+
+
+#  Generator
+#-----------------------------------------------
 class Leaf.Template.DOMGenerator
 
   doc = document # copying global variable to local make js faster
@@ -7,7 +14,7 @@ class Leaf.Template.DOMGenerator
 
   constructor: ->
 
-  init: (@tree, @obj, @scope = {}) ->
+  init: (@tree, @obj) ->
     unless @tree
       throw new RequiredArgumentsError('tree')
 
@@ -40,7 +47,12 @@ class Leaf.Template.DOMGenerator
       $ doc.createTextNode ''
 
   createElement: (node, $parent) ->
-    c = customTags.def[node.name] ? {}
+    c = customTags.def[node.name]
+
+    if node.customTag && !c
+      throw new UndefinedCustomTagError "<#{node.name}>"
+
+    c ?= {}
 
     if c.structure
       $marker = @createMarker node.name

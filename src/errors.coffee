@@ -9,9 +9,13 @@ class Leaf.Error extends Error
   constructor: (args...) ->
     msg = []
     msg.push @constructor.prefix
-    msg.push @getErrorType()
-    msg.push ':' if args.length > 0
+
+    type = @getErrorType()
+    type += ':' if args.length > 0
+    msg.push type
+
     msg.push @setMessage args...
+
     @message = _.compact(msg).join ' '
 
   getErrorType: ->

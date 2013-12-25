@@ -5,24 +5,40 @@ class Leaf.Component
 
   @components: {}
 
-  @regularateName: (name) ->
+  @regulateName: (name) ->
+    return '' unless name
+
     name
     .replace(/([a-z])([A-Z])/g, ((_0, _1, _2) -> "#{_1}-#{_2.toLowerCase()}"))
-    .replace(/[^a-z\-\:]/ig, '')
+    .replace(/\//g, ':')
+    .replace(/[^a-z\-:]/ig, '')
+    .replace(/\-*:+\-*/g, ':')
+    .replace(/\-+/g, '-')
+    .replace(/^(\-|:)|(\-|:)$/g, '')
+    .replace(/^component:/, '')
 
   @register: (name, node) ->
-    name = @regularateName name
-    Leaf.Component.componets[name] = node.contents
-    Leaf.Template.registerTag name, ComponentView
+    name = @regulateName name
+    Leaf.Component.components[name] = node.contents
+    Leaf.Template.registerTag "component:#{name}", ComponentView
 
   @get: (name) ->
-    name = @regularateName name
-    Leaf.Component.componets[name]
+    name = @regulateName name
+    Leaf.Component.components[name]
+
+  @unregister: (name) ->
+    name = @regulateName name
+    @components[name] = undefined
+    Leaf.Template.unregisterTag "component:#{name}"
+
+  @reset: ->
+    @unregister name for name in _.keys(@components)
 
 
 #  Error
 #-----------------------------------------------
 class NoNameAttributeWithComponentTagError extends Leaf.Error
+class UndefinedComponentTagError extends Leaf.Error
 
 
 #  Component view
@@ -33,14 +49,23 @@ class ComponentView
 
   @create: (node, $marker, $parent, obj) ->
     view = new Leaf.Template.DOMGenerator()
-    view.init Leaf.Component.get(node.name), obj
+
+    binder = new Leaf.Template.Binder obj
+    withScope = binder.getScopeObject node.localeBindings
+    tree = Leaf.Component.get node.name
+
+    unless tree
+      throw new UndefinedComponentTagError "<#{node.name}>"
+
+    view.init tree, withScope
+
     $el = view.getDOM()
     $el.appendTo $parent
 
 
 #  Component def tag
 #-----------------------------------------------
-Leaf.Template.registerTag 'componet',
+Leaf.Template.registerTag 'component',
   structure: true
 
   open: (node, parent) ->

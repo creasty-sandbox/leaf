@@ -1,5 +1,33 @@
 
-#  Attribute patterns
+#  HTML5 tags
+#-----------------------------------------------
+HTML5_TAGS = ///
+  ^(
+    a|abbr|address|area|article|aside|audio
+    |b|base|bdi|bdo|blockquote|body|br|button
+    |canvas|caption|cite|code|colgroup|col|command
+    |datalist|dd|del|details|dfn|dialog|div|dl|dt
+    |embed|em
+    |fieldset|figcaption|figure|footer|form
+    |h[1-6]|header|head|hgroup|hr|html
+    |i|iframe|img|input|ins
+    |kbd|keygen
+    |label|legend|li|link
+    |main|mathml|map|mark|menu|meta|meter
+    |nav|noscript
+    |object|ol|optgroup|option|output
+    |p|param|pre|progress
+    |q
+    |rp|rt|ruby
+    |s|samp|script|section|select|small|source|span|strong|style|sub|sup|summary|svg
+    |table|tbody|td|textarea|tfoot|thead|th|time|title|tr|track
+    |u|ul
+    |var|video
+    |wbr
+  )$
+///
+
+#  HTML5 attributes
 #-----------------------------------------------
 ATTR_REGEXP = ///
   \s+       # need spaces seperater
@@ -14,7 +42,7 @@ ATTR_REGEXP = ///
   )?
 ///g
 
-ATTR_PRESERVED =
+HTMl5_ATTR_PRESERVED =
   '*': ///
     ^(
       accesskey | class | contenteditable | contextmenu | dir | draggable
@@ -94,7 +122,7 @@ ATTR_PRESERVED =
   'track': /^(kind|src|srclang|label|default)$/
   'video': /^(src|crossorigin|poster|preload|autoplay|mediagroup|loop|muted|controls|width|height)$/
 
-ATTR_BOOLEANS = /^(disabled|selected|checked|contenteditable)$/
+HTML5_ATTR_BOOLEANS = /^(disabled|selected|checked|contenteditable)$/
 
 
 #  JavaScript
@@ -211,7 +239,7 @@ class Leaf.Template.Parser
       if '\'' == c || '"' == c || '/' == c
         idx = i + 1
         true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
-        return node if (i = idx) == -1 # unbalance error
+        return node if (i = idx) == -1 # unbalance: expression has syntax error
       else
         i++
 
@@ -234,7 +262,7 @@ class Leaf.Template.Parser
 
     return unless attrs
 
-    attrs = " #{attrs} "
+    attrs = " #{attrs} " # makes thing easier
 
     ATTR_REGEXP.lastIndex = 0
 
@@ -244,8 +272,8 @@ class Leaf.Template.Parser
       val = m[3] || m[4]
 
       if '$' == binding
-        globalAttrs = ATTR_PRESERVED['*']
-        tagSpecificAttrs = ATTR_PRESERVED[node.name]
+        globalAttrs = HTMl5_ATTR_PRESERVED['*']
+        tagSpecificAttrs = HTMl5_ATTR_PRESERVED[node.name]
 
         if key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
           node.attrBindings[key] = @parseExpression val
@@ -267,6 +295,7 @@ class Leaf.Template.Parser
     node.contents = []
     node.context = {}
     node.name = token.name
+    node.customTags = !node.name.match HTML5_TAGS
     @parseTagAttrs node, token.attrPart
     @createNewScope node, parent
     node
@@ -315,7 +344,7 @@ class Leaf.Template.Parser
           @customTagCloseOther _p, p
           @customTagClose _p, p
         else
-          throw new UnbalancedTagParseError()
+          throw new UnbalancedTagParseError "expect </#{p.name}> insted of </#{token.name}>"
 
   parseTree: (parents) ->
     token = @tokenizer.getToken()
