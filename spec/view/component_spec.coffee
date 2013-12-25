@@ -112,10 +112,7 @@ describe 'Component views', ->
     beforeEach ->
       @obj = new Leaf.ObservableObject
         users: [
-          {
-            name: 'John'
-            age: 27
-          }
+          { name: 'John' }
         ]
 
 
@@ -147,55 +144,38 @@ describe 'Component views', ->
 
       expect(dom).toBe '.foo'
 
-  it 'should be able to access to variables of locale bindings', ->
-      bufferDefComponent = '''
-        <component name="foo">
-          {{ users[0].name }}
-        </component>
-      '''
+    it 'should be able to access to variables of locale bindings', ->
+        bufferDefComponent = '''
+          <component name="foo">
+            {{ users[0].name }}
+          </component>
+        '''
 
-      createDOM {}, bufferDefComponent
+        createDOM {}, bufferDefComponent
 
-      buffer = '''
-        <component:foo $users="users">
-      '''
+        buffer = '''
+          <component:foo $users="users">
+        '''
 
-      @obj = new Leaf.ObservableObject
-        users: [
-          {
-            name: 'John'
-            age: 27
-          }
-        ]
-      dom = createDOM @obj, buffer
-      console.log dom
+        dom = createDOM @obj, buffer
 
-      expect(dom).toHaveText 'John'
+        expect(dom).toHaveText 'John'
 
-  it 'should be able to access to the value of locale bindings\' expression', ->
-      bufferDefComponent = '''
-        <component name="foo">
-          {{ user.name }}
-        </component>
-      '''
+    it 'should be able to access to the value of locale bindings\' expression', ->
+        bufferDefComponent = '''
+          <component name="foo">
+            {{ user.name }}
+          </component>
+        '''
 
-      createDOM {}, bufferDefComponent
+        createDOM {}, bufferDefComponent
 
-      buffer = '''
-        <component:foo $user="users[0]">
-      '''
+        buffer = '''
+          <component:foo $user="users[0]">
+        '''
 
-      @obj = new Leaf.ObservableObject
-        users: [
-          {
-            name: 'John'
-            age: 27
-          }
-        ]
-      dom = createDOM @obj, buffer
-      console.log dom
+        dom = createDOM @obj, buffer
 
-      expect(dom).toHaveText 'John'
-
+        expect(dom).toHaveText 'John'
 
 

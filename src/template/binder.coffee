@@ -4,12 +4,22 @@ class Leaf.Template.Binder
   constructor: (@obj) ->
 
   getFunction: (expr, vars) ->
-    new Function vars..., "return (#{expr})"
+    try
+      fn = new Function vars..., "return (#{expr})"
+      fn.expr = expr
+      fn
+    catch e
+      Leaf.warn 'Syntax error:', expr
+      _.noop
 
   getEvaluator: (fn, vars) ->
     evaluate = =>
       args = vars.map (v) => @obj._get v
-      try fn.apply @obj, args
+      try
+        fn.apply @obj, args
+      catch e
+        Leaf.warn 'Invalid expression:', fn.expr
+        return ''
 
   getBinder: ({ expr, vars }) ->
     value = @getFunction expr, vars
@@ -29,7 +39,6 @@ class Leaf.Template.Binder
 
   mergeWithScope: (scope, obj = @obj) ->
     withScope = obj.clone()
-    console.log scope
 
     _(scope).forEach (value, name) =>
       bind = @getBinder value

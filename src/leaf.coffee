@@ -1,7 +1,7 @@
 
 class Leaf
 
-  develop: false
+  develop: true
 
   log: (args...) ->
     return unless @develop
