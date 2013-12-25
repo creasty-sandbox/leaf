@@ -37,31 +37,31 @@ describe 'domGenerator', ->
       expect(@gen.$parent).toBeDefined()
 
 
-  describe '#bind({ expr, vars })', ->
+  describe '#getBinder({ expr, vars })', ->
 
     beforeEach ->
       @gen.init DUMMY_TREE, @obj
 
-    it 'should return a binder function', ->
-      binder = @gen.bind expr: 'name.toUpperCase()', vars: ['name']
+    it 'should return a bind function', ->
+      bind = @gen.getBinder expr: 'name.toUpperCase()', vars: ['name']
 
-      expect(typeof binder).toBe 'function'
+      expect(typeof bind).toBe 'function'
 
     it 'should evaluate an expression with values of the object and call a routine function with a result', ->
-      binder = @gen.bind expr: 'name.toUpperCase()', vars: ['name']
+      bind = @gen.getBinder expr: 'name.toUpperCase()', vars: ['name']
 
       res = null
 
-      binder (result) -> res = result
+      bind (result) -> res = result
 
       expect(res).toBe 'JOHN'
 
     it 'should re-evaluate expression and call a routine function when dependents value of the object are updated', ->
-      binder = @gen.bind expr: 'name.toUpperCase()', vars: ['name']
+      bind = @gen.getBinder expr: 'name.toUpperCase()', vars: ['name']
 
       res = null
 
-      binder (result) -> res = result
+      bind (result) -> res = result
 
       @obj.set 'name', 'David'
 

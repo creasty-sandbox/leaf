@@ -39,9 +39,9 @@ Leaf.Template.registerTag 'if',
     view = new Leaf.Template.DOMGenerator()
     view.init node.contents, obj
     $el = view.getDOM()
-    binder = view.bind node.condition
+    bind = view.getBinder node.condition
 
-    binder (result) ->
+    bind (result) ->
       if !!result
         $el.insertAfter $marker
       else
@@ -78,9 +78,9 @@ Leaf.Template.registerTag 'elseif',
     view = new Leaf.Template.DOMGenerator()
     view.init node.contents, obj
     $el = view.getDOM()
-    binder = view.bind node.condition
+    bind = view.getBinder node.condition
 
-    binder (result) ->
+    bind (result) ->
       if !!result
         $el.insertAfter $marker
       else
@@ -111,9 +111,9 @@ Leaf.Template.registerTag 'else',
     view = new Leaf.Template.DOMGenerator()
     view.init node.contents, obj
     $el = view.getDOM()
-    binder = view.bind node.condition
+    bind = view.getBinder node.condition
 
-    binder (result) ->
+    bind (result) ->
       if !!result
         $el.insertAfter $marker
       else

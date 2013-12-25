@@ -33,7 +33,8 @@ class IteratorView extends Leaf.Object
   init: (@node, @$marker, @$parent, @obj) ->
     ite = @node.scope[@node.iterator]
 
-    bind = Leaf.Template.Binder.getBinder ite, @obj
+    binder = new Leaf.Template.Binder @obj
+    bind = binder.getBinder ite
     bind (value) => @collection = value
     @collectionViews = new Leaf.ObservableArray []
 

@@ -35,6 +35,7 @@ FILES =
     'template.coffee'
     'tokenizer.coffee'
     'parser.coffee'
+    'binder.coffee'
     'dom_generator.coffee'
   ]
   view: [

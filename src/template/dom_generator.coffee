@@ -1,31 +1,4 @@
 
-class Leaf.Template.Binder
-
-  @getFunction: (expr, vars) ->
-    new Function vars..., "return (#{expr})"
-
-  @getEvaluator: (fn, vars, obj) ->
-    evaluate = ->
-      args = vars.map (v) => obj._get v
-      try fn.apply null, args
-
-  @getBinder: ({ expr, vars }, obj) ->
-    value = @getFunction expr, vars
-
-    evaluate = @getEvaluator value, vars, obj
-
-    binder = (routine) =>
-      obj._beginTrack 'getter' unless value._dependents
-
-      result = evaluate()
-
-      if (dependents = obj._endTrack 'getter')
-        value._dependents = dependents
-        obj.observe d, (-> routine evaluate()) for d in dependents
-
-      routine result
-
-
 class Leaf.Template.DOMGenerator
 
   doc = document # copying global variable to local make js faster
@@ -43,13 +16,14 @@ class Leaf.Template.DOMGenerator
 
     @$parent = $ doc.createElement 'body'
 
-  bind: (value) ->
-    Leaf.Template.Binder.getBinder value, @obj
+  getBinder: (value) ->
+    binder = new Leaf.Template.Binder @obj
+    binder.getBinder value, @obj
 
   bindAttributes: ($el, attrs) ->
     _(attrs).forEach (val, key) =>
-      binder = @bind val
-      binder (result) -> $el.attr key, result
+      bind = @getBinder val
+      bind (result) -> $el.attr key, result
 
   bindLocales: ($el, attrs) ->
     # TODO
@@ -93,20 +67,20 @@ class Leaf.Template.DOMGenerator
     $text.appendTo $parent
 
   createInterpolationNode: (node, $parent) ->
-    binder = @bind node.value
+    bind = @getBinder node.value
 
     if node.escape
       el = doc.createTextNode ''
       $el = $ el
       $el.appendTo $parent
 
-      binder (result) -> el.nodeValue = result
+      bind (result) -> el.nodeValue = result
     else
       $marker = @createMarker 'interpolation'
       $marker.appendTo $parent
       $el = null
 
-      binder (result) ->
+      bind (result) ->
         if $el
           $el.remove()
           $el = null
