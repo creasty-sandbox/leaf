@@ -157,6 +157,11 @@ gruntConfig.coffee =
     files:
       'dist/leaf.js': files.all 'view', 'src'
 
+# Clean
+gruntConfig.clean =
+  tmp: TMP_DIR
+
+
 # Concat
 gruntConfig.concat =
   src:
@@ -255,7 +260,7 @@ module.exports = (grunt) ->
   filteredTest = if filter then "jasmine:#{filter}" else 'jasmine'
   grunt.registerTask 'filtered_test', [filteredTest]
 
-  grunt.registerTask 'dev', ['coffee:src', 'watch:coffee']
-  grunt.registerTask 'test', ['coffee:src', 'coffee:test', 'filtered_test', 'watch']
-  grunt.registerTask 'release', ['coffee:release', 'concat', 'uglify']
+  grunt.registerTask 'dev', ['clean', 'coffee:src', 'watch:coffee']
+  grunt.registerTask 'test', ['clean', 'coffee:src', 'coffee:test', 'filtered_test', 'watch']
+  grunt.registerTask 'release', ['clean', 'coffee:release', 'concat', 'uglify']
 
