@@ -62,9 +62,9 @@ class Leaf.ObservableBase extends Leaf.Object
     stacks = {}
 
     # find terminal keypaths:
-    # ['a.x', 'a.b.d', 'a.b.c.d']
+    # ['a.x', 'a.b.d', 'a.b.c.e']
     # in
-    # ['a', 'a.b', 'a.x', 'a.b.c', 'a.b.d', 'a.b.c.d']
+    # ['a', 'a.b', 'a.x', 'a.b.c', 'a.b.d', 'a.b.c.e']
     #
     for keypath in keypaths
       stacks[keypath] = true
