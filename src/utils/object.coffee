@@ -8,10 +8,17 @@ class LeafObject extends Leaf.Class
       Leaf.Hookable,
       Leaf.ObservableObject
 
+    @_superClass = @constructor.__super__
+
     super arguments...
 
   @_isLeafObject: true
   __isLeafObject: true
+
+  inherit: (property) ->
+    return unless @_superClass
+    self = @[property] ? {}
+    @[property] = _.defaults self, @_superClass[property]
 
   toString: -> "<#{@getLeafClass()}.#{@constructor.name} #{@_leafID}>"
 

@@ -23,8 +23,8 @@ class Leaf
     for mixin in mixins
       continue unless _.isFunction(mixin) || _.isPlainObject(mixin)
 
-      to[key] ?= value for own key, value of mixin when key != 'prototype'
-      to::[key] ?= value for own key, value of mixin:: ? {}
+      to[key] ?= value for key, value of mixin when key != 'prototype'
+      to::[key] ?= value for key, value of mixin:: ? {}
 
     to
 

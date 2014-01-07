@@ -7,13 +7,14 @@ class Leaf.ObservableBase extends Leaf.Class
   @mixin Leaf.Cacheable, Leaf.Accessible
 
   constructor: ->
-    super()
     @initMixin Leaf.Cacheable, Leaf.Accessible
 
     @_dependents = {}
     @_tracked = {}
     @_tracking = {}
     @_sub = {}
+
+    super arguments...
 
   _makeObservable: (o, parentObj, parentProp) ->
     if _.isArray o

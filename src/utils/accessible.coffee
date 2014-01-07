@@ -1,11 +1,11 @@
 
 class Leaf.Accessible
 
-  @_isAccessible: true
-  __isAccessible: true
-
   constructor: ->
     @_accessors = {}
+
+  @_isAccessible: true
+  __isAccessible: true
 
   accessors: (accessors, obj = @) ->
     return unless accessors
