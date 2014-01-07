@@ -168,7 +168,7 @@ class Leaf.ObservableBase extends Leaf.Class
       @_createTrack 'setter' if options.bubbling
     else
       @_update prop if options.notify
-      @_update() if options.notify
+      @_update() if options.bubbling
 
     val
 
@@ -212,11 +212,12 @@ class Leaf.ObservableBase extends Leaf.Class
     { obj, prop } = @getTerminalParent keypath
     obj._removeFromCollection prop
 
-  _update: (prop) -> @_fire prop, 'update'
+  _update: (prop) ->
+    @_fire prop, 'update'
+    @_parentObj._update @_parentProp if @_hasParent
 
   update: (keypath) ->
     { obj, prop } = @getTerminalParent keypath
-    @_parentObj._update @_parentProp if @_hasParent
     obj._update prop
 
   _observe: (prop, callback) ->
