@@ -18,6 +18,7 @@ FILES =
     'cache.coffee'
     'inflector.coffee'
     'array_diff_patch.coffee'
+    'hookable.coffee'
     'object.coffee'
   ]
   observable: [
@@ -152,7 +153,6 @@ gruntConfig.coffee =
 # Clean
 gruntConfig.clean =
   tmp: TMP_DIR
-
 
 # Concat
 gruntConfig.concat =

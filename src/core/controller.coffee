@@ -1,7 +1,9 @@
 
-class Leaf.Controller
+class Leaf.Controller extends Leaf.Object
 
-  constructor: ->
+  @setObjectType()
+
+  initialize: ->
 
   render: (args...) ->
     option = Leaf.Utils.extractOptions args
@@ -9,11 +11,13 @@ class Leaf.Controller
     @_renderOption = option
 
   @render: (action) ->
-    ctrl = new @()
-    _prev = _.keys ctrl
-    ctrl[action]()
-    vars = _.pick ctrl, _.without(_.keys(ctrl), _prev...)
+    @ctrl ?= new @()
 
+    _prev = _.keys @ctrl
+    @ctrl[action]()
+    vars = _.pick @ctrl, _.without(_.keys(@ctrl), _prev...)
+
+    # TODO
     # render template with vars
     # initialize views
 

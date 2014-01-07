@@ -1,11 +1,13 @@
 
 class LeafObject extends Object
 
-  @_objectType = 'Object'
-
   _leafID = 0
 
-  constructor: -> @_objectBaseInit()
+  constructor: ->
+    @initMixin Hookable
+
+    @_objectBaseInit()
+    @initialize? arguments...
 
   getClass: -> @constructor
 
@@ -22,7 +24,7 @@ class LeafObject extends Object
     @_cache.set @toLeafID(), @
     @_accessors = {}
 
-  @mixin: -> @::mixin.apply @::, arguments
+  @mixin: -> Leaf.mixin @, arguments...
   mixin: -> Leaf.mixin @, arguments...
   initMixin: (mixin, args...) -> mixin.apply @, args
 
@@ -67,6 +69,10 @@ class LeafObject extends Object
     !!id.match /^__LEAF_ID_\d+$/
 
   @setObjectType: (name = @name) -> @_objectType = name
+
+  # self
+  @setObjectType()
+  @mixin Hookable
 
 
 Leaf.Object = LeafObject
