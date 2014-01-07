@@ -1,24 +1,26 @@
 
 class Leaf.Class extends Object
 
-  getclass: -> @constructor
-
   @singleton: ->
     instance = new @ arguments...
-    instance._sharedinstance = instance
+    instance._sharedInstance = instance
     instance
 
-  @mixin: -> _mixin @, arguments...
-  mixin: -> _mixin @, arguments...
-  initMixin: (mixins...) ->
-    mixin.apply @ for mixin in mixins ? []
+  getClass: -> @constructor
 
-  _mixin = (to, mixins...) ->
-    for mixin in mixins
-      continue unless _.isFunction(mixin) || _.isPlainObject(mixin)
+  @_mixins: []
 
-      to[key] ?= value for key, value of mixin when key != 'prototype'
-      to::[key] ?= value for key, value of mixin:: ? {}
+  @mixin: -> @_mixins.push mixinTo(@, mixin) for mixin in arguments
+  mixin: -> mixinTo(@, mixin) for mixin in arguments
 
-    to
+  initMixin: (mixin, args = []) -> mixin.apply @, args
+  initMixins: -> @initMixin mixin for mixin in @constructor._mixins
+
+  mixinTo = (to, mixin) ->
+    return mixin unless _.isFunction(mixin) || _.isPlainObject(mixin)
+
+    to[key] ?= value for key, value of mixin when key != 'prototype'
+    to::[key] ?= value for key, value of mixin:: ? {}
+
+    mixin
 
