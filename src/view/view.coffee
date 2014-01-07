@@ -1,13 +1,11 @@
 
 class Leaf.View extends Leaf.Object
 
-  @setObjectType()
-
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
-  constructor: (@$view) ->
-    @_objectBaseInit()
+  @setObjectType()
 
+  initialize: (@$view) ->
     @inherit 'elements'
     @inherit 'events'
 

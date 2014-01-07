@@ -32,3 +32,5 @@ class RequiredArgumentsError extends Leaf.Error
 
   @segment = ', '
 
+class DependentMixinError extends Leaf.Error
+

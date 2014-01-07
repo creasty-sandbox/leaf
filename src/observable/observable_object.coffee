@@ -1,10 +1,9 @@
 
 class Leaf.ObservableObject extends Leaf.ObservableBase
 
-  init: ->
+  initialize: (_data) ->
     super()
 
-    _data = @_data
     @_data = {}
 
     for own key, val of _data

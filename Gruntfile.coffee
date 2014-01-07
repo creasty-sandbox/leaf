@@ -13,11 +13,15 @@ FILES =
   ]
   utils: [
     'lodash/*.coffee'
+    'class.coffee'
     'error.coffee'
     'event.coffee'
     'cache.coffee'
     'inflector.coffee'
     'array_diff_patch.coffee'
+    'identifiable.coffee'
+    'cacheable.coffee'
+    'accessible.coffee'
     'hookable.coffee'
     'object.coffee'
   ]

@@ -1,13 +1,14 @@
 
-class Leaf.ObservableBase extends Leaf.Object
+class Leaf.ObservableBase extends Leaf.Class
 
-  isObservable: true
+  @_isObservable: true
+  __isObservable: true
 
-  constructor: (@_data) ->
-    @init()
+  @mixin Leaf.Cacheable, Leaf.Accessible
 
-  init: ->
-    @_objectBaseInit()
+  constructor: ->
+    super()
+    @initMixin Leaf.Cacheable, Leaf.Accessible
 
     @_dependents = {}
     @_tracked = {}

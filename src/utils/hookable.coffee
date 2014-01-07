@@ -2,7 +2,7 @@
 class HookFunctionNotExistError extends Leaf.Error
 
 
-class Hookable
+class Leaf.Hookable
 
   @_hooks = {}
 
