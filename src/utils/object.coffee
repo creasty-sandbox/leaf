@@ -21,10 +21,10 @@ class LeafObject extends Leaf.Class
 
   getLeafClass: -> "Leaf.#{@constructor._objectType}"
 
-  @setObjectType: (name = @name) -> @_objectType = name
+  @setLeafClass: (name = @name) -> @_objectType = name
 
   # self
-  @setObjectType()
+  @setLeafClass 'Object'
 
   @mixin Leaf.Cacheable,
     Leaf.Accessible,

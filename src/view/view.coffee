@@ -3,7 +3,7 @@ class Leaf.View extends Leaf.Object
 
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
-  @setObjectType()
+  @setLeafClass()
 
   initialize: (@$view) ->
     @inherit 'elements'

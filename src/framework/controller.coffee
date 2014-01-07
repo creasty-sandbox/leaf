@@ -1,7 +1,7 @@
 
 class Leaf.Controller extends Leaf.Object
 
-  @setObjectType()
+  @setLeafClass()
 
   initialize: ->
 

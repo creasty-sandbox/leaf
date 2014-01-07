@@ -1,7 +1,7 @@
 
 class Leaf.App extends Leaf.Object
 
-  @setObjectType()
+  @setLeafClass()
 
   basePath: '/'
   usePushState: true
