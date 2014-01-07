@@ -1,6 +1,10 @@
 
 class Leaf.Class extends Object
 
+  @setLeafClass: (name = @name) -> @_objectType = name
+
+  getLeafClass: -> "Leaf.#{@constructor._objectType}"
+
   @singleton: ->
     instance = new @ arguments...
     instance._sharedInstance = instance

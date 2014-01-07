@@ -3,6 +3,13 @@ class LeafObject extends Leaf.Class
 
   __leafObject: true
 
+  @setLeafClass 'Object'
+
+  @mixin Leaf.Cacheable,
+    Leaf.Accessible,
+    Leaf.Hookable,
+    Leaf.ObservableObject
+
   constructor: ->
     @initMixins()
 
@@ -19,19 +26,6 @@ class LeafObject extends Leaf.Class
 
   toString: -> "<#{@getLeafClass()}.#{@constructor.name} #{@_leafID}>"
 
-  getLeafClass: -> "Leaf.#{@constructor._objectType}"
-
-  @setLeafClass: (name = @name) -> @_objectType = name
-
-  # self
-  @setLeafClass 'Object'
-
-  @mixin Leaf.Cacheable,
-    Leaf.Accessible,
-    Leaf.Hookable,
-    Leaf.ObservableObject
-
 
 Leaf.Object = LeafObject
-
 
