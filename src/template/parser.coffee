@@ -181,8 +181,8 @@ class Leaf.Template.Parser
     unless @buffer?
       throw new RequiredArgumentsError('buffer')
 
-    formatter = Leaf.Formatter.HTML
-    @buffer = formatter.minify @buffer
+    preformatter = new Leaf.Template.Preformatter @buffer
+    @buffer = preformatter.getResult()
 
     @tokenizer = new Leaf.Template.Tokenizer()
     @tokenizer.init @buffer

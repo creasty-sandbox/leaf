@@ -171,7 +171,7 @@ describe 'domGenerator', ->
 
       @gen.createInterpolationNode node, @$parent
 
-      expect(@$parent).toHaveHtml '<b>JOHN</b>'
+      expect(@$parent).toHaveHtml '<!--leaf: interpolation--><b>JOHN</b>'
 
     it 'should update the value of text node when the object value is changed', ->
       node =
@@ -193,5 +193,5 @@ describe 'domGenerator', ->
 
       @obj.set 'name', 'David'
 
-      expect(@$parent).toHaveHtml '<b>DAVID</b>'
+      expect(@$parent).toHaveHtml '<!--leaf: interpolation--><b>DAVID</b>'
 

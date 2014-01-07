@@ -1,7 +1,7 @@
 
 class Leaf.View extends Leaf.Object
 
-  @_objectType = 'View'
+  @setObjectType()
 
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 

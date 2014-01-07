@@ -1,24 +1,24 @@
 
 class Leaf.App extends Leaf.Object
 
-  @_objectType = 'App'
+  @setObjectType()
 
   basePath: '/'
   usePushState: true
   cacheViews: true
 
-  constructor: ->
+  views: {}
+
+  constructor: (config = {}) ->
     super()
-    @_c.app = @
-    @appName = @_c.name
-    @observer = new Leaf.Event()
-    @connectAllObjects()
+    Leaf.app = @
 
-  connectAllObjects: ->
-    obj.app = @ for own ns, obj of @_c when obj._objectType
+    @[key] = val for key, val of config
 
-  @routes: (routes) ->
-    app = new @()
-    # @router = new Leaf.Router app
-    # @router.createTable routes
+  ###
+  routes: (routes) ->
+    return unless routes
+    @router = new Leaf.Router()
+    @router.createTable routes
+  ###
 

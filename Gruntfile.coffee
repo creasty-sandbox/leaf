@@ -10,20 +10,15 @@ VENDOR_DIR = 'vendors/'
 FILES =
   _headers: [
     'leaf.coffee'
-    'constants.coffee'
-    'errors.coffee'
   ]
   utils: [
     'lodash/*.coffee'
-    'inflector.coffee'
+    'error.coffee'
     'event.coffee'
     'cache.coffee'
-    'object.coffee'
+    'inflector.coffee'
     'array_diff_patch.coffee'
-  ]
-  formatters: [
-    'formatter.coffee'
-    'html.coffee'
+    'object.coffee'
   ]
   observable: [
     'observable_base.coffee'
@@ -33,6 +28,7 @@ FILES =
   ]
   template: [
     'template.coffee'
+    'preformatter.coffee'
     'tokenizer.coffee'
     'parser.coffee'
     'binder.coffee'
@@ -47,10 +43,9 @@ FILES =
     'outlet.coffee'
   ]
   core: [
-    'object.coffee'
-    'router.coffee'
-    'navigator.coffee'
-    'model.coffee'
+    # 'router.coffee'
+    # 'navigator.coffee'
+    # 'model.coffee'
     'controller.coffee'
     'app.coffee'
   ]
@@ -71,20 +66,17 @@ FILE_DEPENDENCIES =
   template: [
     'headers'
     'utils'
-    'formatters'
     'observable'
   ]
   view: [
     'headers'
     'utils'
-    'formatters'
     'observable'
     'template'
   ]
   core: [
     'headers'
     'utils'
-    'formatters'
     'observable'
     'template'
   ]
