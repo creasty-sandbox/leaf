@@ -4,8 +4,7 @@ class HookFunctionNotExistError extends Leaf.Error
 
 class Leaf.Hookable
 
-  @_isHookable: true
-  __isHookable:true
+  __hookable:true
 
   @_hooks = {}
 

@@ -1,7 +1,7 @@
 
 class Leaf.ObservableArray extends Leaf.ObservableBase
 
-  toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v.__isObservable then v.toLeafID() else v
+  toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v.__observable then v.toLeafID() else v
 
   constructor: (_data = []) ->
     super()

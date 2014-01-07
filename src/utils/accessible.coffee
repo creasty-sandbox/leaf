@@ -1,8 +1,7 @@
 
 class Leaf.Accessible
 
-  @_isAccessible: true
-  __isAccessible: true
+  __accessible: true
 
   constructor: ->
     @_accessors = {}

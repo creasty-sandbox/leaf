@@ -1,8 +1,7 @@
 
 class LeafObject extends Leaf.Class
 
-  @_isLeafObject: true
-  __isLeafObject: true
+  __leafObject: true
 
   constructor: ->
     @initMixin Leaf.Cacheable,

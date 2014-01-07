@@ -1,8 +1,7 @@
 
 class Leaf.Cacheable extends Leaf.Identifiable
 
-  @_isCacheable: true
-  __isCacheable: true
+  __cacheable: true
 
   @cacheGroup = null # default
 
