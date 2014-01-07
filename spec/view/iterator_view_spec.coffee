@@ -1,21 +1,19 @@
 
-createDOM = (obj, buffer) ->
-  psr = new Leaf.Template.Parser()
-  psr.init buffer
-
-  gen = new Leaf.Template.DOMGenerator()
-  gen.init psr.getTree(), obj
-  gen.getDOM()
-
-
 describe 'Iterator statements', ->
+
+  createDOM = (obj, buffer) ->
+    psr = new Leaf.Template.Parser()
+    psr.init buffer
+
+    gen = new Leaf.Template.DOMGenerator()
+    gen.init psr.getTree(), obj
+    gen.getDOM()
+
 
   describe '<each $model="collection[]">', ->
 
-    obj = null
-
     beforeEach ->
-      obj = new Leaf.Observable
+      @obj = new Leaf.Observable
         posts: [
           { id: 1, title: 'Alpha' }
           { id: 2, title: 'Beta' }
@@ -31,8 +29,8 @@ describe 'Iterator statements', ->
         </div>
       '''
 
-      ctx = ->
-        $el = createDOM obj, buffer
+      ctx = =>
+        $el = createDOM @obj, buffer
 
       expect(ctx).toThrow()
 
@@ -45,7 +43,7 @@ describe 'Iterator statements', ->
         </div>
       '''
 
-      $el = createDOM obj, buffer
+      $el = createDOM @obj, buffer
       $posts = $el.find '.post'
 
       expect($posts).toExist()
@@ -62,7 +60,7 @@ describe 'Iterator statements', ->
         </div>
       '''
 
-      $el = createDOM obj, buffer
+      $el = createDOM @obj, buffer
 
       expect($el).toContain '#post_1'
       expect($el).toContain '#post_2'
@@ -72,10 +70,12 @@ describe 'Iterator statements', ->
       expect($el.find('#post_2 h2')).toHaveText 'Beta'
       expect($el.find('#post_3 h2')).toHaveText 'Gamma'
 
-
+    ###
     describe 'Special variable: modelIndex', ->
 
       it 'should return current index of an item in the collection', ->
-        expect(1 == 0).toBe true
+        # TODO
+
+    ###
 
 

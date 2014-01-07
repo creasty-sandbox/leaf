@@ -1,32 +1,55 @@
 
 class Leaf.ObservableBase extends Leaf.Object
 
-  @isObservable = true
+  isObservable: true
 
   constructor: (@_data) ->
     @init()
 
   init: ->
-    @isObservable = true
     @_objectBaseInit()
+
     @_dependents = {}
     @_tracked = {}
     @_tracking = {}
     @_sub = {}
 
-  _makeObservable: (o) ->
+  _makeObservable: (o, parentObj, parentProp) ->
     if _.isArray o
-      new Leaf.ObservableArray o
+      o = new Leaf.ObservableArray o
+      o.setParent parentObj, parentProp
+      o
     else if _.isPlainObject o
-      new Leaf.ObservableObject o
+      o = new Leaf.ObservableObject o
+      o.setParent parentObj, parentProp
+      o
     else
       o
 
+  setParent: (obj, prop) ->
+    return unless obj
+
+    @_hasParent = true
+    @_parentObj = obj
+    @_parentProp = prop
+
+  unsetParent: ->
+    @_hasParent = false
+    @_parentObj = null
+    @_parentProp = null
+
+  clone: -> new @constructor @_data
+
   _beginTrack: (name) ->
+    return if @_tracking[name]
     @_tracked[name] ?= []
     @_tracking[name] = true
 
-  _createTrack: (name, val) -> @_tracked[name].push val
+  _createTrack: (name, val) ->
+    @_parentObj._createTrack name, @_keypathFrom(@_parentProp, val) if @_hasParent
+
+    return unless @_tracking[name]
+    @_tracked[name].push val
 
   _endTrack: (name) ->
     return unless @_tracking[name]
@@ -34,7 +57,24 @@ class Leaf.ObservableBase extends Leaf.Object
     tracked = @_tracked[name]
     @_tracked[name] = []
     @_tracking[name] = false
-    _.unique tracked
+
+    keypaths = _.unique tracked
+    stacks = {}
+
+    # find terminal keypaths:
+    # ['a.x', 'a.b.d', 'a.b.c.e']
+    # in
+    # ['a', 'a.b', 'a.x', 'a.b.c', 'a.b.d', 'a.b.c.e']
+    #
+    for keypath in keypaths
+      stacks[keypath] = true
+
+      props = keypath.split '.'
+
+      # negate all the parents
+      stacks[props.join('.')] = false while props.pop() && props[0]
+
+    (path for path, flag of stacks when flag)
 
   beginBatch: ->
     @_beginTrack 'setter'
@@ -61,21 +101,21 @@ class Leaf.ObservableBase extends Leaf.Object
 
     val
 
+  _keypathFrom: (path...) -> _.compact(path).join '.'
+
   _get: (prop) ->
     return @ unless prop?
 
-    @_createTrack 'getter', prop if @_tracking.getter
+    @_createTrack 'getter', prop
 
     @_getComputed prop
 
   get: (keypath) ->
-    { obj, prop } = @getParent keypath
-
-    @_createTrack 'getter', keypath if @_tracking.getter
+    { obj, prop } = @getTerminalParent keypath
 
     obj?._get prop, @, keypath
 
-  getParent: (keypath) ->
+  getTerminalParent: (keypath) ->
     return { obj: @ } unless keypath?
 
     keypath += ''
@@ -118,7 +158,8 @@ class Leaf.ObservableBase extends Leaf.Object
     if _.isFunction @_data[prop]
       @_data[prop].call @, val
     else
-      @_data[prop] = @_makeObservable val
+      obj = @_makeObservable val, @, prop
+      @_data[prop] = obj
 
     if @_tracking.setter
       @_createTrack 'setter', prop if options.notify
@@ -144,7 +185,7 @@ class Leaf.ObservableBase extends Leaf.Object
 
       return @
 
-    { obj, prop } = @getParent keypath
+    { obj, prop } = @getTerminalParent keypath
 
     if @_tracking.setter
       @_createTrack 'setter', keypath if options?.notify
@@ -166,13 +207,14 @@ class Leaf.ObservableBase extends Leaf.Object
     @_fire prop, 'removeFromCollection'
 
   removeFromCollection: (keypath) ->
-    { obj, prop } = @getParent keypath
+    { obj, prop } = @getTerminalParent keypath
     obj._removeFromCollection prop
 
   _update: (prop) -> @_fire prop, 'update'
 
   update: (keypath) ->
-    { obj, prop } = @getParent keypath
+    { obj, prop } = @getTerminalParent keypath
+    @_parentObj._update @_parentProp if @_hasParent
     obj._update prop
 
   _observe: (prop, callback) ->
@@ -185,7 +227,7 @@ class Leaf.ObservableBase extends Leaf.Object
       's?f': 'keypath callback'
     , arguments
 
-    { obj, prop } = @getParent keypath
+    { obj, prop } = @getTerminalParent keypath
     obj._observe prop, callback
 
   _unobserve: (prop, callback) ->
@@ -196,6 +238,6 @@ class Leaf.ObservableBase extends Leaf.Object
       's?f': 'keypath callback'
     , arguments
 
-    { obj, prop } = @getParent keypath
+    { obj, prop } = @getTerminalParent keypath
     obj._unobserve prop, callback
 

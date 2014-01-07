@@ -26,7 +26,7 @@ INTERPOLATION_REGEXP = ///
 TAG_REGEXP = ///
   <
     (/?)  # closing tag
-    (\w+) # tag name
+    ([\w\-:]+) # tag name
     (     # attributes
       (?:
         \s+         # need spaces seperater
@@ -45,7 +45,7 @@ TAG_REGEXP = ///
   >
 ///i
 
-TAG_SELF_CLOSING = /^(img|input|hr|br|wbr|outlet|render|component)$/
+TAG_SELF_CLOSING = /^(img|input|hr|br|wbr|outlet|render|component:[\w\-]+)$/
 
 
 #  Tokenizer

@@ -4,18 +4,21 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
   toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v._leafObject then v.toLeafID() else v
 
   init: ->
-    @_data ?= []
     super()
+
     @_saveCurrentMap()
     @_lastOperation = {}
     @_removeHandlers = {}
-    @length = @_data.length
 
-    for i in [0...@_data.length] by 1
-      val = @_makeObservable @_data[i], @
+    _data = @_data ? []
+    @_data = []
+
+    for i in [0..._data.length] by 1
+      val = @_makeObservable _data[i], @
       @_data[i] = val
       @_accessor i
 
+    @length = @_data.length
     @_map = toLeafIDs @_data
 
   _saveCurrentMap: -> @_prev = _.clone @_map

@@ -5,10 +5,8 @@ Leaf
 Client-side MVC framework for rails projects
 
 
-
-
 Features
-========
+--------
 
 - MVC architecture
 - Hight affinity to Ruby on Rails projects
@@ -18,95 +16,8 @@ Features
 - CoffeeScript in mind
 
 
-
-
-Sample
-======
-
-```coffee
-class window.App extends Leaf.App
-```
-
-
-Model
------
-
-```coffee
-class App.Author extends Leaf.Model
-  
-  @accessors 'firstname', 'lastname'
-
-  @hasMany 'posts'
-
-  fullname: -> "#{@firstname} #{@lastname}"
-
-
-class App.Post extends Leaf.Model
-
-  @accessors 'title', 'content'
-
-  @hasMany 'comments'
-  @belongsTo 'author'
-
-
-class App.Comment extends Leaf.Model
-
-  @accessors 'email', 'name', 'content'
-
-  @belongsTo 'post'
-
-```
-
-
-View
-----
-
-```html
-<!-- posts/index.html -->
-<if $condition="posts.length > 0">
-  <each $post="posts[]">
-    <article>
-      <h3>{{ post.title }}</h3>
-      <p>{{ post.content.slice(0, 150) }}</p>
-    </article>
-  </each>
-</if>
-<else>
-  <p>No posts!</p>
-</else>
-```
-
-
-Controller
-----------
-
-```coffee
-class App.PostsController extends Leaf.Controller
-
-  index: ->
-    @posts = App.Post.orderBy 'created_at'
-
-```
-
-
-Routing
--------
-
-```coffee
-App.routes ->
-
-  @root 'pages#home'
-
-  @resources 'posts', ->
-    @resources 'comments'
-
-```
-
-
-
-
 Building & Testing
-==================
+------------------
 
 You'll need to have Grunt and Bower installed.
 
@@ -130,21 +41,17 @@ $ grunt release
 ```
 
 
-
-
 Contributing
-============
+------------
 
-Bug reports
------------
+### Bug reports
 
 1. Ensure the bug can be reproduced on the latest master.
 1. Check it's not a duplicate.
 1. Raise an issue.
 
 
-Pull-requests
--------------
+### Pull-requests
 
 Contributions are always welcome!
 
@@ -156,10 +63,8 @@ Contributions are always welcome!
 1. Create a pull request.
 
 
-
-
 License
-=======
+-------
 
 This project is copyright by [Creasty](http://www.creasty.com), released under the MIT lisence.  
 See `LICENSE` file for details.

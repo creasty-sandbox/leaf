@@ -1,7 +1,5 @@
 
-PlainObject = Object
-
-class Leaf.Object extends PlainObject
+class LeafObject extends Object
 
   @_objectType = 'Object'
 
@@ -9,14 +7,24 @@ class Leaf.Object extends PlainObject
 
   constructor: -> @_objectBaseInit()
 
+  getClass: -> @constructor
+
+  @singleton: ->
+    instance = new @ arguments...
+    instance._sharedInstance = instance
+    instance
+
   _objectBaseInit: ->
     @_leafObject = true
     @_leafID = ++_leafID
-    @_c = @constructor
     @_superClass = @constructor.__super__
     @_cache = new Leaf.Cache()
     @_cache.set @toLeafID(), @
     @_accessors = {}
+
+  @mixin: -> @::mixin.apply @::, arguments
+  mixin: -> Leaf.mixin @, arguments...
+  initMixin: (mixin, args...) -> mixin.apply @, args
 
   inherit: (property) ->
     return unless @_superClass
@@ -34,7 +42,7 @@ class Leaf.Object extends PlainObject
   _accessor: (attr, obj = @) ->
     @_accessors[attr] = 1
 
-    PlainObject.defineProperty @, attr,
+    Object.defineProperty @, attr,
       enumerable: true
       configurable: true
       get: => obj._get attr
@@ -43,17 +51,24 @@ class Leaf.Object extends PlainObject
   _removeAccessor: (attr, obj = @) ->
     @_accessors[attr] = undefined
 
-    PlainObject.defineProperty obj, attr,
+    Object.defineProperty obj, attr,
       enumerable: false
       configurable: true
       value: undefined
 
-  toString: -> "<#{@getLeafClass()}.#{@_c.name} #{@_leafID}>"
+  toString: -> "<#{@getLeafClass()}.#{@constructor.name} #{@_leafID}>"
+
   toLeafID: -> "__LEAF_ID_#{@_leafID}"
 
-  getLeafClass: -> "Leaf.#{@_c._objectType}"
+  getLeafClass: -> "Leaf.#{@constructor._objectType}"
 
   @isLeafID: (id) ->
     return false unless _.isString id
     !!id.match /^__LEAF_ID_\d+$/
+
+  @setObjectType: (name = @name) -> @_objectType = name
+
+
+Leaf.Object = LeafObject
+
 

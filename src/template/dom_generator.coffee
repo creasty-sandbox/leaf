@@ -1,4 +1,11 @@
 
+#  Errors
+#-----------------------------------------------
+class UndefinedCustomTagError extends Leaf.Error
+
+
+#  Generator
+#-----------------------------------------------
 class Leaf.Template.DOMGenerator
 
   doc = document # copying global variable to local make js faster
@@ -7,7 +14,7 @@ class Leaf.Template.DOMGenerator
 
   constructor: ->
 
-  init: (@tree, @obj, @scope = {}) ->
+  init: (@tree, @obj) ->
     unless @tree
       throw new RequiredArgumentsError('tree')
 
@@ -16,28 +23,14 @@ class Leaf.Template.DOMGenerator
 
     @$parent = $ doc.createElement 'body'
 
-  bind: ({ expr, vars }) ->
-    value = new Function vars..., "return (#{expr})"
-
-    evaluate = =>
-      args = vars.map (v) => @scope[v] ? @obj._get v
-      try value.apply null, args
-
-    binder = (routine) =>
-      @obj._beginTrack 'getter' unless value._dependents
-
-      result = evaluate()
-
-      if (dependents = @obj._endTrack 'getter')
-        value._dependents = dependents
-        @obj.observe d, (-> routine evaluate()) for d in dependents
-
-      routine result
+  getBinder: (value) ->
+    binder = new Leaf.Template.Binder @obj
+    binder.getBinder value, @obj
 
   bindAttributes: ($el, attrs) ->
     _(attrs).forEach (val, key) =>
-      binder = @bind val
-      binder (result) -> $el.attr key, result
+      bind = @getBinder val
+      bind (result) -> $el.attr key, result
 
   bindLocales: ($el, attrs) ->
     # TODO
@@ -54,7 +47,12 @@ class Leaf.Template.DOMGenerator
       $ doc.createTextNode ''
 
   createElement: (node, $parent) ->
-    c = customTags.def[node.name] ? {}
+    c = customTags.def[node.name]
+
+    if node.customTag && !c
+      throw new UndefinedCustomTagError "<#{node.name}>"
+
+    c ?= {}
 
     if c.structure
       $marker = @createMarker node.name
@@ -81,20 +79,20 @@ class Leaf.Template.DOMGenerator
     $text.appendTo $parent
 
   createInterpolationNode: (node, $parent) ->
-    binder = @bind node.value
+    bind = @getBinder node.value
 
     if node.escape
       el = doc.createTextNode ''
       $el = $ el
       $el.appendTo $parent
 
-      binder (result) -> el.nodeValue = result
+      bind (result) -> el.nodeValue = result
     else
       $marker = @createMarker 'interpolation'
       $marker.appendTo $parent
       $el = null
 
-      binder (result) ->
+      bind (result) ->
         if $el
           $el.remove()
           $el = null

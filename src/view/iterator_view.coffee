@@ -14,12 +14,7 @@ class IteratorView extends Leaf.Object
     node.iterator = null
 
     for key, value of node.localeBindings when value.expr.match /\w+\[\]$/
-      ik = "#{key}Index"
       value.expr = value.expr.replace '[]', ''
-      value.vars.push ik
-
-      node.localeBindings[key] = undefined
-      node.scope[key] = value
       node.iterator = key
       break
 
@@ -31,11 +26,12 @@ class IteratorView extends Leaf.Object
     iv.init node, $marker, $parent, obj
 
   init: (@node, @$marker, @$parent, @obj) ->
-    ite = @node.scope[@node.iterator]
-
-    @collection = obj.get ite.expr
     @collectionViews = new Leaf.ObservableArray []
 
+    binder = new Leaf.Template.Binder @obj
+    bindingObj = binder.getBindingObject @node.localeBindings
+
+    @collection = bindingObj.get @node.iterator
     @collection.forEach @addOne
     @collection.observe @update
 
@@ -70,12 +66,12 @@ class IteratorView extends Leaf.Object
 #-----------------------------------------------
 class IteratorItemView extends Leaf.View
 
-  constructor: (@node, @item, @obj) ->
+  constructor: (@node, @item, obj) ->
     return cached if (cached = @getCachedView @item)
 
-    scope = {}
-    scope[@node.iterator] = @item
-    @$view = @fromParsedTree @node.contents, @obj, scope
+    @obj = obj.clone()
+    @obj.set @node.iterator, @item
+    @$view = @fromParsedTree @node.contents, @obj
 
     super @$view
 
