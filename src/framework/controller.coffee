@@ -5,9 +5,12 @@ class Leaf.Controller extends Leaf.Object
 
   initialize: ->
 
-  render: (args...) ->
-    option = Leaf.Utils.extractOptions args
-    @_renderTemplate = args[0]
+  render: ->
+    { name, option } = _.polymorphic
+      'so?': 'name option'
+    , arguments
+
+    @_renderTemplate = name
     @_renderOption = option
 
   @render: (action) ->

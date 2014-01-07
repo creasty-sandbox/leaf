@@ -43,7 +43,7 @@ FILES =
     'render.coffee'
     'outlet.coffee'
   ]
-  core: [
+  framework: [
     # 'router.coffee'
     # 'navigator.coffee'
     # 'model.coffee'
@@ -75,7 +75,7 @@ FILE_DEPENDENCIES =
     'observable'
     'template'
   ]
-  core: [
+  framework: [
     'headers'
     'utils'
     'observable'
@@ -148,7 +148,7 @@ gruntConfig.coffee =
     options:
       join: true
     files:
-      'dist/leaf.js': files.all 'view', 'src'
+      'dist/leaf.js': files.all 'framework', 'src'
 
 # Clean
 gruntConfig.clean =
