@@ -3,7 +3,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v.__isObservable then v.toLeafID() else v
 
-  initialize: (_data = []) ->
+  constructor: (_data = []) ->
+    super()
     @_data = []
 
     @_saveCurrentMap()

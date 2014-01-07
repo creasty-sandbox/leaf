@@ -1,19 +1,20 @@
 
 class LeafObject extends Leaf.Class
 
+  @_isLeafObject: true
+  __isLeafObject: true
+
   constructor: ->
-    @initMixin Leaf.Identifiable,
-      Leaf.Cacheable,
+    @initMixin Leaf.Cacheable,
       Leaf.Accessible,
       Leaf.Hookable,
       Leaf.ObservableObject
 
     @_superClass = @constructor.__super__
 
-    super arguments...
+    @initialize arguments...
 
-  @_isLeafObject: true
-  __isLeafObject: true
+  initialize: ->
 
   inherit: (property) ->
     return unless @_superClass

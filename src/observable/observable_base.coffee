@@ -14,8 +14,6 @@ class Leaf.ObservableBase extends Leaf.Class
     @_tracking = {}
     @_sub = {}
 
-    super arguments...
-
   _makeObservable: (o, parentObj, parentProp) ->
     if _.isArray o
       o = new Leaf.ObservableArray o

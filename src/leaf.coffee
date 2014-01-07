@@ -19,15 +19,6 @@ class Leaf
     msg = ['[Leaf] Warn:', args...]
     console.error msg...
 
-  mixin: (to, mixins...) ->
-    for mixin in mixins
-      continue unless _.isFunction(mixin) || _.isPlainObject(mixin)
-
-      to[key] ?= value for key, value of mixin when key != 'prototype'
-      to::[key] ?= value for key, value of mixin:: ? {}
-
-    to
-
 
 # Framework namespace
 window.Leaf = new Leaf()

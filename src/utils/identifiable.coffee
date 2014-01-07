@@ -3,11 +3,11 @@ class Leaf.Identifiable
 
   _leafID = 0
 
-  constructor: ->
-    @_leafID ?= ++_leafID
-
   @_isIdentifiable: true
   __isIndentifiable: true
+
+  constructor: ->
+    @_leafID ?= ++_leafID
 
   toLeafID: -> "__LEAF_ID_#{@_leafID}"
 

@@ -1,11 +1,11 @@
 
 class Leaf.Accessible
 
-  constructor: ->
-    @_accessors = {}
-
   @_isAccessible: true
   __isAccessible: true
+
+  constructor: ->
+    @_accessors = {}
 
   accessors: (accessors, obj = @) ->
     return unless accessors
@@ -21,8 +21,8 @@ class Leaf.Accessible
     Object.defineProperty @, attr,
       enumerable: true
       configurable: true
-      get: => obj._get attr
-      set: (val) => obj._set attr, val
+      get: -> obj._get attr
+      set: (val) -> obj._set attr, val
 
   _removeAccessor: (attr, obj = @) ->
     @_accessors[attr] = undefined

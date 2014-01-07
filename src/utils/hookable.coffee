@@ -4,6 +4,9 @@ class HookFunctionNotExistError extends Leaf.Error
 
 class Leaf.Hookable
 
+  @_isHookable: true
+  __isHookable:true
+
   @_hooks = {}
 
   @beforeAction: (action, hook) -> @hook "beforeAction:#{action}", hook
