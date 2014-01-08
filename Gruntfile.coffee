@@ -39,6 +39,9 @@ FILES =
     'binder.coffee'
     'dom_generator.coffee'
   ]
+  _object: [
+    'object.coffee'
+  ]
   view: [
     'view.coffee'
     'conditional_view.coffee'
@@ -78,12 +81,15 @@ FILE_DEPENDENCIES =
     'utils'
     'observable'
     'template'
+    'object'
   ]
   framework: [
     'headers'
     'utils'
     'observable'
     'template'
+    'object'
+    'view'
   ]
 
 

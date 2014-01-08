@@ -12,13 +12,24 @@ class Leaf.Class extends Object
 
   getClass: -> @constructor
 
-  @_mixins: []
+  @mixin: ->
+    @_mixins ?= []
+    @_mixins.push mixinTo(@, mixin) for mixin in arguments
+    null
 
-  @mixin: -> @_mixins.push mixinTo(@, mixin) for mixin in arguments
-  mixin: -> mixinTo(@, mixin) for mixin in arguments
+  mixin: ->
+    mixinTo(@, mixin) for mixin in arguments
+    null
 
-  initMixin: (mixin, args = []) -> mixin.apply @, args
-  initMixins: -> @initMixin mixin for mixin in @constructor._mixins
+  initMixin: (mixins...) ->
+    for mixin in mixins when mixin
+      if _.isArray mixin
+        fn = mixin.shift()
+        fn.apply @, mixin
+      else
+        mixin.apply @
+
+    null
 
   mixinTo = (to, mixin) ->
     return mixin unless _.isFunction(mixin) || _.isPlainObject(mixin)

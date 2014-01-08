@@ -1,8 +1,7 @@
 
 class Leaf.ObservableBase extends Leaf.Class
 
-  @_isObservable: true
-  __isObservable: true
+  __observable: true
 
   @mixin Leaf.Cacheable, Leaf.Accessible
 

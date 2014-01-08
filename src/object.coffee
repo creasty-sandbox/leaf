@@ -11,7 +11,10 @@ class LeafObject extends Leaf.Class
     Leaf.ObservableObject
 
   constructor: ->
-    @initMixins()
+    @initMixin  Leaf.Cacheable,
+      Leaf.Accessible,
+      Leaf.Hookable,
+      Leaf.ObservableObject
 
     @_superClass = @constructor.__super__
 
