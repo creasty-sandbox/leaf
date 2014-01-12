@@ -202,13 +202,6 @@ class Leaf.ObservableBase extends Leaf.Class
   _fire: (prop, eventName) ->
     $(window).trigger @_getEventName(prop, null, eventName), [@get(prop)]
 
-  _removeFromCollection: (prop) ->
-    @_fire prop, 'removeFromCollection'
-
-  removeFromCollection: (keypath) ->
-    { obj, prop } = @getTerminalParent keypath
-    obj._removeFromCollection prop
-
   _update: (prop) ->
     @_fire prop, 'update'
     @_parentObj._update @_parentProp if @_hasParent

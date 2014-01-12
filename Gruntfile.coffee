@@ -25,6 +25,16 @@ FILES =
     'hookable.coffee'
     'object.coffee'
   ]
+  support: [
+    'support.coffee'
+    'string.coffee'
+    'number.coffee'
+    'date.coffee'
+  ]
+  event: [
+    'event.coffee'
+    'lifecycle_event.coffee'
+  ]
   observable: [
     'observable_base.coffee'
     'observable_object.coffee'
@@ -67,18 +77,28 @@ FILE_DEPENDENCIES =
   utils: [
     'headers'
   ]
+  support: [
+    'headers'
+    'utils'
+  ]
   observable: [
     'headers'
     'utils'
+    'support'
+    'event'
   ]
   template: [
     'headers'
     'utils'
+    'support'
+    'event'
     'observable'
   ]
   view: [
     'headers'
     'utils'
+    'support'
+    'event'
     'observable'
     'template'
     'object'
@@ -86,6 +106,8 @@ FILE_DEPENDENCIES =
   framework: [
     'headers'
     'utils'
+    'support'
+    'event'
     'observable'
     'template'
     'object'
