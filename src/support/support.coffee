@@ -4,20 +4,23 @@ class Leaf.Support
   @add: (klass) ->
     extendee = klass.__super__ ? Object
     instance = new klass()
-    obj = (@[extendee.name] ?= {})
 
-    addMethod obj, extendee, method, fn for own method, fn of instance
+    addClassMethod extendee, method, fn for own method, fn of klass
+    addInstanceMethod extendee, method, fn for own method, fn of instance
 
-  addMethod = (obj, extendee, method, fn) ->
-    obj[method] = fn
+  addClassMethod = (extendee, method, fn) ->
+    extendee[method] = -> fn @, arguments...
+
+  addInstanceMethod = (extendee, method, fn) ->
     extendee::[method] = -> fn @, arguments...
 
-  @resetPrototypeMethods: ->
-    for ctor in supportClasses
-      methods = klass[ctor.name]
+###
+SubNumber = ->
+  n = new Number arguments...
+  n.__proto__ = SubNumber::
+  n
 
-      for method of methods when method != 'add'
-        ctor::[method] = undefined
-
-    null
+SubNumber:: = new Number()
+SubNumber::succ = -> new @constructor @ + 1
+###
 

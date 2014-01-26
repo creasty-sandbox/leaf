@@ -33,7 +33,7 @@ class DateSupport extends Date
 
   class FormatterNotImplementedError extends Leaf.Error
 
-  STRING_FORMATS =
+  DATE_FORMATTERS =
     '%a': (date) -> ABBR_WEEKDAYS[date.getDay()]
     '%A': (date) -> WEEKDAYS[date.getDay()]
     '%b': (date) -> ABBR_MONTHS[date.getMonth()]
@@ -87,7 +87,7 @@ class DateSupport extends Date
   toFormattedString: (date, format) ->
     format
     .replace /(^|[^%])%([a-zA-Z])/g, (_, hack, f) ->
-      hack + STRING_FORMATS[f]?(date)
+      hack + DATE_FORMATTERS[f]?(date)
     .replace /%%/g, '%'
 
   relativeDate: (date) ->
@@ -155,17 +155,14 @@ class DateSupport extends Date
 
   tomorrow: (date) -> date.setDate date.getDate() + 1
 
-###
-Date.prototype.strftime = Date.prototype.toFormattedString;
-Date.prototype.midnight = Date.prototype.beginningOfDay;
-Date.prototype.monday = Date.prototype.beginningOfWeek;
+  # method aliases
+  strftime: @::toFormattedString
+  midnight: @::beginningOfDay
+  monday: @::beginningOfWeek
 
-Date.WEEKDAYS.each(function(dayName, dayIndex) {
-  Date.prototype["is" + dayName] = function() {
-    return this.getDay() % 7 == dayIndex;
-  }
-});
-###
+  klass = @
+  WEEKDAYS.forEach (dayName, dayIndex) ->
+    klass::["is#{dayName}"] = -> @getDay() % 7 == dayIndex
 
 
 Leaf.Support.add DateSupport

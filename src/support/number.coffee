@@ -11,7 +11,7 @@ class NumberSupport extends Number
     num + ['th', 'st', 'nd', 'rd'][n]
 
   klass = @
-  _.w('abs acos asin atan ceil cos exp floor log pow round sin sqrt tan').each (method) ->
+  _('abs acos asin atan ceil cos exp floor log pow round sin sqrt tan').word().each (method) ->
     klass::[method] = Math[method]
 
   KILOBYTE_UNIT = 1024
