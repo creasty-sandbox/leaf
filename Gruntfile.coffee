@@ -64,6 +64,7 @@ FILES =
     # 'router.coffee'
     # 'navigator.coffee'
     # 'model.coffee'
+    'collection.coffee'
     'controller.coffee'
     'app.coffee'
   ]

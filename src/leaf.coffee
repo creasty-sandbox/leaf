@@ -1,5 +1,6 @@
 
-class Leaf
+# Framework namespace
+window.Leaf = new class
 
   LOCAL_SERVER = /(^localhost$)|(\.(dev|local)$)/
 
@@ -18,8 +19,4 @@ class Leaf
     return unless @develop
     msg = ['[Leaf] Warn:', args...]
     console.error msg...
-
-
-# Framework namespace
-window.Leaf = new Leaf()
 
