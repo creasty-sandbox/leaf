@@ -6,31 +6,26 @@ class Leaf.View extends Leaf.Object
   @setLeafClass()
   @cacheGroup = 'view'
 
-  initialize: (@$view) ->
+  initialize: (elementOrTree) ->
     @inherit 'elements'
     @inherit 'events'
 
     @$body = $ 'body'
-    @$view ?= @$body
+
+    @$view =
+      if _.isPlainObject(elementOrTree) && elementOrTree.tree
+        @_elementFromParseTree elementOrTree
+      else
+        elementOrTree ? $('<div/>')
 
     @_setupElements()
     @setup()
     @_subscribeEvents()
 
-  fromParsedTree: (tree, obj, scope) ->
-    view = new Leaf.Template.DOMGenerator()
-    view.init _.cloneDeep(tree), obj, scope
-    view.getDOM()
-
-  getCachedView: (obj) ->
-    viewCache = new Leaf.Cache 'views'
-    id = obj.toLeafID()
-
-    if (cachedView = viewCache.get id)
-      cachedView
-    else
-      viewCache.set id, @
-      null
+  _elementFromParseTree: ({ tree, obj, scope }) ->
+    gen = new Leaf.Template.DOMGenerator()
+    gen.init _.cloneDeep(tree), obj, scope
+    gen.getDOM()
 
   setup: ->
 

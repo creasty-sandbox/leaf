@@ -173,6 +173,8 @@ class UnbalancedTagParseError extends Leaf.Error
 #-----------------------------------------------
 class Leaf.Template.Parser
 
+  _nodeID = 0
+
   customTags = Leaf.Template.customTags
 
   constructor: ->
@@ -220,8 +222,12 @@ class Leaf.Template.Parser
     for r in customTags.closeOthers when r != node.name
       customTags.def[r].closeOther node, parent
 
+  _createNode: (o = {}) ->
+    o._nodeID = ++_nodeID
+    o
+
   parseExpression: (expr) ->
-    node = {}
+    node = @_createNode()
     node.expr = expr
     node.vars = []
 
@@ -286,7 +292,7 @@ class Leaf.Template.Parser
     ATTR_REGEXP.lastIndex = 0
 
   createTagNode: (token, parent) ->
-    node = {}
+    node = @_createNode()
     node.type = token.type
     node.contents = []
     node.context = {}
@@ -296,14 +302,14 @@ class Leaf.Template.Parser
     node
 
   createTextNode: (token) ->
-    node = {}
+    node = @_createNode()
     node.type = token.type
     node.buffer = token.buffer
     node.empty = !!node.buffer.match /^\s*$/
     node
 
   createInterpolationNode: (token, parent) ->
-    node = {}
+    node = @_createNode()
     node.type = token.type
     node.escape = token.textBinding.escape
     expr = _.unescape token.textBinding.val

@@ -11,5 +11,5 @@ class Leaf.Identifiable
   toLeafID: -> "__LEAF_ID_#{@_leafID}"
 
   @isLeafID: (id) ->
-    _.isString(id) && id[0] == '_' && !!id.match /^__LEAF_ID_\d+$/
+    _.isString(id) && id[0...10] == '__LEAF_ID_'
 

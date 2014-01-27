@@ -41,7 +41,9 @@ class IteratorView extends Leaf.Object
     @collectionViews.push view
 
   createView: (item) ->
-    IteratorItemView.findOrCreate item.toLeafID(), (klass) =>
+    id = "#{@node._nodeID}:#{item.toLeafID()}"
+
+    IteratorItemView.findOrCreate id, (klass) =>
       new klass @node, item, @obj
 
   update: (models) =>
@@ -59,7 +61,7 @@ class IteratorView extends Leaf.Object
         @collectionViews.insertAt index, [view]
       when 'removeAt'
         if (cv = @collectionViews[index])
-          cv._removeView()
+          cv.detach()
           @collectionViews.removeAt index
 
 
@@ -70,9 +72,12 @@ class IteratorItemView extends Leaf.View
   constructor: (@node, @item, obj) ->
     @obj = obj.clone()
     @obj.set @node.iterator, @item
-    @$view = @fromParsedTree @node.contents, @obj
 
-    super @$view
+    super
+      tree: @node.contents
+      obj: @obj
+
+    @setCache "#{@node._nodeID}:#{item.toLeafID()}", @
 
 
 #  Registeration
