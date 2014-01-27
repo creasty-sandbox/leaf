@@ -44,6 +44,8 @@ $ grunt release
 Contributing
 ------------
 
+Contributions are always welcome!
+
 ### Bug reports
 
 1. Ensure the bug can be reproduced on the latest master.
@@ -52,8 +54,6 @@ Contributing
 
 
 ### Pull-requests
-
-Contributions are always welcome!
 
 1. Fork the repository.
 2. Create a branch.
