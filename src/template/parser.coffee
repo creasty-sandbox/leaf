@@ -346,7 +346,7 @@ class Leaf.Template.Parser
           @customTagCloseOther _p, p
           @customTagClose _p, p
         else
-          throw new UnbalancedTagParseError "expect </#{p.name}> insted of </#{token.name}>"
+          throw new UnbalancedTagParseError "expect </#{p.name}> instead of </#{token.name}>"
 
   parseTree: (parents) ->
     token = @tokenizer.getToken()
