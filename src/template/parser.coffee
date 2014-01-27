@@ -299,6 +299,7 @@ class Leaf.Template.Parser
     node = {}
     node.type = token.type
     node.buffer = token.buffer
+    node.empty = !!node.buffer.match /^\s*$/
     node
 
   createInterpolationNode: (token, parent) ->
@@ -314,8 +315,8 @@ class Leaf.Template.Parser
 
     switch token.type
       when T_TEXT
-        @customTagReset token, p
         node = @createTextNode token
+        @customTagReset token, p unless node.empty
         p.contents.push node
       when T_INTERPOLATION
         @customTagReset token, p

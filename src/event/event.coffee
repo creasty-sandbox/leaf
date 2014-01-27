@@ -1,14 +1,12 @@
 
 class Leaf.Event extends Leaf.Cacheable
 
-  global = window
-
   __event: true
 
-  constructor: ->
+  constructor: (obj) ->
     super()
-    @_eventObj = $ @
-    @_eventGlobalObj = $ global
+    obj ?= @
+    @_eventObj = $ obj
 
   on: (event, handler, ctx = global) ->
     @_eventObj.on event, (e, args...) ->

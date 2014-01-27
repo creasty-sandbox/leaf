@@ -4,6 +4,7 @@ class Leaf.View extends Leaf.Object
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
   @setLeafClass()
+  @cacheGroup = 'view'
 
   initialize: (@$view) ->
     @inherit 'elements'
@@ -107,11 +108,11 @@ class Leaf.View extends Leaf.Object
   send: ->
     # TODO
 
-  _removeView: ->
+  detach: ->
     @$view.detach()
 
-  _destroyView: ->
-    @$view = null
+  destroy: ->
     @_unsubscribeEvents()
-
+    @$view.remove()
+    @$view = null
 

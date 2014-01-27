@@ -41,7 +41,8 @@ class IteratorView extends Leaf.Object
     @collectionViews.push view
 
   createView: (item) ->
-    new IteratorItemView @node, item, @obj
+    IteratorItemView.findOrCreate item.toLeafID(), (klass) =>
+      new klass @node, item, @obj
 
   update: (models) =>
     @applyPatch op for op in models.getPatch()
@@ -67,8 +68,6 @@ class IteratorView extends Leaf.Object
 class IteratorItemView extends Leaf.View
 
   constructor: (@node, @item, obj) ->
-    return cached if (cached = @getCachedView @item)
-
     @obj = obj.clone()
     @obj.set @node.iterator, @item
     @$view = @fromParsedTree @node.contents, @obj
