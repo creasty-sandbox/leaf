@@ -192,14 +192,14 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     for i in [af..at] by 1
       patch.push Leaf.ArrayDiffPatch.createPatch 'insertAt', i - rf, @_map[i]
 
-    patch.forEach (p) => p.element = @_cache.get p.element
+    patch.forEach (p) => p.element = @getCache p.element
 
   getPatch: ->
     return @_lastPatch if @_lastPatch
 
     if @_lastOperation.changed
       patch = Leaf.ArrayDiffPatch.getPatch @_prev, @_map
-      patch.forEach (p) => p.element = @_cache.get p.element
+      patch.forEach (p) => p.element = @getCache p.element
     else
       patch = @getSimplePatch()
 
