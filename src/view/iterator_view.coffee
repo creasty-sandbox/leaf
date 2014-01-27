@@ -77,7 +77,7 @@ class IteratorItemView extends Leaf.View
       tree: @node.contents
       obj: @obj
 
-    @setCache "#{@node._nodeID}:#{item.toLeafID()}", @
+    @setCache "#{@node._nodeID}:#{@item.toLeafID()}", @
 
 
 #  Registeration
