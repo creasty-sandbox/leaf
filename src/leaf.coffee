@@ -1,6 +1,5 @@
 
-# Framework namespace
-window.Leaf = new class
+class Leaf
 
   LOCAL_SERVER = /(^localhost$)|(\.(dev|local)$)/
 
@@ -19,4 +18,14 @@ window.Leaf = new class
     return unless @develop
     msg = ['[Leaf] Warn:', args...]
     console.error msg...
+
+  hasApp: -> !!@app
+
+  getComponentClassFor: (name) ->
+    className = "#{(name + '').capitalize()}Component"
+    Leaf.app[className]
+
+
+# Framework namespace
+window.Leaf = Leaf = new Leaf()
 

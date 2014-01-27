@@ -2,6 +2,10 @@
 #  Error
 #-----------------------------------------------
 class NoIteratorBindingsError extends Leaf.Error
+class NonIteratableObjectError extends Leaf.Error
+
+  setMessage: (iterator, obj) ->
+    "`#{iterator}` is #{Object::toString.call obj}"
 
 
 #  Iterator
@@ -32,6 +36,10 @@ class IteratorView extends Leaf.Object
     bindingObj = binder.getBindingObject @node.localeBindings
 
     @collection = bindingObj.get @node.iterator
+
+    unless @collection instanceof Leaf.ObservableArray
+      throw new NonIteratableObjectError @node.iterator, @collection
+
     @collection.forEach @addOne
     @collection.observe @update
 

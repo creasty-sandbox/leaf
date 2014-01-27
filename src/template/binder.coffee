@@ -46,3 +46,8 @@ class Leaf.Template.Binder
 
     obj
 
+  getBindingValue: ({ expr, vars }) ->
+    value = @getFunction expr, vars
+    evaluate = @getEvaluator value, vars
+    evaluate()
+
