@@ -4,7 +4,7 @@ class Leaf.View extends Leaf.Object
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
   @setLeafClass()
-  @cacheGroup = 'view'
+  # @cacheGroup = 'view'
 
   @parse: (buffer) ->
     psr = new Leaf.Template.Parser()

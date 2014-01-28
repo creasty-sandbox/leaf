@@ -227,11 +227,11 @@ class Leaf.Template.Parser
     o
 
   parseExpression: (expr) ->
-    node = @_createNode()
-    node.expr = expr
-    node.vars = []
+    value = {}
+    value.expr = expr
+    value.vars = []
 
-    return node unless expr
+    return value unless expr
 
     buf = ''
     i = 0
@@ -244,20 +244,20 @@ class Leaf.Template.Parser
       if '\'' == c || '"' == c || '/' == c
         idx = i + 1
         true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
-        return node if (i = idx) == -1 # unbalance: expression has syntax error
+        return value if (i = idx) == -1 # unbalance: expression has syntax error
       else
         i++
 
     expr = buf.replace JS_NON_VARIABLE_REGEXP, '#'
 
-    return node unless (m = expr.match JS_VARIABLE_REGEXP)
+    return value unless (m = expr.match JS_VARIABLE_REGEXP)
 
-    node.vars = m.filter (arg) ->
+    value.vars = m.filter (arg) ->
       !arg.match(JS_RESERVED_WORDS) && !arg.match(JS_GLOBAL_VARIABLES)
 
-    node.vars = _.uniq node.vars
+    value.vars = _.uniq value.vars
 
-    node
+    value
 
   parseTagAttrs: (node, attrs) ->
     node.attrs = {}

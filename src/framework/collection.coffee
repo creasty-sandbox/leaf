@@ -33,3 +33,12 @@ class Leaf.Collection extends Leaf.Object
     .on(@_getEventName(null, o, 'remove'), handler)
     .on(@_getEventName(null, o, 'destroy'), handler)
 
+
+###
+class Leaf.Collection extends Leaf.ObservableArray
+
+  constructor: (data = []) ->
+    super data
+    @views = new Leaf.ObservableArray []
+###
+

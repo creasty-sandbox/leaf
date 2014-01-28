@@ -15,6 +15,9 @@ class Leaf.App extends Leaf.Object
 
     @[key] = val for key, val of config
 
+  registerView: (name, buffer) ->
+    @views[name] = Leaf.View.parse buffer
+
   ###
   routes: (routes) ->
     return unless routes

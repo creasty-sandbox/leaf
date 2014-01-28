@@ -8,7 +8,7 @@ class Leaf.Cacheable extends Leaf.Identifiable
   constructor: ->
     super()
     @_cache = new Leaf.Cache @constructor.cacheGroup
-    @_cache.set @toLeafID(), @ if @constructor.cacheable == true
+    @_cache.set @toLeafID(), @
 
   getCache: (key) -> @_cache.get key
   setCache: (key, val) -> @_cache.set key, val

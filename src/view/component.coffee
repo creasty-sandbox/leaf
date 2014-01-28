@@ -16,6 +16,7 @@ class Leaf.Component extends Leaf.View
     .replace(/\-+/g, '-')
     .replace(/^(\-|:)|(\-|:)$/g, '')
     .replace(/^component:/, '')
+    .toLowerCase()
 
   @register: (name, node) ->
     name = @regulateName name
@@ -97,12 +98,10 @@ Leaf.Template.registerTag 'component:poly',
   create: (node, $marker, $parent, obj) ->
     name = node.attrs.poly
 
-    console.log node
-
     unless name
       binder = new Leaf.Template.Binder obj
       name = binder.getBindingValue node.localeBindings.poly
 
-    node.name = name
+    node.name = "component:#{Leaf.Component.regulateName name}"
     ComponentView.create node, $marker, $parent, obj
 

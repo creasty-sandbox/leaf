@@ -22,7 +22,7 @@ class Leaf
   hasApp: -> !!@app
 
   getComponentClassFor: (name) ->
-    className = (name + '_component').classify()
+    className = "#{name.replace(/^component:/, '')}_component".classify()
     @app[className]
 
   getModelClassFor: (name) ->
@@ -30,7 +30,7 @@ class Leaf
     @app[className]
 
   getControllerClassFor: (name) ->
-    className = (name + '_controller').classify()
+    className = "#{name}_controller".classify()
 
 
 
