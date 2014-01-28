@@ -221,10 +221,6 @@ class Leaf.Template.Parser
     for r in customTags.closeOthers when r != node.name
       customTags.def[r].closeOther node, parent
 
-  _createNode: (o = {}) ->
-    o._nodeID = ++_nodeID
-    o
-
   parseExpression: (expr) ->
     value = {}
     value.expr = expr
@@ -296,7 +292,8 @@ class Leaf.Template.Parser
     key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
 
   createTagNode: (token, parent) ->
-    node = @_createNode()
+    node = {}
+    node._nodeID = ++_nodeID
     node.type = token.type
     node.contents = []
     node.context = {}
@@ -306,14 +303,14 @@ class Leaf.Template.Parser
     node
 
   createTextNode: (token) ->
-    node = @_createNode()
+    node = {}
     node.type = token.type
     node.buffer = token.buffer
     node.empty = !!node.buffer.match /^\s*$/
     node
 
   createInterpolationNode: (token, parent) ->
-    node = @_createNode()
+    node = {}
     node.type = token.type
     node.escape = token.textBinding.escape
     expr = _.unescape token.textBinding.val

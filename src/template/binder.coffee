@@ -2,6 +2,11 @@
 class Leaf.Template.Binder
 
   constructor: (@obj) ->
+    unless @obj
+      throw new RequiredArgumentsError 'obj'
+
+    unless @obj instanceof Leaf.ObservableObject
+      throw new TypeError 'expect `obj` to be ObservableObject'
 
   getFunction: (expr, vars) ->
     try
@@ -19,7 +24,7 @@ class Leaf.Template.Binder
         fn.apply @obj, args
       catch e
         Leaf.warn 'Invalid expression:', fn.expr
-        return ''
+        ''
 
   getBinder: ({ expr, vars }) ->
     value = @getFunction expr, vars
@@ -38,7 +43,7 @@ class Leaf.Template.Binder
       routine result
 
   getBindingObject: (values) ->
-    obj = new Leaf.Observable {}
+    obj = new Leaf.ObservableObject()
 
     _(values).forEach (value, name) =>
       if value.raw

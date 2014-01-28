@@ -167,6 +167,8 @@ class Leaf.ObservableBase extends Leaf.Class
       @_update prop if options.notify
       @_update() if options.bubbling
 
+    @_accessor prop
+
     val
 
   set: ->

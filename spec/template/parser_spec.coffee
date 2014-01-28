@@ -12,6 +12,24 @@ describe 'Leaf.Template.Parser', ->
 
 describe 'parser', ->
 
+  withoutNodeId = (o) ->
+    if _.isArray o
+      omitted = []
+      omitted.push withoutNodeId(val) for val in o
+    else if _.isPlainObject o
+      omitted = {}
+
+      for key, val of o when '_nodeID' != key
+        omitted[key] =
+          if _.isPlainObject(val) || _.isArray(val)
+            withoutNodeId val
+          else
+            val
+    else
+      omitted = o
+
+    omitted
+
   DUMMY_BUFFER = 'buffer'
 
   beforeEach ->
@@ -190,9 +208,10 @@ describe 'parser', ->
       node =
         type: T_TEXT
         buffer: 'this will be a text'
+        empty: false
 
       expect(@psr.root.contents.length).toBe 1
-      expect(@psr.root.contents[0]).toHaveContents node
+      expect(withoutNodeId(@psr.root.contents[0])).toHaveContents node
 
     it 'should should append interpolation nodes to their parent', ->
       @psr.init DUMMY_BUFFER
@@ -243,9 +262,9 @@ describe 'parser', ->
         actions: {}
 
       expect(@psr.root.contents.length).toBe 1
-      expect(@psr.root.contents[0]).toHaveContents node
+      expect(withoutNodeId(@psr.root.contents[0])).toHaveContents node
 
-    it 'should should append opening tag nodes to their parent and set current parent to self', ->
+    it 'should append opening tag nodes to their parent and set current parent to self', ->
       @psr.init DUMMY_BUFFER
 
       token =
@@ -270,7 +289,7 @@ describe 'parser', ->
         actions: {}
 
       expect(@psr.root.contents.length).toBe 1
-      expect(@psr.root.contents[0]).toHaveContents node
+      expect(withoutNodeId(@psr.root.contents[0])).toHaveContents node
       expect(@psr.parents[0]).toBe @psr.root.contents[0]
 
     it 'should throw an exception when attempt to close tag which has not been open', ->
@@ -322,7 +341,7 @@ describe 'parser', ->
       @psr.parseNode @psr.parents, tokenClose
 
       expect(@psr.root.contents.length).toBe 1
-      expect(@psr.root.contents[0]).toHaveContents node
+      expect(withoutNodeId(@psr.root.contents[0])).toHaveContents node
       expect(@psr.parents.length).toBe 1
 
 
@@ -347,12 +366,13 @@ describe 'parser', ->
             {
               type: T_TEXT
               buffer: 'text'
+              empty: false
             }
           ]
         }
       ]
 
-      expect(@psr.root.contents).toHaveContents result
+      expect(withoutNodeId(@psr.root.contents)).toHaveContents result
 
     it 'should return parse tree of nested tags', ->
       buffer = '<section><div></div></section>'
@@ -385,5 +405,5 @@ describe 'parser', ->
         }
       ]
 
-      expect(@psr.root.contents).toHaveContents result
+      expect(withoutNodeId(@psr.root.contents)).toHaveContents result
 

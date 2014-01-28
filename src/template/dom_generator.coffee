@@ -30,7 +30,15 @@ class Leaf.Template.DOMGenerator
   bindAttributes: ($el, attrs) ->
     _(attrs).forEach (val, key) =>
       bind = @getBinder val
-      bind (result) -> $el.attr key, result
+
+      if 'value' == key
+        bind (result) -> $el.val result
+        $el.on 'keyup keydown keypress', =>
+          console.log @obj, val, $el.val()
+          @obj.set val, $el.val()
+      else
+        bind (result) -> $el.attr key, result
+
 
   bindLocales: ($el, attrs) ->
     binder = new Leaf.Template.Binder @obj

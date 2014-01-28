@@ -13,7 +13,7 @@ describe 'Leaf.Template.DOMGenerator', ->
 describe 'domGenerator', ->
 
   DUMMY_TREE = []
-  DUMMY_OBJ = {}
+  DUMMY_OBJ = new Leaf.ObservableObject()
 
   beforeEach ->
     @obj = new Leaf.Observable
