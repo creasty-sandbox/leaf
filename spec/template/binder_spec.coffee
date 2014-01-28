@@ -35,6 +35,9 @@ describe 'binder', ->
 
   describe '#getFunction(expr, vars)', ->
 
+    it 'should be defined', ->
+      expect(@binder.getFunction).toBeDefined()
+
     it 'should return a function that evaluate `expr` with arguments of `vars`', ->
       fn = @binder.getFunction 'a + b', ['a', 'b']
 
@@ -47,6 +50,9 @@ describe 'binder', ->
 
 
   describe 'getEvaluator(fn, vars)', ->
+
+    it 'should be defined', ->
+      expect(@binder.getEvaluator).toBeDefined()
 
     it 'should return an evaluator function that call `fn` function with the values of the object', ->
       expr = 'foo + 1'
@@ -88,6 +94,9 @@ describe 'binder', ->
         c: { expr: 'baz.abc + 100', vars: ['baz'] }
 
 
+    it 'should be defined', ->
+      expect(@binder.getBinder).toBeDefined()
+
     it 'should return a binder function that observes object for update', ->
       bind = @binder.getBinder @values.a
 
@@ -117,6 +126,9 @@ describe 'binder', ->
 
   describe '#getBindingValue(value)', ->
 
+    it 'should be defined', ->
+      expect(@binder.getBindingValue).toBeDefined()
+
     it 'should return a result value of expression', ->
       value = expr: 'foo + 1', vars: ['foo']
       result = @binder.getBindingValue value
@@ -125,6 +137,9 @@ describe 'binder', ->
 
 
   describe '#getBindingObject(values)', ->
+
+    it 'should be defined', ->
+      expect(@binder.getBindingObject).toBeDefined()
 
     it 'should return result object of values', ->
       values =
