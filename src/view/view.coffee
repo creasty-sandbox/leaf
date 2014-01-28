@@ -6,17 +6,38 @@ class Leaf.View extends Leaf.Object
   @setLeafClass()
   @cacheGroup = 'view'
 
-  initialize: (elementOrTree) ->
+  @parse: (buffer) ->
+    psr = new Leaf.Template.Parser()
+    psr.init buffer
+    tree = psr.getTree()
+
+    (obj) ->
+      gen = new Leaf.Template.DOMGenerator()
+      gen.init tree, obj
+      gen.getDOM()
+
+  initialize: (elementOrTree, data = {}) ->
     @inherit 'elements'
     @inherit 'events'
 
     @$body = $ 'body'
 
+    fromTree = _.isPlainObject(elementOrTree) && elementOrTree.tree
+
     @$view =
-      if _.isPlainObject(elementOrTree) && elementOrTree.tree
+      if fromTree
         @_elementFromParseTree elementOrTree
       else
         elementOrTree ? $('<div/>')
+
+    if data.model
+      @model = data.model
+
+      if fromTree
+        @setCache "#{elementOrTree._nodeID}:#{@model.toLeafID()}", @
+
+    if data.collection
+      @collection = data.collection
 
     @_setupElements()
     @setup()

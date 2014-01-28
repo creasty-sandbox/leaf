@@ -52,7 +52,15 @@ class IteratorView extends Leaf.Object
     id = "#{@node._nodeID}:#{item.toLeafID()}"
 
     IteratorItemView.findOrCreate id, (klass) =>
-      new klass @node, item, @obj
+      obj = @obj.clone()
+      obj.set @node.iterator, item
+
+      new klass
+        tree: @node.contents
+        obj: obj
+      ,
+        model: item
+        collection: @collection
 
   update: (models) =>
     @applyPatch op for op in models.getPatch()
@@ -76,16 +84,6 @@ class IteratorView extends Leaf.Object
 #  Iterator item
 #-----------------------------------------------
 class IteratorItemView extends Leaf.View
-
-  constructor: (@node, @item, obj) ->
-    @obj = obj.clone()
-    @obj.set @node.iterator, @item
-
-    super
-      tree: @node.contents
-      obj: @obj
-
-    @setCache "#{@node._nodeID}:#{@item.toLeafID()}", @
 
 
 #  Registeration

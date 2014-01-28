@@ -1,7 +1,7 @@
 
 #  Component
 #-----------------------------------------------
-class Leaf.Component
+class Leaf.Component extends Leaf.View
 
   @components: {}
 

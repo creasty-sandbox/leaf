@@ -22,8 +22,16 @@ class Leaf
   hasApp: -> !!@app
 
   getComponentClassFor: (name) ->
-    className = "#{(name + '').classify()}Component"
-    Leaf.app[className]
+    className = (name + '_component').classify()
+    @app[className]
+
+  getModelClassFor: (name) ->
+    className = (name + '').classify()
+    @app[className]
+
+  getControllerClassFor: (name) ->
+    className = (name + '_controller').classify()
+
 
 
 # Framework namespace

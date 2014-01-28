@@ -26,8 +26,10 @@ class StringSupport
     str = @capitalize str unless lowFirstLetter
     str
 
-  capitalize: (str) ->
-    str[0].toUpperCase() + str[1..]
+  capitalize: (str, lowOtherLetter = false) ->
+    other = str[1..]
+    other = other.toLowerCase() if lowOtherLetter
+    str[0].toUpperCase() + other
 
   dasherize: (str) ->
     str.replace /[_\s]+/g, '-'
