@@ -124,7 +124,6 @@ HTMl5_ATTR_PRESERVED =
 
 HTML5_ATTR_BOOLEANS = /^(disabled|selected|checked|contenteditable)$/
 
-
 #  JavaScript
 #-----------------------------------------------
 JS_RESERVED_WORDS = ///
@@ -277,19 +276,24 @@ class Leaf.Template.Parser
       val = m[3] || m[4]
 
       if '$' == binding
-        globalAttrs = HTMl5_ATTR_PRESERVED['*']
-        tagSpecificAttrs = HTMl5_ATTR_PRESERVED[node.name]
-
-        if key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
+        if isNormalAttr node.name, key
           node.attrBindings[key] = @parseExpression val
         else
           node.localeBindings[key] = @parseExpression val
       else if '@' == binding
         node.actions[key] = val
-      else
+      else if !node.customTag && isNormalAttr(node.name, key)
         node.attrs[key] = val
+      else
+        node.localeBindings[key] = raw: true, rawValue: val
 
     ATTR_REGEXP.lastIndex = 0
+
+  isNormalAttr = (name, key) ->
+    globalAttrs = HTMl5_ATTR_PRESERVED['*']
+    tagSpecificAttrs = HTMl5_ATTR_PRESERVED[name]
+
+    key.match(globalAttrs) || tagSpecificAttrs && key.match tagSpecificAttrs
 
   createTagNode: (token, parent) ->
     node = @_createNode()

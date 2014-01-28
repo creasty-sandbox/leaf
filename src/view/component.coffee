@@ -39,6 +39,7 @@ class Leaf.Component extends Leaf.View
 #  Error
 #-----------------------------------------------
 class NoNameAttributeWithComponentTagError extends Leaf.Error
+class ComponentNameMustBeConstantError extends Leaf.Error
 class NoPolyBindingWithPolymorphicComponentTagError extends Leaf.Error
 class UndefinedComponentTagError extends Leaf.Error
 class ComponentClassNotFoundError extends Leaf.Error
@@ -80,12 +81,15 @@ Leaf.Template.registerTag 'component',
   structure: true
 
   open: (node, parent) ->
-    { name } = node.attrs
+    { name } = node.localeBindings
 
     unless name
       throw new NoNameAttributeWithComponentTagError()
 
-    Leaf.Component.register name, node
+    unless name.raw
+      throw new ComponentNameMustBeConstantError()
+
+    Leaf.Component.register name.rawValue, node
 
 
 Leaf.Template.registerTag 'component:poly',
@@ -96,12 +100,9 @@ Leaf.Template.registerTag 'component:poly',
       throw new NoPolyBindingWithPolymorphicComponentTagError()
 
   create: (node, $marker, $parent, obj) ->
-    name = node.attrs.poly
+    binder = new Leaf.Template.Binder obj
+    poly = binder.getBindingValue node.localeBindings.poly
 
-    unless name
-      binder = new Leaf.Template.Binder obj
-      name = binder.getBindingValue node.localeBindings.poly
-
-    node.name = "component:#{Leaf.Component.regulateName name}"
+    node.name = "component:#{Leaf.Component.regulateName poly}"
     ComponentView.create node, $marker, $parent, obj
 

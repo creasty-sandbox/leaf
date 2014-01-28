@@ -41,12 +41,17 @@ class Leaf.Template.Binder
     obj = new Leaf.Observable {}
 
     _(values).forEach (value, name) =>
-      bind = @getBinder value
-      bind (result) -> obj.set name, result
+      if value.raw
+        obj.set name, value.rawValue
+      else
+        bind = @getBinder value
+        bind (result) -> obj.set name, result
 
     obj
 
-  getBindingValue: ({ expr, vars }) ->
+  getBindingValue: ({ expr, vars, raw, rawValue }) ->
+    return rawValue if raw
+
     value = @getFunction expr, vars
     evaluate = @getEvaluator value, vars
     evaluate()

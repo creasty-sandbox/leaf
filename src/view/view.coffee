@@ -39,6 +39,8 @@ class Leaf.View extends Leaf.Object
     if data.collection
       @collection = data.collection
 
+    @locale = @$view.data 'leaf-locale'
+
     @_setupElements()
     @setup()
     @_subscribeEvents()
