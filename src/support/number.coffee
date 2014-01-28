@@ -1,8 +1,8 @@
 
 class NumberSupport
 
-  pluralize: (num, str) ->
-    Leaf.Inflector.pluralize str, num
+  pluralize: (num, str, withNumber) ->
+    Leaf.Inflector.pluralize str, num, withNumber
 
   ordinalize: (num) ->
     n = num % 10
@@ -21,7 +21,7 @@ class NumberSupport
   PETABYTE_UNIT = 1024 * TERABYTE_UNIT
   EXABYTE_UNIT  = 1024 * PETABYTE_UNIT
 
-  byte:     (num) -> num
+  byte:     (num) -> +num
   kilobyte: (num) -> num * KILOBYTE_UNIT
   megabyte: (num) -> num * MEGABYTE_UNIT
   gigabyte: (num) -> num * GIGABYTE_UNIT
@@ -29,8 +29,8 @@ class NumberSupport
   petabyte: (num) -> num * PETABYTE_UNIT
   exabyte:  (num) -> num * EXABYTE_UNIT
 
-  SECOUND_UNIT   = 1000
-  MINUTE_UNIT    = 60 * SECOUND_UNIT
+  SECOND_UNIT    = 1000
+  MINUTE_UNIT    = 60 * SECOND_UNIT
   HOUR_UNIT      = 60 * MINUTE_UNIT
   DAY_UNIT       = 24 * HOUR_UNIT
   WEEK_UNIT      = 7 * DAY_UNIT
@@ -38,7 +38,7 @@ class NumberSupport
   MONTH_UNIT     = 30 * DAY_UNIT
   YEAR_UNIT      = 12 * MONTH_UNIT
 
-  second:    (num) -> num * SECOUND_UNIT
+  second:    (num) -> num * SECOND_UNIT
   minute:    (num) -> num * MINUTE_UNIT
   hour:      (num) -> num * HOUR_UNIT
   day:       (num) -> num * DAY_UNIT
