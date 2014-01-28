@@ -63,7 +63,7 @@ FILES =
   framework: [
     # 'router.coffee'
     # 'navigator.coffee'
-    # 'model.coffee'
+    'model.coffee'
     'collection.coffee'
     'controller.coffee'
     'app.coffee'

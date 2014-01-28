@@ -1,37 +1,43 @@
 
-class Leaf.Model
+class Leaf.Model extends Leaf.Object
 
   @path: null
 
   @accessors = []
-  @associations = []
+  @associations = {}
 
-  constructor: ->
-    @init()
-    @initAccessors()
-    @initAssociations()
+  @defaultAttrs = {}
 
+  constructor: (_data) ->
+    super()
 
-  #  Initializer
-  #-----------------------------------------------
-  init: ->
-    @c = @constructor
+    _data = _.defaults _data, @constructor.defaultAttrs
+
+    for own key, val of _data
+      obj = @_makeObservable val, @, key
+      @_data[key] = obj
+
+    @modelName = @constructor.name
 
     @params = {}
-    @attrs = {}
-    @locals = {}
 
     @dfd = $.Deferred()
     @promise = @dfd.promise()
 
-  initAccessors: ->
-    _(@c.accessors).forEach (accessor) =>
-      table = @[if accessor.sync then 'attrs' else 'locals']
-      @__defineGetter__ accessor.name, ->
-        table[accessor.name]
+    @_initAccessors()
+    @_initAssociations()
 
-      @__defineSetter__ accessor.name, (val) ->
-        table[accessor.name] = val
+  #  Initializer
+  #-----------------------------------------------
+  initialize: ->
+
+  _initAccessors: ->
+    _(@constructor.accessors).forEach (accessor) =>
+      @_accessor accessor.name
+
+  _initAssociations: ->
+    for assoc, options of @constructor.associations
+      @[assoc] = new Leaf.ObservableArray()
 
   #  Override settings
   #-----------------------------------------------
@@ -96,31 +102,34 @@ class Leaf.Model
 
   #  Attributes & associations
   #-----------------------------------------------
-  @attrAccessible: (attrs...) ->
-    attrs.forEach (attr) => @accessors.push name: attr, sync: true
+  @attrAccessible: (name, options = {}) ->
+    @accessors.push name: name, sync: true
 
-  @local: (attrs...) ->
-    attrs.forEach (attr) => @accessors.push name: attr, sync: false
+    if options.defaults
+      @defaultAttrs[name] = options.defaults
+
+  @attrAccessor: (name, options = {}) ->
+    @accessors.push name: name, sync: false
 
   @belongsTo: (assoc, options = {}) ->
     options.type = 'belongsTo'
     options.name = assoc
-    @associations.push options
+    @associations[assoc] = options
 
   @hasOne: (assoc, options = {}) ->
     options.type = 'hasOne'
     options.name = assoc
-    @associations.push options
+    @associations[assoc] = options
 
   @hasMany: (assoc, options = {}) ->
     options.type = 'hasMany'
     options.name = assoc
-    @associations.push options
+    @associations[assoc] = options
 
   @hasAndBelongsToMany: (assoc, options = {}) ->
     options.type = 'hasAndBelongsToMany'
     options.name = assoc
-    @associations.push options
+    @associations[assoc] = options
 
   #  Static with-initializer methods
   #-----------------------------------------------
@@ -138,49 +147,3 @@ class Leaf.Model
   ].forEach (method) =>
     @[method] = (args...) -> new @()[method] args...
 
-###
-
-class window.Model
-
-  @accessors = []
-
-  constructor: (attrs = {}) ->
-    @init()
-    @initAccessors()
-
-    @[attr] = val for attr, val of attrs
-
-  #  Initializer
-  #-----------------------------------------------
-  init: ->
-    @c = @constructor
-
-    @attrs = {}
-    @locals = {}
-
-  initAccessors: ->
-    @c.accessors.forEach (accessor) =>
-      table = @[if accessor.sync then 'attrs' else 'locals']
-      Object.defineProperty @, accessor.name,
-        enumerable: true
-        configurable: true
-        get: =>
-          table[accessor.name]
-        set: (val) =>
-          table[accessor.name] = val
-          @change accessor.name
-
-  change: (name) ->
-    $(window).trigger 'change:model_user_1', [name, @]
-
-  #  Static
-  #-----------------------------------------------
-  @attrAccessible: (attrs...) ->
-    attrs.forEach (attr) =>
-      @accessors.push name: attr, sync: true
-
-  @attrAccessor: (attrs...) ->
-    attrs.forEach (attr) =>
-      @accessors.push name: attr, sync: false
-
-###
