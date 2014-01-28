@@ -58,7 +58,7 @@ class DateSupport
     '%Z': (date) -> throw new FormatterNotImplementedError '%Z'
 
   @now: -> new Date()
-  @today: -> @now().atBeginningOfDay()
+  @today: -> @now().beginningOfDay()
 
   equals: (date, other) ->
     date.getFullYear() == other.getFullYear() \
@@ -144,6 +144,9 @@ class DateSupport
   endOfDay: (date) ->
     new Date(date).setHours(23).setMinutes(59).setSeconds 59
 
+  endOfWeek: (date) ->
+    # TODO
+
   endOfMonth: (date) ->
     @beginningOfDay(date).setDate date.getDaysInMonth()
 
@@ -163,6 +166,10 @@ class DateSupport
   klass = @
   WEEKDAYS.forEach (dayName, dayIndex) ->
     klass::["is#{dayName}"] = -> @getDay() % 7 == dayIndex
+
+  _('setSeconds setMinutes setHours setDays setMonth setYears').word().forEach (method) ->
+    org = Date::[method]
+    klass::[method] = (date, val) -> new Date org.call date, val
 
 
 Leaf.Support.add DateSupport
