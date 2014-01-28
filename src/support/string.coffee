@@ -1,9 +1,11 @@
 
-class StringSupport extends String
+class StringSupport
 
-  pluralize: Leaf.Inflector.pluralize
+  pluralize: (str, count, withNumber) ->
+    Leaf.Inflector.pluralize str, count, withNumber
 
-  singularize: Leaf.Inflector.singularize
+  singularize: (str) ->
+    Leaf.Inflector.singularize str
 
   camelize: (str, lowFirstLetter = false) ->
     str = str.replace /_([a-z])/g, (_, c) -> c.toUpperCase()
@@ -11,7 +13,9 @@ class StringSupport extends String
     str
 
   underscore: (str) ->
-    str.replace /([a-z])([A-Z])/g, (_, l, r) ->
+    str
+    .replace(/\-+/g, '_')
+    .replace /([a-z])([A-Z])/g, (_, l, r) ->
       "#{l}_#{r.toLowerCase()}"
 
   humanize: (str, lowFirstLetter = false) ->
@@ -45,7 +49,7 @@ class StringSupport extends String
     @pluralize @underscore(str)
 
   classify: (str) ->
-    @singularize @camelize(str)
+    @singularize @camelize(@underscore(str))
 
   foreignKey: (str, withUnderscore = true) ->
     @singularize(@underscore(str)) + ('_' if withUnderscore) + 'id'

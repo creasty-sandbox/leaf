@@ -1,5 +1,5 @@
 
-class NumberSupport extends Number
+class NumberSupport
 
   pluralize: (num, str) ->
     Leaf.Inflector.pluralize str, num
@@ -12,7 +12,7 @@ class NumberSupport extends Number
 
   klass = @
   _('abs acos asin atan ceil cos exp floor log pow round sin sqrt tan').word().each (method) ->
-    klass::[method] = Math[method]
+    klass::[method] = -> Math[method] arguments...
 
   KILOBYTE_UNIT = 1024
   MEGABYTE_UNIT = 1024 * KILOBYTE_UNIT

@@ -1,5 +1,5 @@
 
-class DateSupport extends Date
+class DateSupport
 
   MONTHS = _.w 'January February March April May June July August September October November December'
   ABBR_MONTHS = _.w 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'

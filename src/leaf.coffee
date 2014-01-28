@@ -22,7 +22,7 @@ class Leaf
   hasApp: -> !!@app
 
   getComponentClassFor: (name) ->
-    className = "#{(name + '').capitalize()}Component"
+    className = "#{(name + '').classify()}Component"
     Leaf.app[className]
 
 

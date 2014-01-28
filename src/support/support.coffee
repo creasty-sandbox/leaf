@@ -2,25 +2,33 @@
 class Leaf.Support
 
   @add: (klass) ->
-    extendee = klass.__super__ ? Object
+    primitive = switch klass.name.replace(/Support$/, '')
+      when 'String' then String
+      when 'Number' then Number
+      when 'Object' then Object
+      when 'Date'   then Date
+
     instance = new klass()
 
-    addClassMethod extendee, method, fn for own method, fn of klass
-    addInstanceMethod extendee, method, fn for own method, fn of instance
+    for method, fn of klass
+      addMethod primitive, method, fn.bind(klass)
 
-  addClassMethod = (extendee, method, fn) ->
-    extendee[method] = -> fn @, arguments...
+    for method, fn of instance when method != 'constructor'
+      addMethod primitive::, method, fn.bind(instance)
 
-  addInstanceMethod = (extendee, method, fn) ->
-    extendee::[method] = -> fn @, arguments...
+    null
 
-###
-SubNumber = ->
-  n = new Number arguments...
-  n.__proto__ = SubNumber::
-  n
+  addMethod = (to, method, fn) -> to[method] = -> fn @, arguments...
 
-SubNumber:: = new Number()
-SubNumber::succ = -> new @constructor @ + 1
-###
+  @inject: (to, implement) ->
+    klass = ->
+      o = new to arguments...
+      o.__proto__ = implement::
+      o
+
+    klass:: = new to
+    _.extends klass, implement
+    _.extends klass::, implement::
+
+    klass
 
