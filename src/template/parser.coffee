@@ -173,6 +173,8 @@ class UnbalancedTagParseError extends Leaf.Error
 #-----------------------------------------------
 class Leaf.Template.Parser
 
+  _nodeID = 0
+
   customTags = Leaf.Template.customTags
 
   constructor: ->
@@ -181,8 +183,8 @@ class Leaf.Template.Parser
     unless @buffer?
       throw new RequiredArgumentsError('buffer')
 
-    formatter = Leaf.Formatter.HTML
-    @buffer = formatter.minify @buffer
+    preformatter = new Leaf.Template.Preformatter @buffer
+    @buffer = preformatter.getResult()
 
     @tokenizer = new Leaf.Template.Tokenizer()
     @tokenizer.init @buffer
@@ -220,12 +222,16 @@ class Leaf.Template.Parser
     for r in customTags.closeOthers when r != node.name
       customTags.def[r].closeOther node, parent
 
-  parseExpression: (expr) ->
-    node = {}
-    node.expr = expr
-    node.vars = []
+  _createNode: (o = {}) ->
+    o._nodeID = ++_nodeID
+    o
 
-    return node unless expr
+  parseExpression: (expr) ->
+    value = {}
+    value.expr = expr
+    value.vars = []
+
+    return value unless expr
 
     buf = ''
     i = 0
@@ -238,20 +244,20 @@ class Leaf.Template.Parser
       if '\'' == c || '"' == c || '/' == c
         idx = i + 1
         true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
-        return node if (i = idx) == -1 # unbalance: expression has syntax error
+        return value if (i = idx) == -1 # unbalance: expression has syntax error
       else
         i++
 
     expr = buf.replace JS_NON_VARIABLE_REGEXP, '#'
 
-    return node unless (m = expr.match JS_VARIABLE_REGEXP)
+    return value unless (m = expr.match JS_VARIABLE_REGEXP)
 
-    node.vars = m.filter (arg) ->
+    value.vars = m.filter (arg) ->
       !arg.match(JS_RESERVED_WORDS) && !arg.match(JS_GLOBAL_VARIABLES)
 
-    node.vars = _.uniq node.vars
+    value.vars = _.uniq value.vars
 
-    node
+    value
 
   parseTagAttrs: (node, attrs) ->
     node.attrs = {}
@@ -286,7 +292,7 @@ class Leaf.Template.Parser
     ATTR_REGEXP.lastIndex = 0
 
   createTagNode: (token, parent) ->
-    node = {}
+    node = @_createNode()
     node.type = token.type
     node.contents = []
     node.context = {}
@@ -296,13 +302,14 @@ class Leaf.Template.Parser
     node
 
   createTextNode: (token) ->
-    node = {}
+    node = @_createNode()
     node.type = token.type
     node.buffer = token.buffer
+    node.empty = !!node.buffer.match /^\s*$/
     node
 
   createInterpolationNode: (token, parent) ->
-    node = {}
+    node = @_createNode()
     node.type = token.type
     node.escape = token.textBinding.escape
     expr = _.unescape token.textBinding.val
@@ -314,8 +321,8 @@ class Leaf.Template.Parser
 
     switch token.type
       when T_TEXT
-        @customTagReset token, p
         node = @createTextNode token
+        @customTagReset token, p unless node.empty
         p.contents.push node
       when T_INTERPOLATION
         @customTagReset token, p
@@ -339,7 +346,7 @@ class Leaf.Template.Parser
           @customTagCloseOther _p, p
           @customTagClose _p, p
         else
-          throw new UnbalancedTagParseError "expect </#{p.name}> insted of </#{token.name}>"
+          throw new UnbalancedTagParseError "expect </#{p.name}> instead of </#{token.name}>"
 
   parseTree: (parents) ->
     token = @tokenizer.getToken()

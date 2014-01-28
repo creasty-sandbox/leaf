@@ -1,7 +1,13 @@
 
 class Leaf
 
-  develop: true
+  LOCAL_SERVER = /(^localhost$)|(\.(dev|local)$)/
+
+  app: null
+  develop: false
+
+  constructor: ->
+    @develop = !!window.location.hostname.match LOCAL_SERVER
 
   log: (args...) ->
     return unless @develop
@@ -13,16 +19,21 @@ class Leaf
     msg = ['[Leaf] Warn:', args...]
     console.error msg...
 
-  mixin: (to, mixins...) ->
-    for mixin in mixins
-      continue unless _.isPlainObject mixin
+  hasApp: -> !!@app
 
-      to[key] = value for own key, value of mixin when key != 'prototype'
-      to::[key] = value for own key, value of mixin:: ? {}
+  getComponentClassFor: (name) ->
+    className = "#{name.replace(/^component:/, '')}_component".classify()
+    @app[className]
 
-    to
+  getModelClassFor: (name) ->
+    className = (name + '').classify()
+    @app[className]
+
+  getControllerClassFor: (name) ->
+    className = "#{name}_controller".classify()
+
 
 
 # Framework namespace
-window.Leaf = new Leaf()
+window.Leaf = Leaf = new Leaf()
 

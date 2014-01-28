@@ -165,10 +165,9 @@ describe 'tokenizer', ->
   describe '#getToken', ->
 
     getTokenizer = (buffer) ->
-      formatter = Leaf.Formatter.HTML
+      preformatter = new Leaf.Template.Preformatter buffer
       @tk = new Leaf.Template.Tokenizer()
-
-      @tk.init formatter.minify(buffer)
+      @tk.init preformatter.getResult()
       @tk
 
 

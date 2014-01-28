@@ -21,14 +21,14 @@ Building & Testing
 
 You'll need to have Grunt and Bower installed.
 
-```shell
+```sh
 $ npm install
 $ bower install
 ```
 
 Available grunt commands are:
 
-```shell
+```sh
 # Development: do less, compile coffee
 $ grunt dev
 
@@ -44,23 +44,23 @@ $ grunt release
 Contributing
 ------------
 
+Contributions are always welcome!
+
 ### Bug reports
 
 1. Ensure the bug can be reproduced on the latest master.
-1. Check it's not a duplicate.
-1. Raise an issue.
+2. Check it's not a duplicate.
+3. Raise an issue.
 
 
 ### Pull-requests
 
-Contributions are always welcome!
-
 1. Fork the repository.
-1. Create a feature branch. (this project is using git-flow)
-1. Write tests first.
-1. Write test-driven code.
-1. Update the documentation if need.
-1. Create a pull request.
+2. Create a branch.
+3. Run tests.
+4. Write test-driven code.
+5. Update the documentation if necessary.
+6. Create a pull request.
 
 
 License

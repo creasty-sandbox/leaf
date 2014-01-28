@@ -47,8 +47,7 @@ describe 'view', ->
     @view = new TestView @$el
 
   afterEach ->
-    @view._destroyView()
-    @$el.remove()
+    @view.destroy()
 
 
   it 'should call `#setup` on initialization', ->

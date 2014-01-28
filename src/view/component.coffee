@@ -1,7 +1,7 @@
 
 #  Component
 #-----------------------------------------------
-class Leaf.Component
+class Leaf.Component extends Leaf.View
 
   @components: {}
 
@@ -16,6 +16,7 @@ class Leaf.Component
     .replace(/\-+/g, '-')
     .replace(/^(\-|:)|(\-|:)$/g, '')
     .replace(/^component:/, '')
+    .toLowerCase()
 
   @register: (name, node) ->
     name = @regulateName name
@@ -38,7 +39,9 @@ class Leaf.Component
 #  Error
 #-----------------------------------------------
 class NoNameAttributeWithComponentTagError extends Leaf.Error
+class NoPolyBindingWithPolymorphicComponentTagError extends Leaf.Error
 class UndefinedComponentTagError extends Leaf.Error
+class ComponentClassNotFoundError extends Leaf.Error
 
 
 #  Component view
@@ -62,6 +65,14 @@ class ComponentView
     $el = view.getDOM()
     $el.appendTo $parent
 
+    if Leaf.hasApp()
+      klass = Leaf.getComponentClassFor node.name
+
+      unless klass
+        throw new ComponentClassNotFoundError node.name
+
+      new klass $el
+
 
 #  Component def tag
 #-----------------------------------------------
@@ -75,4 +86,22 @@ Leaf.Template.registerTag 'component',
       throw new NoNameAttributeWithComponentTagError()
 
     Leaf.Component.register name, node
+
+
+Leaf.Template.registerTag 'component:poly',
+  structure: true
+
+  open: (node, parent) ->
+    unless node.attrs.poly || node.localeBindings.poly
+      throw new NoPolyBindingWithPolymorphicComponentTagError()
+
+  create: (node, $marker, $parent, obj) ->
+    name = node.attrs.poly
+
+    unless name
+      binder = new Leaf.Template.Binder obj
+      name = binder.getBindingValue node.localeBindings.poly
+
+    node.name = "component:#{Leaf.Component.regulateName name}"
+    ComponentView.create node, $marker, $parent, obj
 

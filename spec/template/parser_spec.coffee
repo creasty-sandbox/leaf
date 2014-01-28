@@ -233,6 +233,7 @@ describe 'parser', ->
 
       node =
         type: T_TAG_SELF
+        customTag: false
         contents: []
         context: {}
         name: 'img'
@@ -259,6 +260,7 @@ describe 'parser', ->
 
       node =
         type: T_TAG_OPEN
+        customTag: false
         contents: []
         context: {}
         name: 'div'
@@ -299,6 +301,7 @@ describe 'parser', ->
 
       node =
         type: T_TAG_OPEN
+        customTag: false
         contents: []
         context: {}
         name: 'div'
@@ -333,6 +336,7 @@ describe 'parser', ->
       result = [
         {
           type: T_TAG_OPEN
+          customTag: false
           context: {}
           name: 'div'
           attrs: {}
@@ -358,6 +362,7 @@ describe 'parser', ->
       result = [
         {
           type: T_TAG_OPEN
+          customTag: false
           context: {}
           name: 'section'
           attrs: {}
@@ -367,6 +372,7 @@ describe 'parser', ->
           contents: [
             {
               type: T_TAG_OPEN
+              customTag: false
               contents: []
               context: {}
               name: 'div'

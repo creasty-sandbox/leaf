@@ -1,37 +1,52 @@
 
 class Leaf.View extends Leaf.Object
 
-  @_objectType = 'View'
-
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
-  constructor: (@$view) ->
-    @_objectBaseInit()
+  @setLeafClass()
+  # @cacheGroup = 'view'
 
+  @parse: (buffer) ->
+    psr = new Leaf.Template.Parser()
+    psr.init buffer
+    tree = psr.getTree()
+
+    (obj) ->
+      gen = new Leaf.Template.DOMGenerator()
+      gen.init tree, obj
+      gen.getDOM()
+
+  initialize: (elementOrTree, data = {}) ->
     @inherit 'elements'
     @inherit 'events'
 
     @$body = $ 'body'
-    @$view ?= @$body
+
+    fromTree = _.isPlainObject(elementOrTree) && elementOrTree.tree
+
+    @$view =
+      if fromTree
+        @_elementFromParseTree elementOrTree
+      else
+        elementOrTree ? $('<div/>')
+
+    if data.model
+      @model = data.model
+
+      if fromTree
+        @setCache "#{elementOrTree._nodeID}:#{@model.toLeafID()}", @
+
+    if data.collection
+      @collection = data.collection
 
     @_setupElements()
     @setup()
     @_subscribeEvents()
 
-  fromParsedTree: (tree, obj, scope) ->
-    view = new Leaf.Template.DOMGenerator()
-    view.init _.cloneDeep(tree), obj, scope
-    view.getDOM()
-
-  getCachedView: (obj) ->
-    viewCache = new Leaf.Cache 'views'
-    id = obj.toLeafID()
-
-    if (cachedView = viewCache.get id)
-      cachedView
-    else
-      viewCache.set id, @
-      null
+  _elementFromParseTree: ({ tree, obj, scope }) ->
+    gen = new Leaf.Template.DOMGenerator()
+    gen.init _.cloneDeep(tree), obj, scope
+    gen.getDOM()
 
   setup: ->
 
@@ -109,11 +124,11 @@ class Leaf.View extends Leaf.Object
   send: ->
     # TODO
 
-  _removeView: ->
+  detach: ->
     @$view.detach()
 
-  _destroyView: ->
-    @$view = null
+  destroy: ->
     @_unsubscribeEvents()
-
+    @$view.remove()
+    @$view = null
 

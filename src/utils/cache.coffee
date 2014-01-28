@@ -8,11 +8,7 @@ class Leaf.Cache
     @storage = storage[@namespace]
 
   set: (key, val) -> @storage[key] = val
-  get: (key, set) ->
-    if Leaf.Object.isLeafID key
-      @storage[key] ?= set
-    else
-      key
+  get: (key, set) -> (@storage[key] ?= set)
 
   clear: (key) ->
     storage[@namespace] = null

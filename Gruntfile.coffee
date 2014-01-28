@@ -10,20 +10,30 @@ VENDOR_DIR = 'vendors/'
 FILES =
   _headers: [
     'leaf.coffee'
-    'constants.coffee'
-    'errors.coffee'
   ]
   utils: [
     'lodash/*.coffee'
-    'inflector.coffee'
+    'class.coffee'
+    'error.coffee'
     'event.coffee'
     'cache.coffee'
-    'object.coffee'
+    'inflector.coffee'
     'array_diff_patch.coffee'
+    'identifiable.coffee'
+    'cacheable.coffee'
+    'accessible.coffee'
+    'hookable.coffee'
+    'object.coffee'
   ]
-  formatters: [
-    'formatter.coffee'
-    'html.coffee'
+  support: [
+    'support.coffee'
+    'string.coffee'
+    'number.coffee'
+    'date.coffee'
+  ]
+  event: [
+    'event.coffee'
+    'lifecycle_event.coffee'
   ]
   observable: [
     'observable_base.coffee'
@@ -33,10 +43,14 @@ FILES =
   ]
   template: [
     'template.coffee'
+    'preformatter.coffee'
     'tokenizer.coffee'
     'parser.coffee'
     'binder.coffee'
     'dom_generator.coffee'
+  ]
+  _object: [
+    'object.coffee'
   ]
   view: [
     'view.coffee'
@@ -46,11 +60,11 @@ FILES =
     'render.coffee'
     'outlet.coffee'
   ]
-  core: [
-    'object.coffee'
-    'router.coffee'
-    'navigator.coffee'
+  framework: [
+    # 'router.coffee'
+    # 'navigator.coffee'
     'model.coffee'
+    'collection.coffee'
     'controller.coffee'
     'app.coffee'
   ]
@@ -64,29 +78,41 @@ FILE_DEPENDENCIES =
   utils: [
     'headers'
   ]
+  support: [
+    'headers'
+    'utils'
+  ]
   observable: [
     'headers'
     'utils'
+    'support'
+    'event'
   ]
   template: [
     'headers'
     'utils'
-    'formatters'
+    'support'
+    'event'
     'observable'
   ]
   view: [
     'headers'
     'utils'
-    'formatters'
+    'support'
+    'event'
     'observable'
     'template'
+    'object'
   ]
-  core: [
+  framework: [
     'headers'
     'utils'
-    'formatters'
+    'support'
+    'event'
     'observable'
     'template'
+    'object'
+    'view'
   ]
 
 
@@ -155,12 +181,11 @@ gruntConfig.coffee =
     options:
       join: true
     files:
-      'dist/leaf.js': files.all 'view', 'src'
+      'dist/leaf.js': files.all 'framework', 'src'
 
 # Clean
 gruntConfig.clean =
   tmp: TMP_DIR
-
 
 # Concat
 gruntConfig.concat =

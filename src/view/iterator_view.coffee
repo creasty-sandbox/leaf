@@ -2,6 +2,10 @@
 #  Error
 #-----------------------------------------------
 class NoIteratorBindingsError extends Leaf.Error
+class NonIteratableObjectError extends Leaf.Error
+
+  setMessage: (iterator, obj) ->
+    "`#{iterator}` is #{Object::toString.call obj}"
 
 
 #  Iterator
@@ -32,6 +36,10 @@ class IteratorView extends Leaf.Object
     bindingObj = binder.getBindingObject @node.localeBindings
 
     @collection = bindingObj.get @node.iterator
+
+    unless @collection instanceof Leaf.ObservableArray
+      throw new NonIteratableObjectError @node.iterator, @collection
+
     @collection.forEach @addOne
     @collection.observe @update
 
@@ -41,7 +49,18 @@ class IteratorView extends Leaf.Object
     @collectionViews.push view
 
   createView: (item) ->
-    new IteratorItemView @node, item, @obj
+    id = "#{@node._nodeID}:#{item.toLeafID()}"
+
+    IteratorItemView.findOrCreate id, (klass) =>
+      obj = @obj.clone()
+      obj.set @node.iterator, item
+
+      new klass
+        tree: @node.contents
+        obj: obj
+      ,
+        model: item
+        collection: @collection
 
   update: (models) =>
     @applyPatch op for op in models.getPatch()
@@ -58,22 +77,13 @@ class IteratorView extends Leaf.Object
         @collectionViews.insertAt index, [view]
       when 'removeAt'
         if (cv = @collectionViews[index])
-          cv._removeView()
+          cv.detach()
           @collectionViews.removeAt index
 
 
 #  Iterator item
 #-----------------------------------------------
 class IteratorItemView extends Leaf.View
-
-  constructor: (@node, @item, obj) ->
-    return cached if (cached = @getCachedView @item)
-
-    @obj = obj.clone()
-    @obj.set @node.iterator, @item
-    @$view = @fromParsedTree @node.contents, @obj
-
-    super @$view
 
 
 #  Registeration

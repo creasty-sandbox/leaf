@@ -2,6 +2,8 @@
 # jasmine.CATCH_EXCEPTIONS = false
 
 beforeEach ->
+  Leaf.develop = true if Leaf?
+
   flag = false
   spy = (name) -> jasmine.createSpy(name).andCallFake -> flag = true
 
