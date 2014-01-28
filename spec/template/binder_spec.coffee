@@ -110,9 +110,9 @@ describe 'binder', ->
         result = null
         bind (r) -> result = r
 
-        @obj.baz.abc = 567
+        @obj.baz.abc = 890
 
-        expect(result).toBe 577
+        expect(result).toBe 990
 
 
   describe '#getBindingValue(value)', ->
