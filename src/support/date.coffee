@@ -67,7 +67,7 @@ class DateSupport
 
   isLeapYear: (date) ->
     year = date.getFullYear()
-    (year % 4 == 0 && year % 100 != 0) || year % 400
+    year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)
 
   getMonthName: (date) -> MONTHS[date.getMonth()]
 
@@ -122,12 +122,12 @@ class DateSupport
 
     "#{@relativeDate date} at #{@toFormattedString date, '%H:%M'}"
 
-  since: (date, seconds) -> seconds.since date
+  since: (date, millisec) -> millisec.since date
 
-  ago: (date, seconds) -> date.since -seconds
+  ago: (date, millisec) -> millisec.ago date
 
   beginningOfDay: (date) ->
-    new Date(date).setHours(0).setMinutes(0).setSeconds 0
+    new Date(date).setHours(0).setMinutes(0).setSeconds(0).setMilliseconds(0)
 
   beginningOfWeek: (date) ->
     daysToSunday = (date.getDay() + 6) % 7
@@ -143,9 +143,6 @@ class DateSupport
 
   endOfDay: (date) ->
     new Date(date).setHours(23).setMinutes(59).setSeconds 59
-
-  endOfWeek: (date) ->
-    # TODO
 
   endOfMonth: (date) ->
     @beginningOfDay(date).setDate date.getDaysInMonth()
@@ -167,7 +164,7 @@ class DateSupport
   WEEKDAYS.forEach (dayName, dayIndex) ->
     klass::["is#{dayName}"] = -> @getDay() % 7 == dayIndex
 
-  _('setSeconds setMinutes setHours setDays setMonth setYears').word().forEach (method) ->
+  _('setMilliseconds setSeconds setMinutes setHours setDays setDate setMonth setYears').word().forEach (method) ->
     org = Date::[method]
     klass::[method] = (date, val) -> new Date org.call date, val
 

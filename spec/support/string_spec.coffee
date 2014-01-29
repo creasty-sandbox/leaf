@@ -1,7 +1,7 @@
 
 describe 'String', ->
 
-  describe '#pluralize(count, withNumber)', ->
+  describe '#pluralize(count[, withNumber])', ->
 
     it 'should be defined', ->
       expect(String::pluralize).toBeDefined()
@@ -37,7 +37,7 @@ describe 'String', ->
       expect('un __ der - scoreMe'.underscore()).toBe 'un_der_score_me'
 
 
-  describe '#capitalize(lowOtherLetter = false)', ->
+  describe '#capitalize([lowOtherLetter = false])', ->
 
     it 'should be defined', ->
       expect(String::capitalize).toBeDefined()
@@ -49,7 +49,7 @@ describe 'String', ->
       expect('heLLo WoRlD'.capitalize(true)).toBe 'Hello world'
 
 
-  describe '#camelize(lowFirstLetter = false)', ->
+  describe '#camelize([lowFirstLetter = false])', ->
 
     it 'should be defined', ->
       expect(String::camelize).toBeDefined()
@@ -61,7 +61,7 @@ describe 'String', ->
       expect('came_lize'.camelize(true)).toBe 'cameLize'
 
 
-  describe '#humanize(lowFirstLetter = false)', ->
+  describe '#humanize([lowFirstLetter = false])', ->
 
     it 'should be defined', ->
       expect(String::humanize).toBeDefined()
@@ -103,7 +103,7 @@ describe 'String', ->
       expect('user_accounts'.classify()).toBe 'UserAccount'
 
 
-  describe '#foreignKey(withUnderscore = true)', ->
+  describe '#foreignKey([withUnderscore = true])', ->
 
     it 'should be defined', ->
       expect(String::foreignKey).toBeDefined()

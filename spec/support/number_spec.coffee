@@ -1,7 +1,7 @@
 
 describe 'Number', ->
 
-  describe '#pluralize(word, withNumber = false)', ->
+  describe '#pluralize(word [, withNumber = false])', ->
 
     it 'should be defined', ->
       expect(Number::pluralize).toBeDefined()
@@ -158,7 +158,7 @@ describe 'Number', ->
       expect((2).year()).toBe 2 * 1000 * 60 * 60 * 24 * 30 * 12
 
 
-  describe '#since(reference)', ->
+  describe '#since([reference])', ->
 
     it 'should be defined', ->
       expect(Number::since).toBeDefined()
@@ -170,7 +170,7 @@ describe 'Number', ->
       expect((3).year().since(ref)).toEqual result
 
 
-  describe '#until(reference)', ->
+  describe '#until([reference])', ->
 
     it 'should be defined', ->
       expect(Number::until).toBeDefined()
@@ -188,6 +188,7 @@ describe 'Number', ->
       expect(Number::fromNow).toBeDefined()
 
     it 'should return a date that milisecounds of number after now', ->
+      # untestable
 
 
   describe '#ago()', ->
@@ -196,5 +197,6 @@ describe 'Number', ->
       expect(Number::ago).toBeDefined()
 
     it 'should return a date that milisecounds of number before now', ->
+      # untestable
 
 
