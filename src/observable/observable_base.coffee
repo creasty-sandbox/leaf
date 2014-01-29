@@ -135,7 +135,7 @@ class Leaf.ObservableBase extends Leaf.Class
       { obj: @ }
     else if len == 1
       obj = @_data[keypath]
-      if obj?.__observable
+      if obj && obj.__observable
         { obj }
       else
         { obj: @, prop: keypath }
@@ -172,7 +172,7 @@ class Leaf.ObservableBase extends Leaf.Class
       @_update prop if options.notify
       @_update() if options.bubbling
 
-    # @_accessor prop
+    @_accessor prop
 
     val
 

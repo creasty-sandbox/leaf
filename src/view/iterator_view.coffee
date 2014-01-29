@@ -57,6 +57,7 @@ class IteratorView extends Leaf.Object
       scope.mergeWith @obj
 
       scope = @obj.cloneWithSameID()
+      scope = @obj.clone()
       scope.set @node.iterator, item
 
       new klass
@@ -70,7 +71,6 @@ class IteratorView extends Leaf.Object
     @applyPatch op for op in models.getPatch()
 
   applyPatch: ({ method, index, element }) ->
-    console.log element
     switch method
       when 'insertAt'
         view = @createView element

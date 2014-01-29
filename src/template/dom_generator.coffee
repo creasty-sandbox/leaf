@@ -38,14 +38,13 @@ class Leaf.Template.DOMGenerator
       else
         bind (result) -> $el.attr key, result
 
-
   bindLocales: ($el, attrs) ->
     bindingObj = @binder.getBindingObject attrs
 
     $el.data 'leaf-locale', bindingObj
 
   registerActions: ($el, actions) ->
-    for event, handler of actions
+    _(actions).forEach (handler, event) ->
       $el.on event, (e) -> $el.trigger handler, [e]
 
     null
