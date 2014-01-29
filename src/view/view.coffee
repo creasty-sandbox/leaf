@@ -45,9 +45,9 @@ class Leaf.View extends Leaf.Object
     @setup()
     @_subscribeEvents()
 
-  _elementFromParseTree: ({ tree, obj, scope }) ->
+  _elementFromParseTree: ({ tree, obj }) ->
     gen = new Leaf.Template.DOMGenerator()
-    gen.init _.cloneDeep(tree), obj, scope
+    gen.init _.cloneDeep(tree), obj
     gen.getDOM()
 
   setup: ->

@@ -39,6 +39,10 @@ class Leaf.ObservableBase extends Leaf.Class
 
   clone: -> new @constructor @_data
 
+  mergeWith: (o) ->
+    @__proto__ = o
+    @_data.__proto__ = o._data
+
   _beginTrack: (name) ->
     return if @_tracking[name]
     @_tracked[name] ?= []
@@ -136,12 +140,12 @@ class Leaf.ObservableBase extends Leaf.Class
       exist = obj: @, keypath: []
 
       while ref && (p = path.shift())
-        if ref.isObservable
-          exist.obj = ref
-          exist.keypath
+        pref = ref.__proto__
+        ref = pref if pref && (pref.get?(p) || pref[p])
 
+        exist.obj = ref if ref.isObservable
         exist.keypath.push p
-        ref = ref.get?(p) ? ref[p]
+        ref = ref.get(p) ? ref[p]
 
       exist.keypath.pop()
 
@@ -154,11 +158,17 @@ class Leaf.ObservableBase extends Leaf.Class
       notify: true
       bubbling: false
 
+    pdata = @__proto__._data ? {}
+
     if _.isFunction @_data[prop]
       @_data[prop].call @, val
     else
       obj = @_makeObservable val, @, prop
-      @_data[prop] = obj
+
+      if pdata[prop]
+        pdata[prop] = obj
+      else
+        @_data[prop] = obj
 
     if @_tracking.setter
       @_createTrack 'setter', prop if options.notify

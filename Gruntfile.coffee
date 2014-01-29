@@ -27,6 +27,8 @@ FILES =
   ]
   support: [
     'support.coffee'
+    'object.coffee'
+    'array.coffee'
     'string.coffee'
     'number.coffee'
     'date.coffee'

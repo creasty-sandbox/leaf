@@ -52,12 +52,13 @@ class IteratorView extends Leaf.Object
     id = "#{@node._nodeID}:#{item.toLeafID()}"
 
     IteratorItemView.findOrCreate id, (klass) =>
-      obj = @obj.clone()
-      obj.set @node.iterator, item
+      scope = new Leaf.ObservableObject()
+      scope.set @node.iterator, item
+      scope.mergeWith @obj
 
       new klass
         tree: @node.contents
-        obj: obj
+        obj: scope
       ,
         model: item
         collection: @collection

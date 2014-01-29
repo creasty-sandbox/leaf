@@ -3,10 +3,11 @@ class Leaf.Support
 
   @add: (klass) ->
     primitive = switch klass.name.replace(/Support$/, '')
-      when 'String' then String
+      when 'Array'  then Array
+      when 'Date'   then Date
       when 'Number' then Number
       when 'Object' then Object
-      when 'Date'   then Date
+      when 'String' then String
 
     instance = new klass()
 

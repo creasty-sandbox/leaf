@@ -21,11 +21,11 @@ class Leaf.Template.DOMGenerator
     unless @obj
       throw new RequiredArgumentsError('obj')
 
+    @binder = new Leaf.Template.Binder @obj
     @$parent = $ doc.createElement 'body'
 
   getBinder: (value) ->
-    binder = new Leaf.Template.Binder @obj
-    binder.getBinder value, @obj
+    @binder.getBinder value, @obj
 
   bindAttributes: ($el, attrs) ->
     _(attrs).forEach (val, key) =>
@@ -34,8 +34,7 @@ class Leaf.Template.DOMGenerator
       if 'value' == key
         bind (result) -> $el.val result
         $el.on 'keyup keydown keypress', =>
-          console.log @obj, val, $el.val()
-          @obj.set val, $el.val()
+          @obj.set val.expr, $el.val()
       else
         bind (result) -> $el.attr key, result
 
