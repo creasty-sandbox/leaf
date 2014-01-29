@@ -10,7 +10,7 @@ class Leaf.Template.DOMGenerator
 
   doc = document # copying global variable to local make js faster
 
-  customTags = Leaf.Template.customTags
+  { customTags } = Leaf.Template
 
   constructor: ->
 
@@ -40,14 +40,15 @@ class Leaf.Template.DOMGenerator
 
 
   bindLocales: ($el, attrs) ->
-    binder = new Leaf.Template.Binder @obj
-    bindingObj = binder.getBindingObject attrs
+    bindingObj = @binder.getBindingObject attrs
 
     $el.data 'leaf-locale', bindingObj
 
   registerActions: ($el, actions) ->
     for event, handler of actions
       $el.on event, (e) -> $el.trigger handler, [e]
+
+    null
 
   createMarker: (name = '') ->
     if Leaf.develop

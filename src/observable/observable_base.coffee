@@ -12,6 +12,7 @@ class Leaf.ObservableBase extends Leaf.Class
     @_tracked = {}
     @_tracking = {}
     @_sub = {}
+    @_mergedObservable = _data: {}
 
   _makeObservable: (o, parentObj, parentProp) ->
     if _.isArray o
@@ -39,9 +40,13 @@ class Leaf.ObservableBase extends Leaf.Class
 
   clone: -> new @constructor @_data
 
-  mergeWith: (o) ->
-    @__proto__ = o
-    @_data.__proto__ = o._data
+  cloneWithSameID: ->
+    clone = new @constructor()
+    clone._leafID = @_leafID
+    @constructor.call clone, @_data
+    clone
+
+  mergeWith: (o) -> @_mergedObservable = o
 
   _beginTrack: (name) ->
     return if @_tracking[name]
@@ -116,7 +121,7 @@ class Leaf.ObservableBase extends Leaf.Class
   get: (keypath) ->
     { obj, prop } = @getTerminalParent keypath
 
-    obj?._get prop, @, keypath
+    obj?._get prop
 
   getTerminalParent: (keypath) ->
     return { obj: @ } unless keypath?
@@ -130,7 +135,7 @@ class Leaf.ObservableBase extends Leaf.Class
       { obj: @ }
     else if len == 1
       obj = @_data[keypath]
-      if obj?.isObservable
+      if obj?.__observable
         { obj }
       else
         { obj: @, prop: keypath }
@@ -140,12 +145,9 @@ class Leaf.ObservableBase extends Leaf.Class
       exist = obj: @, keypath: []
 
       while ref && (p = path.shift())
-        pref = ref.__proto__
-        ref = pref if pref && (pref.get?(p) || pref[p])
-
-        exist.obj = ref if ref.isObservable
+        exist.obj = ref if ref.__observable
         exist.keypath.push p
-        ref = ref.get(p) ? ref[p]
+        ref = ref.get?(p) ? ref[p]
 
       exist.keypath.pop()
 
@@ -158,18 +160,11 @@ class Leaf.ObservableBase extends Leaf.Class
       notify: true
       bubbling: false
 
-    pdata = @__proto__._data ? {}
-
     if _.isFunction @_data[prop]
       @_data[prop].call @, val
     else
       obj = @_makeObservable val, @, prop
-
-      if pdata[prop]
-        pdata[prop] = obj
-      else
-        @_data[prop] = obj
-
+      @_data[prop] = obj
     if @_tracking.setter
       @_createTrack 'setter', prop if options.notify
       @_createTrack 'setter' if options.bubbling
@@ -177,7 +172,7 @@ class Leaf.ObservableBase extends Leaf.Class
       @_update prop if options.notify
       @_update() if options.bubbling
 
-    @_accessor prop
+    # @_accessor prop
 
     val
 

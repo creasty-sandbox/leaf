@@ -24,11 +24,9 @@ class Leaf.Accessible
       set: (val) -> obj._set attr, val
 
   _removeAccessor: (attr, obj = @) ->
-    @_accessors[attr] = undefined
+    @_accessors[attr] = null
 
     Object.defineProperty obj, attr,
       enumerable: false
       configurable: true
-      value: undefined
-
 

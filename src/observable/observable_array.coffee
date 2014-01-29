@@ -7,7 +7,6 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     super()
     @_data = []
 
-    @_saveCurrentMap()
     @_lastOperation = {}
 
     for i in [0..._data.length] by 1
@@ -17,6 +16,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     @length = @_data.length
     @_map = toLeafIDs @_data
+    @_saveCurrentMap()
 
   _saveCurrentMap: -> @_prev = _.clone @_map
 
@@ -222,8 +222,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     if @length < len
       @_accessor i for i in [@length...len] by 1
-    else if @length > len
-      @_removeAccessor i for i in [len...@length] by 1
+    # else if @length > len
+    #   @_removeAccessor i for i in [len...@length] by 1
 
     @length = len
 

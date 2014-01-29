@@ -32,7 +32,8 @@ class Leaf.Template.Binder
     evaluate = @getEvaluator value, vars
 
     bind = (routine) =>
-      @obj._beginTrack 'getter' unless value._dependents
+      unless value._dependents
+        @obj._beginTrack 'getter'
 
       result = evaluate()
 
