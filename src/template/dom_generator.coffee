@@ -32,8 +32,15 @@ class Leaf.Template.DOMGenerator
       bind = @getBinder val
 
       if 'value' == key
-        bind (result) -> $el.val result
+        user = false
+
+        bind (result) ->
+          $el.val result unless user
+          user = false
+          null
+
         $el.on 'keyup keydown keypress', =>
+          user = true
           @obj.set val.expr, $el.val()
       else
         bind (result) -> $el.attr key, result

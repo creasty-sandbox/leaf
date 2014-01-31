@@ -113,25 +113,23 @@ describe 'observableObject', ->
 
   describe '#observe(keypath, callback)', ->
 
-    callback = null
-
     beforeEach ->
-      callback = jasmine.createSpy 'observer'
+      @callback = jasmine.createSpy 'observer'
 
 
     it 'should call registered observers when setting a property value', ->
-      @obo.observe 'foo', callback
+      @obo.observe 'foo', @callback
 
       @obo.set 'foo', 100
 
-      expect(callback).toHaveBeenCalled()
+      expect(@callback).toHaveBeenCalled()
 
     it 'should call registered observer with new value', ->
-      @obo.observe 'foo', callback
+      @obo.observe 'foo', @callback
 
       @obo.set 'foo', 100
 
-      expect(callback).toHaveBeenCalledWith 100
+      expect(@callback).toHaveBeenCalledWith 100, @obo.toLeafID(), 'foo'
 
     it 'should call registered observers every time when setting a property value', ->
       n = 0
@@ -149,40 +147,40 @@ describe 'observableObject', ->
     describe '#unobserve(keypath, callback)', ->
 
       it 'should not call unregistered observers', ->
-        @obo.observe 'foo', callback
-        @obo.unobserve 'foo', callback
+        @obo.observe 'foo', @callback
+        @obo.unobserve 'foo', @callback
 
         @obo.set 'foo', 100
 
-        expect(callback).not.toHaveBeenCalled()
+        expect(@callback).not.toHaveBeenCalled()
 
 
     describe '#update(keypath)', ->
 
       it 'should call registered observers immediately', ->
-        @obo.observe 'foo', callback
+        @obo.observe 'foo', @callback
         @obo.update 'foo'
 
 
     describe 'Event bubbling on nested properties', ->
 
       it 'should call registered observer of parent properties when setting children values', ->
-        @obo.observe 'nested', callback
+        @obo.observe 'nested', @callback
 
         @obo.set 'nested.prop1', 200, bubbling: true
 
-        expect(callback).toHaveBeenCalled()
+        expect(@callback).toHaveBeenCalled()
 
 
     describe 'Computed properties', ->
 
       it 'should call registered observers of computed property when settings its dependent property values', ->
-        @obo.observe 'dependentComputed', callback
+        @obo.observe 'dependentComputed', @callback
 
         @obo.get 'dependentComputed'
         @obo.set 'foo', 100
 
-        expect(callback).toHaveBeenCalledWith 110
+        expect(@callback).toHaveBeenCalledWith 110, @obo.toLeafID(), 'dependentComputed'
 
       it 'should call registered observers of dependent properties when setting a computed property value', ->
         callbackComp = jasmine.createSpy 'observer of settable computed property'
@@ -200,13 +198,13 @@ describe 'observableObject', ->
     describe 'Batch: #beginBatch(), #endBatch()', ->
 
       it 'should not call registered observers within a batch', ->
-        @obo.observe 'foo', callback
+        @obo.observe 'foo', @callback
 
         @obo.beginBatch()
         @obo.set 'foo', 100
         @obo.set 'foo', 200
 
-        expect(callback).not.toHaveBeenCalled()
+        expect(@callback).not.toHaveBeenCalled()
 
       it 'should call registered observers once after ending batch', ->
         n = 0

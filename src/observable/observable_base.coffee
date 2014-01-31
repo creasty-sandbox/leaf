@@ -3,16 +3,25 @@ class Leaf.ObservableBase extends Leaf.Class
 
   __observable: true
 
+  _observableID = 0
+
   @mixin Leaf.Cacheable, Leaf.Accessible
 
-  constructor: ->
+  constructor: (data) ->
     @initMixin Leaf.Cacheable, Leaf.Accessible
+
+    @_observableID = ++_observableID
 
     @_dependents = {}
     @_tracked = {}
     @_tracking = {}
-    @_sub = {}
-    @_mergedObservable = _data: {}
+    @_delegated = {}
+
+    @_sync()
+
+    @_initWithData data
+
+  _initWithData: (data) ->
 
   _makeObservable: (o, parentObj, parentProp) ->
     if _.isArray o
@@ -21,6 +30,10 @@ class Leaf.ObservableBase extends Leaf.Class
       o
     else if _.isPlainObject o
       o = new Leaf.ObservableObject o
+      o.setParent parentObj, parentProp
+      o
+    else if o instanceof Leaf.ObservableBase
+      o = o.cloneWithID()
       o.setParent parentObj, parentProp
       o
     else
@@ -40,15 +53,19 @@ class Leaf.ObservableBase extends Leaf.Class
 
   clone: -> new @constructor @_data
 
-  cloneWithSameID: ->
-    clone = new @constructor()
-    clone._leafID = @_leafID
-    @constructor.call clone, @_data
-    clone
+  cloneWithID: ->
+    o = new @constructor()
+    o._observableID = @_observableID
+    o._sync()
+    o._initWithData @_data
+    o
 
-  mergeWith: (o) -> @_mergedObservable = o
+  _isTracking: (name) ->
+    @_tracking[name] || @_hasParent && @_parentObj._isTracking(name)
 
   _beginTrack: (name) ->
+    @_parentObj._beginTrack name if @_hasParent
+
     return if @_tracking[name]
     @_tracked[name] ?= []
     @_tracking[name] = true
@@ -60,6 +77,8 @@ class Leaf.ObservableBase extends Leaf.Class
     @_tracked[name].push val
 
   _endTrack: (name) ->
+    @_parentObj._endTrack name if @_hasParent
+
     return unless @_tracking[name]
 
     tracked = @_tracked[name]
@@ -85,9 +104,11 @@ class Leaf.ObservableBase extends Leaf.Class
     (path for path, flag of stacks when flag)
 
   beginBatch: ->
+    @_inBatch = true
     @_beginTrack 'setter'
 
   endBatch: ->
+    @_inBatch = false
     if (tracked = @_endTrack 'setter')
       _(tracked).forEach (prop) =>
         @_update prop
@@ -105,7 +126,9 @@ class Leaf.ObservableBase extends Leaf.Class
       @_dependents[prop] = tracked
 
       _(tracked).forEach (dependent) =>
-        @_observe dependent, => @_update prop
+        fn = (val, id, _prop) => @_update prop, true
+        fn._dependentHandler = true
+        @_observe dependent, fn
 
     val
 
@@ -160,15 +183,19 @@ class Leaf.ObservableBase extends Leaf.Class
       notify: true
       bubbling: false
 
+    if options.overrideDelegate
+      @_delegated[prop] = @_observableID
+
     if _.isFunction @_data[prop]
       @_data[prop].call @, val
     else
       obj = @_makeObservable val, @, prop
       @_data[prop] = obj
-    if @_tracking.setter
-      @_createTrack 'setter', prop if options.notify
-      @_createTrack 'setter' if options.bubbling
-    else
+
+    @_createTrack 'setter', prop if options.notify
+    @_createTrack 'setter' if options.bubbling
+
+    unless @_inBatch
       @_update prop if options.notify
       @_update() if options.bubbling
 
@@ -193,24 +220,24 @@ class Leaf.ObservableBase extends Leaf.Class
 
     { obj, prop } = @getTerminalParent keypath
 
-    if @_tracking.setter
-      @_createTrack 'setter', keypath if options?.notify
-      @_createTrack 'setter' if options?.bubbling
-    else
-      obj._set prop, val, options, @
+    @_createTrack 'setter', keypath if options?.notify
+    @_createTrack 'setter' if options?.bubbling
 
-  _getEventName: (prop, o = @, eventName = 'update') ->
-    name = ['observer']
-    name.push eventName
-    name.push o.toLeafID()
-    name.push prop if prop
-    name.join ':'
+    obj._set prop, val, options
 
-  _fire: (prop, eventName) ->
-    $(window).trigger @_getEventName(prop, null, eventName), [@get(prop)]
+  _getUpdateEventName: (prop) ->
+    id = @_delegated[prop] ? @_observableID
+    "observer:update:#{id}"
 
-  _update: (prop) ->
-    @_fire prop, 'update'
+  _sync: ->
+    @_syncHandler = (e, id, prop, val) =>
+      @_set prop, val, notify: false unless id == @_leafID
+      null
+
+    $(window).on @_getUpdateEventName(), @_syncHandler
+
+  _update: (prop, dependentCall = false) ->
+    $(window).trigger @_getUpdateEventName(prop), [@_leafID, prop, @_get(prop), dependentCall]
     @_parentObj._update @_parentProp if @_hasParent
 
   update: (keypath) ->
@@ -218,9 +245,11 @@ class Leaf.ObservableBase extends Leaf.Class
     obj._update prop
 
   _observe: (prop, callback) ->
-    fn = (e, args...) => callback args...
+    fn = (e, id, prop, val, dependentCall) =>
+      callback val, @toLeafID(), prop unless dependentCall && callback._dependentHandler
+
     callback._binded = fn
-    $(window).on @_getEventName(prop), fn
+    $(window).on @_getUpdateEventName(prop), fn
 
   observe: ->
     { keypath, callback } = _.polymorphic
@@ -231,7 +260,7 @@ class Leaf.ObservableBase extends Leaf.Class
     obj._observe prop, callback
 
   _unobserve: (prop, callback) ->
-    $(window).off @_getEventName(prop), callback._binded ? callback
+    $(window).off @_getUpdateEventName(prop), callback._binded ? callback
 
   unobserve: ->
     { keypath, callback } = _.polymorphic

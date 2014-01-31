@@ -3,14 +3,13 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v?.__observable then v.toLeafID() else v
 
-  constructor: (_data = []) ->
-    super()
+  _initWithData: (data = []) ->
     @_data = []
 
     @_lastOperation = {}
 
-    for i in [0..._data.length] by 1
-      val = @_makeObservable _data[i], @
+    for i in [0...data.length] by 1
+      val = @_makeObservable data[i], @
       @_data[i] = val
       @_accessor i
 
@@ -217,7 +216,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_lastOperation = method: 'set', args: [val, options]
     super prop, val, options
 
-  _update: (prop) ->
+  _update: ->
     len = @_data.length
 
     if @length < len
@@ -227,7 +226,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     @length = len
 
-    super prop
+    super()
 
   toArray: -> @_data
 

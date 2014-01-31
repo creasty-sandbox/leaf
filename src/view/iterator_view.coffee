@@ -52,13 +52,8 @@ class IteratorView extends Leaf.Object
     id = "#{@node._nodeID}:#{item.toLeafID()}"
 
     IteratorItemView.findOrCreate id, (klass) =>
-      scope = new Leaf.ObservableObject()
-      scope.set @node.iterator, item
-      scope.mergeWith @obj
-
-      scope = @obj.cloneWithSameID()
-      scope = @obj.clone()
-      scope.set @node.iterator, item
+      scope = @obj.createDelegatedClone()
+      scope.set @node.iterator, item, overrideDelegate: true
 
       new klass
         tree: @node.contents
