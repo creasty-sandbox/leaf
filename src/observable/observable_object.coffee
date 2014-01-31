@@ -17,7 +17,7 @@ class Leaf.ObservableObject extends Leaf.ObservableBase
 
     oid = o.toLeafID()
     o._observe null, (val, id, prop) =>
-      @_update prop, val unless id == oid
+      @_set prop, val unless id == oid
 
     null
 
