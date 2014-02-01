@@ -196,8 +196,8 @@ class Leaf.ObservableBase extends Leaf.Class
     @_createTrack 'setter' if options.bubbling
 
     unless @_inBatch
-      @_update prop if options.notify
-      @_update() if options.bubbling
+      @_update prop, options.dependent if options.notify
+      @_update null, options.dependent if options.bubbling
 
     @_accessor prop
 
