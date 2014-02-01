@@ -11,12 +11,17 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       @_data[i] = val
       @_accessor i
 
-    Object.defineProperty @, 'length',
+    @defineProperty 'length',
       enumerable: false
-      configurable: false
+      configurable: true
       get: -> @_data.length
+      set: (val) -> val
 
     @_archiveCurrentData()
+
+  _delegateProperties: (o) ->
+    @_delegated[i] = o._observableID for i in [0...o.length] by 1
+    super o
 
   _archiveCurrentData: -> @_prev = _.clone @_data
 
@@ -42,7 +47,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_archiveCurrentData()
     @_data.push elements...
     @_update()
-    @length
+    @_data.length
 
   unshift: (elements...) ->
     len = elements.length
@@ -56,7 +61,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_archiveCurrentData()
     @_data.unshift elements...
     @_update()
-    @length
+    @_data.length
 
   pop: ->
     len = @_data.length
@@ -136,21 +141,21 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   forEach: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
-    fn @get(i), i for i in [0...@length] by 1
+    fn @get(i), i for i in [0...@_data.length] by 1
     null
 
   map: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
-    (fn @get(i), i for i in [0...@length] by 1)
+    (fn @get(i), i for i in [0...@_data.length] by 1)
 
   every: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
-    return false for i in [0...@length] by 1 when !fn @get(i), i
+    return false for i in [0...@_data.length] by 1 when !fn @get(i), i
     true
 
   some: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
-    return true for i in [0...@length] by 1 when fn @get(i), i
+    return true for i in [0...@_data.length] by 1 when fn @get(i), i
     false
 
   filter: (fn, thisObject) ->
@@ -158,7 +163,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     result = new @constructor
 
-    for i in [0...@length] by 1
+    for i in [0...@_data.length] by 1
       val = @get i
       result.push val if fn val, i
 
@@ -166,11 +171,11 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   reduce: (fn, initialValue) ->
     result = initialValue ? @get 0
-    result = fn result, @get(i), i, @ for i in [0...@length] by 1
+    result = fn result, @get(i), i, @ for i in [0...@_data.length] by 1
     result
 
   reduceRight: (fn) ->
-    i = @length
+    i = @_data.length
     result = @get i - 1
     result = fn result, @get(i - 1), i - 1, @ while --i
     result

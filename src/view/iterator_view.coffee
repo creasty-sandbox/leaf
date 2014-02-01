@@ -52,7 +52,7 @@ class IteratorView extends Leaf.Object
     id = "#{@node._nodeID}:#{item.toLeafID()}"
 
     IteratorItemView.findOrCreate id, (klass) =>
-      scope = @obj.createDelegatedClone()
+      scope = @obj.delegatedClone()
       scope.set @node.iterator, item, overrideDelegate: true
 
       new klass

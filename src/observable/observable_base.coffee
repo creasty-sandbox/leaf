@@ -33,7 +33,7 @@ class Leaf.ObservableBase extends Leaf.Class
       o.setParent parentObj, parentProp
       o
     else if o instanceof Leaf.ObservableBase
-      o = o.cloneWithID()
+      o = o.syncedClone()
       o.setParent parentObj, parentProp
       o
     else
@@ -53,12 +53,26 @@ class Leaf.ObservableBase extends Leaf.Class
 
   clone: -> new @constructor @_data
 
-  cloneWithID: ->
+  syncedClone: ->
     o = new @constructor()
     o._observableID = @_observableID
     o._sync()
     o.setData @_data
     o
+
+  delegatedClone: ->
+    o = @clone()
+    o._delegateProperties @
+    o
+
+  _delegateProperties: (o) ->
+    oid = o.toLeafID()
+
+    fn = (val, id, prop) =>
+      @_set prop, val, notify: false if id == oid
+
+    fn._dependentHandler = true
+    o._observe null, fn
 
   _isTracking: (name) ->
     @_tracking[name] || @_hasParent && @_parentObj._isTracking(name)
@@ -149,8 +163,7 @@ class Leaf.ObservableBase extends Leaf.Class
   getTerminalParent: (keypath) ->
     return { obj: @ } unless keypath?
 
-    keypath += ''
-    keypath = keypath.replace /\[(\d+)\]/g, '.$1'
+    keypath = String(keypath).replace /\[(\d+)\]/g, '.$1'
     path = keypath.split '.'
     len = path.length
 
@@ -165,16 +178,9 @@ class Leaf.ObservableBase extends Leaf.Class
     else
       prop = path.pop()
       ref = @
-      exist = obj: @, keypath: []
+      ref = ref.get?(p) ? ref[p] while ref && (p = path.shift())
 
-      while ref && (p = path.shift())
-        exist.obj = ref if ref.__observable
-        exist.keypath.push p
-        ref = ref.get?(p) ? ref[p]
-
-      exist.keypath.pop()
-
-      { obj: ref, prop, exist }
+      { obj: ref, prop }
 
   _set: (prop, val, options = {}) ->
     return unless prop

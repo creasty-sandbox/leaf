@@ -14,6 +14,9 @@ class Leaf.Accessible
     return unless accessors
     @_removeAccessor attr, obj for attr in accessors
 
+  defineProperty: (attr, descriptor) ->
+    Object.defineProperty @, attr, descriptor
+
   _accessor: (attr, obj = @) ->
     @_accessors[attr] = 1
 
