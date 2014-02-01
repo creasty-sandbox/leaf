@@ -1,7 +1,7 @@
 
 class Leaf.ObservableObject extends Leaf.ObservableBase
 
-  _initWithData: (data = {}) ->
+  setData: (data = {}) ->
     @_data = {}
 
     for own key, val of data

@@ -1,9 +1,9 @@
 
 class Leaf.ObservableArray extends Leaf.ObservableBase
 
-  toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v?.__observable then v.toLeafID() else v
+  # toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v?.__observable then v.toLeafID() else v
 
-  _initWithData: (data = []) ->
+  setData: (data = []) ->
     @_data = []
 
     @_lastOperation = {}
@@ -14,47 +14,43 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       @_accessor i
 
     @length = @_data.length
-    @_map = toLeafIDs @_data
-    @_saveCurrentMap()
+    @_archiveCurrentData()
 
-  _saveCurrentMap: -> @_prev = _.clone @_map
+  _archiveCurrentData: -> @_prev = _.clone @_data
 
   _recordOperation: (@_lastOperation = {}) ->
     @_lastPatch = null
 
-  indexOf: (v) ->
-    if v._leafObject
-      @_map.indexOf v.toLeafID()
-    else
-      @_data.indexOf v
+  indexOf: (v) -> @_data.indexOf v
+
+  _makeElementsObservable: (elements) ->
+    elements.map (el) => @_makeObservable el, @
 
   push: (elements...) ->
     len = elements.length
-    elements = elements.map (el) => @_makeObservable el, @
+    elements = @_makeElementsObservable elements
 
     @_recordOperation
       method: 'push'
       args: elements
       added: [@length, @length + len - 1]
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     @_data.push elements...
-    @_map.push toLeafIDs(elements)...
     @_update()
     @length
 
   unshift: (elements...) ->
     len = elements.length
-    elements = elements.map (el) => @_makeObservable el, @
+    elements = @_makeElementsObservable elements
 
     @_recordOperation
       method: 'unshift'
       args: elements
       added: [0, len - 1]
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     @_data.unshift elements...
-    @_map.unshift toLeafIDs(elements)...
     @_update()
     @length
 
@@ -63,9 +59,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       method: 'pop'
       removed: [@length - 1, @length - 1]
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     res = @_data.pop()
-    @_map.pop()
     @_update()
     res
 
@@ -74,9 +69,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       method: 'shift'
       removed: [0, 0]
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     res = @_data.shift()
-    @_map.shift()
     @_update()
     res
 
@@ -97,15 +91,13 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       op.added = [index, index + len - 1]
 
     @_recordOperation op
-    @_saveCurrentMap()
+    @_archiveCurrentData()
 
     if len
-      elements = elements.map (el) => @_makeObservable el, @
+      elements = @_makeElementsObservable elements
       res = @_data.splice index, size, elements...
-      @_map.splice index, size, toLeafIDs(elements)...
     else
       res = @_data.splice index, size
-      @_map.splice index, size
 
     @_update()
     res
@@ -115,9 +107,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       method: 'reverse'
       changed: true
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     @_data.reverse()
-    @_map.reverse()
     @_update()
     @
 
@@ -126,9 +117,8 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       method: 'sort'
       changed: true
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     @_data.sort compareFunc
-    @_map = toLeafIDs @_data
     @_update()
     @
 
@@ -186,30 +176,21 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     [af, at] = @_lastOperation.added ? [0, -1]
 
     for i in [rf..rt] by 1
-      patch.push Leaf.ArrayDiffPatch.createPatch 'removeAt', rf
+      patch.push Leaf.ArrayDiffPatch.createPatch 'removeAt', rf, @_prev[i]
 
     for i in [af..at] by 1
-      patch.push Leaf.ArrayDiffPatch.createPatch 'insertAt', i - rf, @_map[i]
+      patch.push Leaf.ArrayDiffPatch.createPatch 'insertAt', i - rf, @_data[i]
 
-    patch.forEach (p) => p.element = @_cacheOrValue p.element
     patch
-
-  _cacheOrValue: (o) ->
-    if Leaf.Identifiable.isLeafID o
-      @getCache o
-    else
-      o
 
   getPatch: ->
     return @_lastPatch if @_lastPatch
 
-    if @_lastOperation.changed
-      patch = Leaf.ArrayDiffPatch.getPatch @_prev, @_map
-      patch.forEach (p) => p.element = @_cacheOrValue p.element
-    else
-      patch = @getSimplePatch()
-
-    @_lastPatch = patch
+    @_lastPatch =
+      if @_lastOperation.changed
+        Leaf.ArrayDiffPatch.getPatch @_prev, @_data
+      else
+        @getSimplePatch()
 
   _set: (prop, val, options = {}) ->
     @_lastPatch = []

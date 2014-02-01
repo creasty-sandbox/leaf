@@ -19,9 +19,9 @@ class Leaf.ObservableBase extends Leaf.Class
 
     @_sync()
 
-    @_initWithData data
+    @setData data
 
-  _initWithData: (data) ->
+  setData: (data) ->
 
   _makeObservable: (o, parentObj, parentProp) ->
     if _.isArray o
@@ -57,7 +57,7 @@ class Leaf.ObservableBase extends Leaf.Class
     o = new @constructor()
     o._observableID = @_observableID
     o._sync()
-    o._initWithData @_data
+    o.setData @_data
     o
 
   _isTracking: (name) ->

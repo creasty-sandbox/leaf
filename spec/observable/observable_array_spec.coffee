@@ -81,7 +81,7 @@ describe 'observableArray', ->
         @oba.pop()
 
         patch = [
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 2
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 2, 3
         ]
 
         expect(@oba.getPatch()).toHaveContents patch
@@ -109,7 +109,7 @@ describe 'observableArray', ->
         @oba.shift()
 
         patch = [
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0, 1
         ]
 
         expect(@oba.getPatch()).toHaveContents patch
@@ -178,7 +178,7 @@ describe 'observableArray', ->
 
         patch = [
           Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, -1
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 4
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 4, -1
         ]
 
         expect(@oba.getPatch()).toHaveContents patch
@@ -201,7 +201,7 @@ describe 'observableArray', ->
         @oba.splice 1, 1, 8, 9
 
         patch = [
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 1
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 1, 2
           Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, 8
           Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, 9
         ]
@@ -227,8 +227,8 @@ describe 'observableArray', ->
         @oba.reverse()
 
         patch = [
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0, 1
+          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0, 2
           Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, 2
           Leaf.ArrayDiffPatch.createPatch 'insertAt', 2, 1
         ]
