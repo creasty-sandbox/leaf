@@ -7,8 +7,10 @@ class Leaf.Cache
     storage[@namespace] ?= {}
     @storage = storage[@namespace]
 
-  set: (key, val) -> @storage[key] = val
   get: (key, set) -> (@storage[key] ?= set)
+
+  set: (key, val) -> @storage[key] = val
+  unset: (key) -> @set key, undefined
 
   clear: (key) ->
     storage[@namespace] = null

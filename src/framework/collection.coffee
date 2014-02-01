@@ -2,36 +2,32 @@
 class Leaf.Collection extends Leaf.Object
 
   constructor: ->
-    @_removeHandlers = {}
+    @_detachHandlers = {}
     @models = new Leaf.ObservableArray()
     @registerModelObserver()
     super()
 
-  registerModelObserver: ->
-    @models.observe =>
-      patch = @models.getSimplePatch()
+  _hookDetach: ->
+    @observe =>
+      patch = @getSimplePatch()
 
       for p in patch
         switch p.method
-          when 'insertAt' then @registerHook p.element
-          when 'removeAt' then @unregisterHook p.element
+          when 'insertAt' then @_hookDetacherOn p.element
+          when 'removeAt' then @_unhookDetacherOn p.element
 
-  unregisterRemoveHook: (o) ->
-    handler = @_removeHandlers[o.toLeafID()]
+  _unhookDetacherOn: (o) ->
+    handler = @_detachHandlers[o._observableID]
     return unless handler
 
-    $(window)
-    .off(@_getEventName(null, o, 'remove'), handler)
-    .off(@_getEventName(null, o, 'destroy'), handler)
+    $(window).off @_getEventName(null, 'detach'), handler
 
-  registerRemoveHook: (o) ->
-    @unregisterRemoveHook o
+  _hookDetacherOn: (o) ->
+    @unhookDetacherOn o
     handler = => @removeAt index if ~(index = @indexOf o)
-    @_removeHandlers[o.toLeafID()] = handler
+    @_detachHandlers[o._observableID] = handler
 
-    $(window)
-    .on(@_getEventName(null, o, 'remove'), handler)
-    .on(@_getEventName(null, o, 'destroy'), handler)
+    $(window).on @_getEventName(null, 'detach'), handler
 
 
 ###

@@ -30,7 +30,7 @@ class IteratorView extends Leaf.Object
     iv.init node, $marker, $parent, obj
 
   init: (@node, @$marker, @$parent, @obj) ->
-    @collectionViews = new Leaf.ObservableArray []
+    @collectionViews = new Leaf.ObservableArray()
 
     binder = new Leaf.Template.Binder @obj
     bindingObj = binder.getBindingObject @node.localeBindings
@@ -49,7 +49,7 @@ class IteratorView extends Leaf.Object
     @collectionViews.push view
 
   createView: (item) ->
-    id = "#{@node._nodeID}:#{item.toLeafID()}"
+    id = "#{@node._nodeID}:#{item._observableID}"
 
     IteratorItemView.findOrCreate id, (klass) =>
       scope = @obj.delegatedClone()
@@ -62,23 +62,21 @@ class IteratorView extends Leaf.Object
         model: item
         collection: @collection
 
-  update: (models) =>
-    @applyPatch op for op in models.getPatch()
+  update: =>
+    @applyPatch @collection.getPatch()
 
-  applyPatch: ({ method, index, element }) ->
-    switch method
-      when 'insertAt'
-        view = @createView element
-
-        $idx = @collectionViews[index]?.$view ? @$marker
-
-        view.$view.insertBefore $idx
-
-        @collectionViews.insertAt index, [view]
-      when 'removeAt'
-        if (cv = @collectionViews[index])
-          cv.detach()
-          @collectionViews.removeAt index
+  applyPatch: (patch) ->
+    for p in patch
+      switch p.method
+        when 'insertAt'
+          view = @createView p.element
+          $idx = @collectionViews[p.index]?.$view ? @$marker
+          view.$view.insertBefore $idx
+          @collectionViews.insertAt p.index, [view]
+        when 'removeAt'
+          if (cv = @collectionViews[p.index])
+            cv.detach()
+            @collectionViews.removeAt p.index
 
 
 #  Iterator item

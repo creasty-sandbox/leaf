@@ -11,7 +11,10 @@ class Leaf.Cacheable extends Leaf.Identifiable
     @_cache.set @toLeafID(), @
 
   getCache: (key) -> @_cache.get key
+
   setCache: (key, val) -> @_cache.set key, val
+  unsetCache: (key) -> @_cache.unset key
+
   clearCache: (key) -> @_cache.clear key
 
   @findOrCreate: (id, factory = null) ->

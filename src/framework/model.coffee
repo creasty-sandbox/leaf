@@ -8,7 +8,7 @@ class Leaf.Model extends Leaf.Object
 
   @defaultAttrs = {}
 
-  constructor: (_data) ->
+  constructor: (_data = {}) ->
     super()
 
     _data = _.defaults _data, @constructor.defaultAttrs
@@ -34,7 +34,10 @@ class Leaf.Model extends Leaf.Object
 
   _initAssociations: ->
     for assoc, options of @constructor.associations
-      @[assoc] = new Leaf.ObservableArray()
+      collection = new Leaf.ObservableArray()
+      collection.setParent @, assoc
+      @_data[assoc] = collection
+      @_accessor assoc
 
   #  Override settings
   #-----------------------------------------------

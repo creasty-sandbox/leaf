@@ -131,6 +131,6 @@ class Leaf.View extends Leaf.Object
 
   destroy: ->
     @_unsubscribeEvents()
-    @$view.remove()
+    @$view.detach()
     @$view = null
 

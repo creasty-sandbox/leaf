@@ -28,7 +28,17 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
   _recordOperation: (@_lastOperation = {}) ->
     @_lastPatch = null
 
-  indexOf: (v) -> @_data.indexOf v
+  indexOf: (v) ->
+    vid = v._observableID
+
+    for i in [0...@_data.length] by 1
+      a = @_data[i]
+      if a?.__observable && a._observableID == vid
+        return i
+      else if a == v
+        return i
+
+    return -1
 
   _makeElementsObservable: (elements) ->
     elements.map (el) => @_makeObservable el, @
@@ -214,7 +224,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   _set: (prop, val, options = {}) ->
     @_lastPatch = []
-    @_lastOperation = method: 'set', args: [val, options]
+    @_lastOperation = method: '_set', args: [prop, val, options]
     super prop, val, options
 
   _update: ->
@@ -239,7 +249,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
       null
 
-    $(window).on @_getUpdateEventName(), @_syncHandler
+    $(window).on @_getEventName(), @_syncHandler
 
   toArray: -> @_data
 

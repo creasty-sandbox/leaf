@@ -32,7 +32,7 @@ class Leaf.ObservableBase extends Leaf.Class
       o = new Leaf.ObservableObject o
       o.setParent parentObj, parentProp
       o
-    else if o instanceof Leaf.ObservableBase
+    else if o?.__observable
       o = o.syncedClone()
       o.setParent parentObj, parentProp
       o
@@ -231,19 +231,30 @@ class Leaf.ObservableBase extends Leaf.Class
 
     obj._set prop, val, options
 
-  _getUpdateEventName: (prop) ->
+  _unset: (prop, options) ->
+    @_set prop, undefined, options
+
+  unset: (keypath, options) ->
+    { obj, prop } = @getTerminalParent keypath
+
+    @_createTrack 'setter', keypath if options?.notify
+    @_createTrack 'setter' if options?.bubbling
+
+    obj._unset prop, options
+
+  _getEventName: (prop, type = 'update') ->
     id = @_delegated[prop] ? @_observableID
-    "observer:update:#{id}"
+    "observer:#{type}:#{id}"
 
   _sync: ->
     @_syncHandler = (e, id, prop, val) =>
       @_set prop, val, notify: false unless id == @_leafID
       null
 
-    $(window).on @_getUpdateEventName(), @_syncHandler
+    $(window).on @_getEventName(), @_syncHandler
 
   _update: (prop, dependentCall = false) ->
-    $(window).trigger @_getUpdateEventName(prop), [@_leafID, prop, @_get(prop), dependentCall]
+    $(window).trigger @_getEventName(prop), [@_leafID, prop, @_get(prop), dependentCall]
     @_parentObj._update @_parentProp if @_hasParent
 
   update: (keypath) ->
@@ -255,7 +266,7 @@ class Leaf.ObservableBase extends Leaf.Class
       callback val, @toLeafID(), prop unless dependentCall && callback._dependentHandler
 
     callback._binded = fn
-    $(window).on @_getUpdateEventName(prop), fn
+    $(window).on @_getEventName(prop), fn
 
   observe: ->
     { keypath, callback } = _.polymorphic
@@ -266,7 +277,7 @@ class Leaf.ObservableBase extends Leaf.Class
     obj._observe prop, callback
 
   _unobserve: (prop, callback) ->
-    $(window).off @_getUpdateEventName(prop), callback._binded ? callback
+    $(window).off @_getEventName(prop), callback._binded ? callback
 
   unobserve: ->
     { keypath, callback } = _.polymorphic
@@ -275,4 +286,17 @@ class Leaf.ObservableBase extends Leaf.Class
 
     { obj, prop } = @getTerminalParent keypath
     obj._unobserve prop, callback
+
+  detachFromParent: ->
+    if @_hasParent
+      if @_parentObj instanceof Leaf.ObservableObject
+        @_parentObj.unset @_parentProp
+      else
+        @_parentObj.removeAt @_parentObj.indexOf(@)
+
+  destroy: ->
+    @detachFromParent()
+    @_data = null
+    @unsetCache @toLeafID()
+
 
