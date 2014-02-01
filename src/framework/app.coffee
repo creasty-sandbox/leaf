@@ -21,12 +21,12 @@ class Leaf.App extends Leaf.Object
 
   getPartial: (file, node) ->
 
-  getYieldContentFor: (name, $marker) ->
+  getYieldContentFor: (name = '_', $marker) ->
     dfd = (@yieldContents[name] ?= $.Deferred())
     dfd.done ($view) ->
       $view.insertAfter $marker
 
-  setYieldContentFor: (name, $view) ->
+  setYieldContentFor: (name = '_', $view) ->
     dfd = (@yieldContents[name] ?= $.Deferred())
     dfd.resolve [$view]
 

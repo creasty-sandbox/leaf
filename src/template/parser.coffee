@@ -106,7 +106,7 @@ HTMl5_ATTR_PRESERVED =
   'progress': /^(value|max)$/
   'q': /^(cite)$/
   'script': /^(src|async|defer|type|charset)$/
-  'select': /^(autofocus|disabled|form|multiple|name|required|size)$/
+  'select': /^(autofocus|disabled|form|multiple|name|required|size|value)$/
   'source': /^(src|type|media)$/
   'style': /^(media|type|scoped)$/
   'table': /^(border)$/
@@ -114,7 +114,7 @@ HTMl5_ATTR_PRESERVED =
   'textarea': ///
     ^(
       autofocus | cols | dirname | disabled | form | maxlength | name | placeholder
-      | readonly | required | rows | wrap
+      | readonly | required | rows | wrap | value
     )$
   ///
   'th': /^(colspan|rowspan|headers|scope|abbr)$/

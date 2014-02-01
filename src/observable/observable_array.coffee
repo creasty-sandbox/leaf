@@ -126,6 +126,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
   sort: (compareFunc) ->
     @_recordOperation
       method: 'sort'
+      args: [compareFunc]
       changed: true
 
     @_archiveCurrentData()
@@ -203,6 +204,14 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       else
         @getSimplePatch()
 
+  applyPatch: (patch) ->
+    for p in patch
+      switch p.method
+        when 'insertAt'
+          @insertAt p.index, [p.element]
+        when 'removeAt'
+          @removeAt p.index
+
   _set: (prop, val, options = {}) ->
     @_lastPatch = []
     @_lastOperation = method: 'set', args: [val, options]
@@ -215,7 +224,22 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     if plen < len
       @_accessor i for i in [plen...len] by 1
 
+    return if @_preventUpdate
+
     super()
+
+  _sync: ->
+    @_syncHandler = (e, id, prop, val) =>
+      unless id == @_leafID
+        ary = @getCache "__LEAF_ID_#{id}"
+        op = ary._lastOperation
+        @_preventUpdate = true
+        @[op.method].apply @, op.args
+        @_preventUpdate = false
+
+      null
+
+    $(window).on @_getUpdateEventName(), @_syncHandler
 
   toArray: -> @_data
 
