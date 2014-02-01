@@ -1,7 +1,7 @@
 
 class Leaf.ObservableArray extends Leaf.ObservableBase
 
-  setData: (data = []) ->
+  setData: (data = [], accessor = true) ->
     @_data = []
 
     @_lastOperation = {}
@@ -9,7 +9,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     for i in [0...data.length] by 1
       val = @_makeObservable data[i], @
       @_data[i] = val
-      @_accessor i
+      @_accessor i if accessor
 
     @defineProperty 'length',
       enumerable: false

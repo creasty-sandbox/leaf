@@ -12,10 +12,7 @@ class Leaf.Model extends Leaf.Object
     super()
 
     _data = _.defaults _data, @constructor.defaultAttrs
-
-    for own key, val of _data
-      obj = @_makeObservable val, @, key
-      @_data[key] = obj
+    @setData _data, false
 
     @modelName = @constructor.name
 

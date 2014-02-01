@@ -96,7 +96,7 @@ Leaf.Template.registerTag 'component:poly',
   structure: true
 
   open: (node, parent) ->
-    unless node.attrs.poly || node.localeBindings.poly
+    unless node.localeBindings.poly
       throw new NoPolyBindingWithPolymorphicComponentTagError()
 
   create: (node, $marker, $parent, obj) ->

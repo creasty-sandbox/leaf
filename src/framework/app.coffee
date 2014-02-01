@@ -18,6 +18,10 @@ class Leaf.App extends Leaf.Object
   registerView: (name, buffer) ->
     @views[name] = Leaf.View.parse buffer
 
+  getPartial: (file, node) ->
+
+  getYieldContentFor: (name, $marker) ->
+
   ###
   routes: (routes) ->
     return unless routes

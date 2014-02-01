@@ -21,7 +21,7 @@ class Leaf.ObservableBase extends Leaf.Class
 
     @setData data
 
-  setData: (data) ->
+  setData: (data, accessor) ->
 
   _makeObservable: (o, parentObj, parentProp) ->
     if _.isArray o
