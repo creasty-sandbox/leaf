@@ -30,19 +30,19 @@ describe 'Conditional statements', ->
       expect(ctx).toThrow()
 
     it 'should create DOM if `$condition` is falsy', ->
-      obj = new Leaf.Observable age: 18
+      obj = Leaf.Observable age: 18
       $el = createDOM obj, buffer
 
       expect($el).not.toContain '#for_adults'
 
     it 'should create DOM if `$condition` is truthy', ->
-      obj = new Leaf.Observable age: 27
+      obj = Leaf.Observable age: 27
       $el = createDOM obj, buffer
 
       expect($el).toContain '#for_adults'
 
     it 'should react to change of the object value and create or detach elements inside the tag', ->
-      obj = new Leaf.Observable age: 18
+      obj = Leaf.Observable age: 18
       $el = createDOM obj, buffer
 
       expect($el).not.toContain '#for_adults'
@@ -70,7 +70,7 @@ describe 'Conditional statements', ->
     '''
 
     it 'should throw an exception if a previous sibling node is not if-statement', ->
-      obj = new Leaf.Observable {}
+      obj = Leaf.Observable {}
       bufferWithError = '''
         <div>
           <elseif $condition="age > 5">
@@ -83,21 +83,21 @@ describe 'Conditional statements', ->
       expect(ctx).toThrow()
 
     it 'should create DOM if `$condition` is falsy', ->
-      obj = new Leaf.Observable age: 1
+      obj = Leaf.Observable age: 1
       $el = createDOM obj, buffer
 
       expect($el).not.toContain '#for_adults'
       expect($el).not.toContain '#for_kids'
 
     it 'should create DOM if `$condition` is truthy', ->
-      obj = new Leaf.Observable age: 10
+      obj = Leaf.Observable age: 10
       $el = createDOM obj, buffer
 
       expect($el).not.toContain '#for_adults'
       expect($el).toContain '#for_kids'
 
     it 'should react to change of the object value and create or detach elements inside the tag', ->
-      obj = new Leaf.Observable age: 1
+      obj = Leaf.Observable age: 1
       $el = createDOM obj, buffer
 
       expect($el).not.toContain '#for_adults'
@@ -131,7 +131,7 @@ describe 'Conditional statements', ->
     '''
 
     it 'should throw an exception if a previous sibling node is not if- nor elseif-statement', ->
-      obj = new Leaf.Observable {}
+      obj = Leaf.Observable {}
       bufferWithError = '''
         <div>
           <else>
@@ -144,7 +144,7 @@ describe 'Conditional statements', ->
       expect(ctx).toThrow()
 
     it 'should create DOM if `$condition` is falsy', ->
-      obj = new Leaf.Observable age: 1
+      obj = Leaf.Observable age: 1
       $el = createDOM obj, buffer
 
       expect($el).not.toContain '#for_adults'
@@ -152,7 +152,7 @@ describe 'Conditional statements', ->
       expect($el).toContain '#for_bady'
 
     it 'should create DOM if `$condition` is truthy', ->
-      obj = new Leaf.Observable age: 10
+      obj = Leaf.Observable age: 10
       $el = createDOM obj, buffer
 
       expect($el).not.toContain '#for_adults'
@@ -160,7 +160,7 @@ describe 'Conditional statements', ->
       expect($el).not.toContain '#for_bady'
 
     it 'should react to change of the object value and create or detach elements inside the tag', ->
-      obj = new Leaf.Observable age: 1
+      obj = Leaf.Observable age: 1
       $el = createDOM obj, buffer
 
       expect($el).not.toContain '#for_adults'
