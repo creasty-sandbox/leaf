@@ -1,8 +1,6 @@
 
 class Leaf.ObservableArray extends Leaf.ObservableBase
 
-  # toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v?.__observable then v.toLeafID() else v
-
   setData: (data = []) ->
     @_data = []
 
@@ -13,7 +11,11 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       @_data[i] = val
       @_accessor i
 
-    @length = @_data.length
+    Object.defineProperty @, 'length',
+      enumerable: false
+      configurable: false
+      get: -> @_data.length
+
     @_archiveCurrentData()
 
   _archiveCurrentData: -> @_prev = _.clone @_data
@@ -27,13 +29,15 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     elements.map (el) => @_makeObservable el, @
 
   push: (elements...) ->
-    len = elements.length
+    len = @_data.length
+
+    elen = elements.length
     elements = @_makeElementsObservable elements
 
     @_recordOperation
       method: 'push'
       args: elements
-      added: [@length, @length + len - 1]
+      added: [len, len + elen - 1]
 
     @_archiveCurrentData()
     @_data.push elements...
@@ -55,9 +59,11 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @length
 
   pop: ->
+    len = @_data.length
+
     @_recordOperation
       method: 'pop'
-      removed: [@length - 1, @length - 1]
+      removed: [len - 1, len - 1]
 
     @_archiveCurrentData()
     res = @_data.pop()
@@ -199,13 +205,10 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   _update: ->
     len = @_data.length
+    plen = @_prev.length
 
-    if @length < len
-      @_accessor i for i in [@length...len] by 1
-    # else if @length > len
-    #   @_removeAccessor i for i in [len...@length] by 1
-
-    @length = len
+    if plen < len
+      @_accessor i for i in [plen...len] by 1
 
     super()
 
