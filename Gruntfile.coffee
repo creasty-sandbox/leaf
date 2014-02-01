@@ -60,7 +60,8 @@ FILES =
     'iterator_view.coffee'
     'component.coffee'
     'render.coffee'
-    'outlet.coffee'
+    'yield.coffee'
+    'content_for.coffee'
   ]
   framework: [
     # 'router.coffee'

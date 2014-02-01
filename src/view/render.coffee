@@ -26,5 +26,5 @@ Leaf.Template.registerTag 'render',
       view.init tree, bindingObj
 
       $el = view.getDOM()
-      $el.appendTo $parent
+      $el.insertAfter $marker
 

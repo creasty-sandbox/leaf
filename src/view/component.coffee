@@ -64,7 +64,7 @@ class ComponentView
     view.init tree, bindingObj
 
     $el = view.getDOM()
-    $el.appendTo $parent
+    $el.insertAfter $marker
 
     if Leaf.hasApp()
       klass = Leaf.getComponentClassFor node.name

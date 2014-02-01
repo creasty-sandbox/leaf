@@ -75,7 +75,7 @@ describe 'Component views', ->
   describe '<component name="foo">', ->
 
     beforeEach ->
-      @obj = {}
+      @obj = new Leaf.ObservableObject()
 
     it 'should throw an exception when name attribute is not set', ->
       bufferWithError = '''
@@ -134,7 +134,7 @@ describe 'Component views', ->
         </component>
       '''
 
-      createDOM {}, bufferDefComponent
+      createDOM @obj, bufferDefComponent
 
       buffer = '''
         <component:foo>
@@ -151,7 +151,7 @@ describe 'Component views', ->
           </component>
         '''
 
-        createDOM {}, bufferDefComponent
+        createDOM @obj, bufferDefComponent
 
         buffer = '''
           <component:foo $users="users">
@@ -168,7 +168,7 @@ describe 'Component views', ->
           </component>
         '''
 
-        createDOM {}, bufferDefComponent
+        createDOM @obj, bufferDefComponent
 
         buffer = '''
           <component:foo $user="users[0]">

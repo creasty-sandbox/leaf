@@ -8,6 +8,7 @@ class Leaf.App extends Leaf.Object
   cacheViews: true
 
   views: {}
+  yieldContents: {}
 
   constructor: (config = {}) ->
     super()
@@ -21,6 +22,13 @@ class Leaf.App extends Leaf.Object
   getPartial: (file, node) ->
 
   getYieldContentFor: (name, $marker) ->
+    dfd = (@yieldContents[name] ?= $.Deferred())
+    dfd.done ($view) ->
+      $view.insertAfter $marker
+
+  setYieldContentFor: (name, $view) ->
+    dfd = (@yieldContents[name] ?= $.Deferred())
+    dfd.resolve [$view]
 
   ###
   routes: (routes) ->
