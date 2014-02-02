@@ -4,7 +4,6 @@ class Leaf.View extends Leaf.Object
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
   @setLeafClass()
-  # @cacheGroup = 'view'
 
   @parse: (buffer) ->
     psr = new Leaf.Template.Parser()
@@ -30,11 +29,14 @@ class Leaf.View extends Leaf.Object
       else
         elementOrTree ? $('<div/>')
 
+    @$view.data 'view', @
+    @$view.attr "data-leaf-id", @_leafID
+
     if data.model
       @model = data.model
 
       if fromTree
-        @setCache "#{elementOrTree._nodeID}:#{@model.toLeafID()}", @
+        @setCache elementOrTree.id, @
 
     if data.collection
       @collection = data.collection
@@ -125,6 +127,9 @@ class Leaf.View extends Leaf.Object
 
   send: ->
     # TODO
+
+  render: ($marker) ->
+    @$view.insertBefore $marker
 
   detach: ->
     @$view.detach()

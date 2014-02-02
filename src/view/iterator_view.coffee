@@ -49,7 +49,7 @@ class IteratorView extends Leaf.Object
     @collectionViews.push view
 
   createView: (item) ->
-    id = "#{@node._nodeID}:#{item._observableID}"
+    id = "#{@_observableID}:#{item._observableID}"
 
     IteratorItemView.findOrCreate id, (klass) =>
       scope = @obj.delegatedClone()
@@ -57,6 +57,7 @@ class IteratorView extends Leaf.Object
 
       new klass
         tree: @node.contents
+        id: id
         obj: scope
       ,
         model: item
@@ -71,11 +72,11 @@ class IteratorView extends Leaf.Object
         when 'insertAt'
           view = @createView p.element
           $idx = @collectionViews[p.index]?.$view ? @$marker
-          view.$view.insertBefore $idx
+          view.render $idx
           @collectionViews.insertAt p.index, [view]
         when 'removeAt'
-          if (cv = @collectionViews[p.index])
-            cv.detach()
+          if (view = @collectionViews[p.index])
+            view.detach()
             @collectionViews.removeAt p.index
 
 

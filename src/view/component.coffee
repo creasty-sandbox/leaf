@@ -64,7 +64,6 @@ class ComponentView
     view.init tree, bindingObj
 
     $el = view.getDOM()
-    $el.insertAfter $marker
 
     if Leaf.hasApp()
       klass = Leaf.getComponentClassFor node.name
@@ -72,7 +71,8 @@ class ComponentView
       unless klass
         throw new ComponentClassNotFoundError node.name
 
-      new klass $el
+      view = new klass $el
+      view.render $marker
 
 
 #  Component def tag

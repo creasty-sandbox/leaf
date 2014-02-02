@@ -1,12 +1,9 @@
 
 class Leaf.Model extends Leaf.Object
 
+  @setLeafClass()
+
   @path: null
-
-  @accessors = []
-  @associations = {}
-
-  @defaultAttrs = {}
 
   constructor: (_data = {}) ->
     super()
@@ -20,6 +17,10 @@ class Leaf.Model extends Leaf.Object
 
     @dfd = $.Deferred()
     @promise = @dfd.promise()
+
+    @constructor.accessors ?= []
+    @constructor.defaultAttrs ?= {}
+    @constructor.associations ?= {}
 
     @_initAccessors()
     @_initAssociations()
@@ -103,30 +104,39 @@ class Leaf.Model extends Leaf.Object
   #  Attributes & associations
   #-----------------------------------------------
   @attrAccessible: (name, options = {}) ->
+    @accessors ?= []
+    @defaultAttrs ?= {}
+
     @accessors.push name: name, sync: true
 
     if options.defaults
       @defaultAttrs[name] = options.defaults
 
   @attrAccessor: (name, options = {}) ->
+    @accessors ?= []
+    @defaultAttrs ?= {}
     @accessors.push name: name, sync: false
 
   @belongsTo: (assoc, options = {}) ->
+    @associations ?= {}
     options.type = 'belongsTo'
     options.name = assoc
     @associations[assoc] = options
 
   @hasOne: (assoc, options = {}) ->
+    @associations ?= {}
     options.type = 'hasOne'
     options.name = assoc
     @associations[assoc] = options
 
   @hasMany: (assoc, options = {}) ->
+    @associations ?= {}
     options.type = 'hasMany'
     options.name = assoc
     @associations[assoc] = options
 
   @hasAndBelongsToMany: (assoc, options = {}) ->
+    @associations ?= {}
     options.type = 'hasAndBelongsToMany'
     options.name = assoc
     @associations[assoc] = options

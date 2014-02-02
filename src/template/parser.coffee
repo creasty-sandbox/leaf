@@ -191,6 +191,7 @@ class Leaf.Template.Parser
     @bindings = {}
 
     @root =
+      _nodeID: ++_nodeID
       name: '_root'
       contents: []
       context: {}
