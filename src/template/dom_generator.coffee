@@ -113,7 +113,7 @@ class Leaf.Template.DOMGenerator
       @createNode $el, node.contents
 
   createTextNode: (node, $parent) ->
-    $text = $ doc.createTextNode node.buffer
+    $text = $ doc.createTextNode _.unescape(node.buffer)
     $text.appendTo $parent
 
   createInterpolationNode: (node, $parent) ->
