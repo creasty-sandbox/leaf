@@ -163,7 +163,10 @@ class Leaf.ObservableBase extends Leaf.Class
   getTerminalParent: (keypath) ->
     return { obj: @ } unless keypath?
 
-    keypath = String(keypath).replace /\[(\d+)\]/g, '.$1'
+    keypath = String(keypath)
+      .replace(/^this\.?/, '')
+      .replace(/\[(\d+)\]/g, '.$1')
+
     path = keypath.split '.'
     len = path.length
 

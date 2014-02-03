@@ -43,6 +43,10 @@ class Leaf.Template.Binder
 
       routine result
 
+    bind.evaluate = evaluate.bind @
+
+    bind
+
   getBindingObject: (values) ->
     obj = new Leaf.ObservableObject()
 

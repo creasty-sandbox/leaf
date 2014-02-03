@@ -35,8 +35,8 @@ class Leaf.View extends Leaf.Object
     if data.model
       @model = data.model
 
-      if fromTree
-        @setCache elementOrTree.id, @
+    if fromTree && elementOrTree.id
+      @setCache elementOrTree.id, @
 
     if data.collection
       @collection = data.collection
