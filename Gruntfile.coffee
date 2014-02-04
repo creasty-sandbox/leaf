@@ -33,6 +33,10 @@ FILES =
     'number.coffee'
     'date.coffee'
   ]
+  data: [
+    'data.coffee'
+    'number.coffee'
+  ]
   event: [
     'event.coffee'
     'lifecycle_event.coffee'
@@ -89,12 +93,14 @@ FILE_DEPENDENCIES =
     'headers'
     'utils'
     'support'
+    'data'
     'event'
   ]
   template: [
     'headers'
     'utils'
     'support'
+    'data'
     'event'
     'observable'
   ]
@@ -102,6 +108,7 @@ FILE_DEPENDENCIES =
     'headers'
     'utils'
     'support'
+    'data'
     'event'
     'observable'
     'template'
@@ -111,6 +118,7 @@ FILE_DEPENDENCIES =
     'headers'
     'utils'
     'support'
+    'data'
     'event'
     'observable'
     'template'

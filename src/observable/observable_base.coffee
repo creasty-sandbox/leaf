@@ -36,6 +36,10 @@ class Leaf.ObservableBase extends Leaf.Class
       o = o.syncedClone()
       o.setParent parentObj, parentProp
       o
+    else if o instanceof Number || o instanceof String || o instanceof Date
+      o = o.ldata()
+      o.setParent parentObj, parentObj
+      o
     else
       o
 
