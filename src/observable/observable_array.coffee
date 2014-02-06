@@ -33,7 +33,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     for i in [0...@_data.length] by 1
       a = @_data[i]
-      if a?.__observable && a._observableID == vid
+      if a && a.__observable && a._observableID == vid
         return i
       else if a == v
         return i
