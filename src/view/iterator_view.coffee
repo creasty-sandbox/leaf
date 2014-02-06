@@ -30,7 +30,7 @@ class IteratorView extends Leaf.Object
     iv.init node, $marker, $parent, obj
 
   init: (@node, @$marker, @$parent, @obj) ->
-    @collectionViews = new Leaf.ObservableArray()
+    @collectionViews = []
 
     binder = new Leaf.Template.Binder @obj
     bindingObj = binder.getBindingObject @node.localeBindings
@@ -41,7 +41,7 @@ class IteratorView extends Leaf.Object
       throw new NonIteratableObjectError @node.iterator, @collection
 
     @collection.forEach @addOne
-    @collection.observe @update
+    @collection.observe => @applyPatch @collection.getPatch()
 
   addOne: (item) =>
     view = @createView item
@@ -63,9 +63,6 @@ class IteratorView extends Leaf.Object
         model: item
         collection: @collection
 
-  update: =>
-    @applyPatch @collection.getPatch()
-
   applyPatch: (patch) ->
     for p in patch
       switch p.method
@@ -73,11 +70,11 @@ class IteratorView extends Leaf.Object
           view = @createView p.element
           $idx = @collectionViews[p.index]?.$view ? @$marker
           view.render $idx
-          @collectionViews.insertAt p.index, [view]
+          @collectionViews.splice p.index, -1, view
         when 'removeAt'
           if view = @collectionViews[p.index]
             view.detach()
-            @collectionViews.removeAt p.index
+            @collectionViews.splice p.index, 1
 
 
 #  Iterator item
