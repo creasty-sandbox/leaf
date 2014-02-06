@@ -12,7 +12,7 @@ class Leaf.Cacheable extends Leaf.Identifiable
 
   getCache: (key) -> @_cache.get key
 
-  setCache: (key, val) -> @_cache.set key, val
+  setCache: (key, val, override) -> @_cache.set key, val, override
   unsetCache: (key) -> @_cache.unset key
 
   clearCache: (key) -> @_cache.clear key

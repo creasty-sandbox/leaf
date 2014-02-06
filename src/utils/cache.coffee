@@ -9,8 +9,11 @@ class Leaf.Cache
 
   get: (key, set) -> (@storage[key] ?= set)
 
-  set: (key, val) -> @storage[key] = val
-  unset: (key) -> @set key, undefined
+  set: (key, val, override = false) ->
+    return if !override && @storage[key]?
+    @storage[key] = val
+
+  unset: (key) -> @set key, undefined, true
 
   clear: (key) ->
     storage[@namespace] = null

@@ -75,7 +75,7 @@ class IteratorView extends Leaf.Object
           view.render $idx
           @collectionViews.insertAt p.index, [view]
         when 'removeAt'
-          if (view = @collectionViews[p.index])
+          if view = @collectionViews[p.index]
             view.detach()
             @collectionViews.removeAt p.index
 

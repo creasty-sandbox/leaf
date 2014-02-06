@@ -3,6 +3,8 @@ class Leaf.View extends Leaf.Object
 
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
+  __globallyUnique: true
+
   @setLeafClass()
 
   @parse: (buffer) ->
@@ -23,7 +25,11 @@ class Leaf.View extends Leaf.Object
 
     fromTree = _.isPlainObject(elementOrTree) && elementOrTree.tree
 
-    @$view =
+    if fromTree && elementOrTree.id
+      @$view = @getCache elementOrTree.id
+      @setCache elementOrTree.id, @
+
+    @$view ?=
       if fromTree
         @_elementFromParseTree elementOrTree
       else
@@ -34,9 +40,6 @@ class Leaf.View extends Leaf.Object
 
     if data.model
       @model = data.model
-
-    if fromTree && elementOrTree.id
-      @setCache elementOrTree.id, @
 
     if data.collection
       @collection = data.collection
