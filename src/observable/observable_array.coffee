@@ -29,14 +29,11 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_lastPatch = null
 
   indexOf: (v) ->
-    vid = v._observableID
+    vid = v?._observableID
 
     for i in [0...@_data.length] by 1
       a = @_data[i]
-      if a && a.__observable && a._observableID == vid
-        return i
-      else if a == v
-        return i
+      return i if (a == v) || (a && a.__observable && a._observableID == vid)
 
     return -1
 
