@@ -27,15 +27,16 @@ FILES =
   ]
   support: [
     'support.coffee'
-    # 'object.coffee'
-    # 'array.coffee'
     'string.coffee'
     'number.coffee'
     'date.coffee'
   ]
   data: [
     'data.coffee'
+    'nothingness.coffee'
+    'string.coffee'
     'number.coffee'
+    'date.coffee'
   ]
   event: [
     'event.coffee'
@@ -93,14 +94,14 @@ FILE_DEPENDENCIES =
     'headers'
     'utils'
     'support'
-    'data'
+    # 'data'
     'event'
   ]
   template: [
     'headers'
     'utils'
     'support'
-    'data'
+    # 'data'
     'event'
     'observable'
   ]
@@ -108,7 +109,7 @@ FILE_DEPENDENCIES =
     'headers'
     'utils'
     'support'
-    'data'
+    # 'data'
     'event'
     'observable'
     'template'
@@ -118,7 +119,7 @@ FILE_DEPENDENCIES =
     'headers'
     'utils'
     'support'
-    'data'
+    # 'data'
     'event'
     'observable'
     'template'

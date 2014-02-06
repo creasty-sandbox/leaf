@@ -1,4 +1,6 @@
 
+class SetterOnOrphanObjectError extends Leaf.Error
+
 class Leaf.Data
 
   inject = (primitive, implement) ->
@@ -51,6 +53,10 @@ class Leaf.Data
 
     val = new @__primitiveClass(val).ldata()
     @_parentObj._set @_parentProp, val
+
+  unset: -> @set new Leaf.Data.Nothingness(@__primitiveClass)
+
+  ldata: -> new @__primitiveClass(@).ldata()
 
 
 Object::ldata = -> new Leaf.ObservableObject @
