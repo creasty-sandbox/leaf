@@ -52,27 +52,28 @@ class ComponentView
   @structure: true
 
   @create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.DOMGenerator()
-
-    binder = new Leaf.Template.Binder obj
-    bindingObj = binder.getBindingObject node.localeBindings
     tree = Leaf.Component.get node.name
 
     unless tree
       throw new UndefinedComponentTagError "<#{node.name}>"
 
-    view.init tree, bindingObj
+    binder = new Leaf.Template.Binder obj
+    bindingObj = binder.getBindingObject node.localeBindings
 
-    $el = view.getDOM()
+    klass =
+      if Leaf.hasApp()
+        Leaf.getComponentClassFor node.name
+      else
+        Leaf.View
 
-    if Leaf.hasApp()
-      klass = Leaf.getComponentClassFor node.name
+    unless klass
+      throw new ComponentClassNotFoundError node.name
 
-      unless klass
-        throw new ComponentClassNotFoundError node.name
+    view = new klass
+      tree: tree
+      obj: bindingObj
 
-      view = new klass $el
-      view.render $marker
+    view.render $marker
 
 
 #  Component def tag

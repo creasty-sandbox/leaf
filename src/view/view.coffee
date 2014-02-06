@@ -3,6 +3,8 @@ class Leaf.View extends Leaf.Object
 
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
+  @_view: true
+
   __globallyUnique: true
 
   @setLeafClass()
@@ -25,29 +27,40 @@ class Leaf.View extends Leaf.Object
 
     fromTree = _.isPlainObject(elementOrTree) && elementOrTree.tree
 
-    @$view =
-      if fromTree
-        @_elementFromParseTree elementOrTree
-      else
-        elementOrTree ? $('<div/>')
+    if fromTree
+      @$view = @_elementFromParseTree elementOrTree
+      @$view.data 'leaf-locale', elementOrTree.obj
+    else
+      @$view = elementOrTree ? $('<div/>')
 
     @$view.data 'view', @
     @$view.attr "data-leaf-id", @_leafID
-
-    if fromTree && elementOrTree.id
-      @setCache elementOrTree.id, @
-
-    if data.model
-      @model = data.model
-
-    if data.collection
-      @collection = data.collection
+    @$view.data 'leaf-view-data', data
 
     @locale = @$view.data 'leaf-locale'
+    @data = @$view.data 'leaf-view-data'
+
+    @setCache elementOrTree.id, @ if fromTree && elementOrTree.id
+
+    p = @constructor
+
+    while p && p._view
+      @_registerMethodAsEventHandler p::
+      p = p.__super__?.constructor
 
     @_setupElements()
     @setup()
     @_subscribeEvents()
+
+  _registerMethodAsEventHandler: (o) ->
+    _(o).forOwn (callback, method) =>
+      unless (
+        '_' == method[0] \           # private method
+        || method == 'constructor' \ # class constructor
+        || !_.isFunction(callback) \ # not function
+        || Leaf.View::[method]       # method defined in Leaf.View
+      )
+        @$view.on method, => callback.apply @, arguments
 
   _elementFromParseTree: ({ tree, obj }) ->
     gen = new Leaf.Template.DOMGenerator()
