@@ -25,11 +25,7 @@ class Leaf.View extends Leaf.Object
 
     fromTree = _.isPlainObject(elementOrTree) && elementOrTree.tree
 
-    if fromTree && elementOrTree.id
-      @$view = @getCache elementOrTree.id
-      @setCache elementOrTree.id, @
-
-    @$view ?=
+    @$view =
       if fromTree
         @_elementFromParseTree elementOrTree
       else
@@ -37,6 +33,9 @@ class Leaf.View extends Leaf.Object
 
     @$view.data 'view', @
     @$view.attr "data-leaf-id", @_leafID
+
+    if fromTree && elementOrTree.id
+      @setCache elementOrTree.id, @
 
     if data.model
       @model = data.model

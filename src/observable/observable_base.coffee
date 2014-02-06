@@ -19,6 +19,12 @@ class Leaf.ObservableBase extends Leaf.Class
 
     @_sync()
 
+    @defineProperty 'parent',
+      enumerable: false
+      configurable: true
+      get: -> @_parentObj
+      set: (val) -> val
+
     @setData data
 
   setData: (data, accessor) ->
@@ -32,8 +38,8 @@ class Leaf.ObservableBase extends Leaf.Class
       o = new Leaf.ObservableObject o
       o.setParent parentObj, parentProp
       o
-    else if o && o.__observable && !o.__globallyUnique
-      o = o.syncedClone()
+    else if o && o.__observable
+      o = o.syncedClone() unless o.__globallyUnique
       o.setParent parentObj, parentProp
       o
     else
