@@ -46,6 +46,8 @@ class Leaf.Template.DOMGenerator
         $el.on 'change keyup keydown keypress', =>
           user = true
           @obj.set val.expr, $el.val()
+      else if 'style' == key
+        bind (result) -> $el.css result # slow?
       else
         if 'option' == name
           $(document).on 'viewDidRender', -> # TODO: document is bad
