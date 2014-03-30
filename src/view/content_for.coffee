@@ -14,5 +14,5 @@ Leaf.Template.registerTag 'content-for',
     view.init node.contents, bindingObj
 
     $el = view.getDOM()
-    Leaf.app.setYieldContentFor name, $el
+    Leaf.sharedApp.setYieldContentFor name, $el
 

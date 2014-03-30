@@ -274,7 +274,6 @@ class Leaf.Template.Parser
 
       if '$' == binding
         if isNormalAttr node.name, key
-          val = "{ #{val.replace(/^\{(.+?)\}$/, '$1')} }" if 'style' == key
           node.attrBindings[key] = @parseExpression val
         else
           node.localeBindings[key] = @parseExpression val

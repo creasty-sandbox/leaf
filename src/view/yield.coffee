@@ -5,5 +5,5 @@ Leaf.Template.registerTag 'yield',
   create: (node, $marker, $parent, obj) ->
     return unless Leaf.hasApp()
     { name } = node.localeBindings
-    Leaf.app.getYieldContentFor name, $marker
+    Leaf.sharedApp.getYieldContentFor name, $marker
 

@@ -12,7 +12,7 @@ class Leaf.App extends Leaf.Object
 
   constructor: (config = {}) ->
     super()
-    Leaf.app = @
+    Leaf.sharedApp = @
 
     @[key] = val for key, val of config
 

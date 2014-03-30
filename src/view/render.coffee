@@ -18,7 +18,7 @@ Leaf.Template.registerTag 'render',
 
     if Leaf.hasApp()
       { partial } = node.localeBindings
-      tree = Leaf.app.getPartial partial, node
+      tree = Leaf.sharedApp.getPartial partial, node
 
       unless tree
         throw new PartialPathResolveError partial

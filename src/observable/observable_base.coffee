@@ -3,27 +3,15 @@ class Leaf.ObservableBase extends Leaf.Class
 
   __observable: true
 
-  _observableID = 0
-
   @mixin Leaf.Cacheable, Leaf.Accessible
 
   constructor: (data) ->
     @initMixin Leaf.Cacheable, Leaf.Accessible
 
-    @_observableID = ++_observableID
-
     @_dependents = {}
     @_tracked = {}
     @_tracking = {}
-    @_delegated = {}
-
-    @_sync()
-
-    @defineProperty 'parent',
-      enumerable: false
-      configurable: true
-      get: -> @_parentObj
-      set: (val) -> val
+    @_delegates = {}
 
     @setData data
 
@@ -31,54 +19,31 @@ class Leaf.ObservableBase extends Leaf.Class
 
   _makeObservable: (o, parentObj, parentProp) ->
     if _.isArray o
-      o = new Leaf.ObservableArray o
-      o.setParent parentObj, parentProp
-      o
+      new Leaf.ObservableArray o
     else if _.isPlainObject o
-      o = new Leaf.ObservableObject o
-      o.setParent parentObj, parentProp
-      o
-    else if o && o.__observable
-      o = o.syncedClone() unless o.__globallyUnique
-      o.setParent parentObj, parentProp
-      o
+      new Leaf.ObservableObject o
     else
       o
 
   setParent: (obj, prop) ->
     return unless obj
+    @_parents[obj._leafID] = { obj, prop }
 
-    @_hasParent = true
-    @_parentObj = obj
-    @_parentProp = prop
+  unsetParent: (obj) ->
+    @_parents[obj._leafID] = undefined
 
-  unsetParent: ->
-    @_hasParent = false
-    @_parentObj = null
-    @_parentProp = null
+  _sendToParents: (method, args...) ->
+    for id, p of @_parents when p
+      p.obj[method].apply p, args
 
-  clone: -> new @constructor @_data
+    null
 
-  syncedClone: ->
+  clone: ->
     o = new @constructor()
-    o._observableID = @_observableID
-    o._sync()
-    o.setData @_data
+    o.delegate @
     o
 
-  delegatedClone: ->
-    o = @clone()
-    o._delegateProperties @
-    o
-
-  _delegateProperties: (o) ->
-    oid = o.toLeafID()
-
-    fn = (val, id, prop) =>
-      @_set prop, val, notify: false if id == oid
-
-    fn._dependentHandler = true
-    o._observe null, fn
+  delegate: (o) ->
 
   _isTracking: (name) ->
     @_tracking[name] || @_hasParent && @_parentObj._isTracking(name)
@@ -112,7 +77,6 @@ class Leaf.ObservableBase extends Leaf.Class
     # ['a.x', 'a.b.d', 'a.b.c.e']
     # in
     # ['a', 'a.b', 'a.x', 'a.b.c', 'a.b.d', 'a.b.c.e']
-    #
     for keypath in keypaths
       stacks[keypath] = true
 
@@ -129,67 +93,67 @@ class Leaf.ObservableBase extends Leaf.Class
 
   endBatch: ->
     @_inBatch = false
+
     if (tracked = @_endTrack 'setter')
       _(tracked).forEach (prop) =>
         @_update prop
 
-  _getComputed: (prop) ->
-    val = @_data[prop]
+  _keypathFrom: (path...) -> _.compact(path).join '.'
 
-    return val unless _.isFunction val
+  getDelegatedObjectForKeypath: (keypath) ->
+    len = 0
 
-    @_beginTrack 'getter' unless @_dependents[prop]
+    if keypath?
+      keypath = String(keypath)
+        .replace(/^this\.?/, '')
+        .replace(/\[(\d+)\]/g, '.$1')
 
-    val = val.call @
+      path = keypath.split '.'
+      len = path.length
+
+    return { obj: @ } if len == 0
+
+    id = @_leafID
+    ref = @
+
+    while ref && (p = path.shift())
+      rid = ref._delegates[p]
+      ref = @getCache rid
+      return { obj: ref, key: p } if rid == id
+      id = rid
+
+    { obj: ref }
+
+  _getComputedPropertyValue: (fn) ->
+    @_beginTrack 'getter' unless @_dependents[key]
+
+    val = fn.call @
 
     if (tracked = @_endTrack 'getter')
-      @_dependents[prop] = tracked
+      @_dependents[key] = tracked
 
       _(tracked).forEach (dependent) =>
-        fn = (val, id, _prop) => @_update prop, true
+        fn = (val, id) => @_update prop, true
         fn._dependentHandler = true
         @_observe dependent, fn
 
     val
 
-  _keypathFrom: (path...) -> _.compact(path).join '.'
+  _getValue: (key) ->
+    return @ unless key?
 
-  _get: (prop) ->
-    return @ unless prop?
+    @_createTrack 'getter', key
 
-    @_createTrack 'getter', prop
+    val = @_data[key]
 
-    @_getComputed prop
+    if _.isFunction val
+      @_getComputedPropertyValue val
+    else
+      val
 
   get: (keypath) ->
-    { obj, prop } = @getTerminalParent keypath
-
-    obj?._get prop
-
-  getTerminalParent: (keypath) ->
-    return { obj: @ } unless keypath?
-
-    keypath = String(keypath)
-      .replace(/^this\.?/, '')
-      .replace(/\[(\d+)\]/g, '.$1')
-
-    path = keypath.split '.'
-    len = path.length
-
-    if len == 0
-      { obj: @ }
-    else if len == 1
-      obj = @_data[keypath]
-      if obj && obj.__observable
-        { obj }
-      else
-        { obj: @, prop: keypath }
-    else
-      prop = path.pop()
-      ref = @
-      ref = ref.get?(p) ? ref[p] while ref && (p = path.shift())
-
-      { obj: ref, prop }
+    { obj, key } = @getDelegatedObjectForKeypath keypath
+    obj?._getValue key
 
   _set: (prop, val, options = {}) ->
     return unless prop
@@ -251,16 +215,20 @@ class Leaf.ObservableBase extends Leaf.Class
 
     obj._unset prop, options
 
-  _getEventName: (prop, type = 'update') ->
-    id = @_delegated[prop] ? @_observableID
-    "observer:#{type}:#{id}"
+  getEventName: (event, id = @_leafID) ->
+    "observer:#{id}.#{event}"
 
-  _sync: ->
-    @_syncHandler = (e, id, prop, val) =>
-      @_set prop, val, notify: false unless id == @_leafID
-      null
+  trigger: (event, args...) ->
+    Leaf.sharedEvent.trigger @_getEventName(event), args...
 
-    $(window).on @_getEventName(), @_syncHandler
+  on: (event, handler) ->
+    Leaf.sharedEvent.on @_getEventName(event), handler
+
+  one: (event, handler) ->
+    Leaf.sharedEvent.one @_getEventName(event), handler
+
+  off: (event, handler) ->
+    Leaf.sharedEvent.off @_getEventName(event), handler
 
   _update: (prop, dependentCall = false) ->
     $(window).trigger @_getEventName(prop), [@_leafID, prop, @_get(prop), dependentCall]
@@ -270,23 +238,18 @@ class Leaf.ObservableBase extends Leaf.Class
     { obj, prop } = @getTerminalParent keypath
     obj._update prop
 
-  _observe: (prop, callback) ->
-    fn = (e, id, prop, val, dependentCall) =>
-      callback val, @toLeafID(), prop unless dependentCall && callback._dependentHandler
-
-    callback._binded = fn
-    $(window).on @_getEventName(prop), fn
+  _observe: (prop, handler) ->
+    event = 'valueDidChange'
+    event = "#{event}.#{prop}" if prop?
+    @on event, -> callback
 
   observe: ->
     { keypath, callback } = _.polymorphic
       's?f': 'keypath callback'
     , arguments
 
-    { obj, prop } = @getTerminalParent keypath
-    obj._observe prop, callback
-
-  _unobserve: (prop, callback) ->
-    $(window).off @_getEventName(prop), callback._binded ? callback
+    { obj, prop } = @getDelegatedObjectForKeypath keypath
+    obj.on 'valueDidChange', callback, @
 
   unobserve: ->
     { keypath, callback } = _.polymorphic
@@ -294,6 +257,7 @@ class Leaf.ObservableBase extends Leaf.Class
     , arguments
 
     { obj, prop } = @getTerminalParent keypath
+    @on 'valueDidChange', callback, @
     obj._unobserve prop, callback
 
   detachFromParent: ->

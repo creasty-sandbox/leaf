@@ -38,10 +38,6 @@ FILES =
     'number.coffee'
     'date.coffee'
   ]
-  event: [
-    'event.coffee'
-    'lifecycle_event.coffee'
-  ]
   observable: [
     'observable_base.coffee'
     'observable_object.coffee'
@@ -95,14 +91,12 @@ FILE_DEPENDENCIES =
     'utils'
     'support'
     # 'data'
-    'event'
   ]
   template: [
     'headers'
     'utils'
     'support'
     # 'data'
-    'event'
     'observable'
   ]
   view: [
@@ -110,7 +104,6 @@ FILE_DEPENDENCIES =
     'utils'
     'support'
     # 'data'
-    'event'
     'observable'
     'template'
     'object'
@@ -120,7 +113,6 @@ FILE_DEPENDENCIES =
     'utils'
     'support'
     # 'data'
-    'event'
     'observable'
     'template'
     'object'

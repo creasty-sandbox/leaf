@@ -2,13 +2,8 @@
 class Leaf.ObservableObject extends Leaf.ObservableBase
 
   setData: (data = {}, accessor = true) ->
-    @_data = {}
-
-    for own key, val of data
-      obj = @_makeObservable val, @, key
-      @_data[key] = obj
-      @_accessor key if accessor
-
+    @_data ?= {}
+    @_set key, obj for own key, val of data
     null
 
   _delegateProperties: (o) ->
