@@ -16,6 +16,7 @@ FILES =
     'class.coffee'
     'error.coffee'
     'event.coffee'
+    'event_emitter.coffee'
     'cache.coffee'
     'inflector.coffee'
     'array_diff_patch.coffee'
@@ -31,25 +32,19 @@ FILES =
     'number.coffee'
     'date.coffee'
   ]
-  data: [
-    'data.coffee'
-    'nothingness.coffee'
-    'string.coffee'
-    'number.coffee'
-    'date.coffee'
-  ]
   observable: [
+    'affected_keypath_tracker.coffee'
+    'expression_compiler.coffee'
+    'observable.coffee'
     'observable_base.coffee'
     'observable_object.coffee'
     'observable_array.coffee'
-    'observable.coffee'
   ]
   template: [
     'template.coffee'
     'preformatter.coffee'
     'tokenizer.coffee'
     'parser.coffee'
-    'binder.coffee'
     'dom_generator.coffee'
   ]
   _object: [
@@ -90,20 +85,17 @@ FILE_DEPENDENCIES =
     'headers'
     'utils'
     'support'
-    # 'data'
   ]
   template: [
     'headers'
     'utils'
     'support'
-    # 'data'
     'observable'
   ]
   view: [
     'headers'
     'utils'
     'support'
-    # 'data'
     'observable'
     'template'
     'object'
@@ -112,7 +104,6 @@ FILE_DEPENDENCIES =
     'headers'
     'utils'
     'support'
-    # 'data'
     'observable'
     'template'
     'object'
@@ -245,7 +236,7 @@ gruntConfig.watch =
       "#{TMP_DIR}#{SPEC_DIR}**/*.js"
       "#{TMP_DIR}#{SRC_DIR}**/*.js"
     ]
-    tasks: ['filtered_test']
+    tasks: ['group_test']
 
 
 #=== Banner
@@ -271,10 +262,6 @@ module.exports = (grunt) ->
   #-----------------------------------------------
   require('matchdep').filterDev('grunt-*').forEach grunt.loadNpmTasks
 
-  #  Option
-  #-----------------------------------------------
-  filter = grunt.option 'filter'
-
   #  Config
   #-----------------------------------------------
   gruntConfig.pkg = grunt.file.readJSON 'package.json'
@@ -284,12 +271,12 @@ module.exports = (grunt) ->
   #  Tasks
   #-----------------------------------------------
   grunt.option 'force', true
+
+  testGroup = grunt.option 'group'
+  grunt.registerTask 'group_test', [if testGroup then "jasmine:#{testGroup}" else 'jasmine']
+
   grunt.registerTask 'default', ['dev']
-
-  filteredTest = if filter then "jasmine:#{filter}" else 'jasmine'
-  grunt.registerTask 'filtered_test', [filteredTest]
-
   grunt.registerTask 'dev', ['clean', 'coffee:src', 'watch:coffee']
-  grunt.registerTask 'test', ['clean', 'coffee:src', 'coffee:test', 'filtered_test', 'watch']
+  grunt.registerTask 'test', ['clean', 'coffee:src', 'coffee:test', 'group_test', 'watch']
   grunt.registerTask 'release', ['clean', 'coffee:release', 'concat', 'uglify']
 

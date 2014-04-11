@@ -3,9 +3,9 @@ _.mixin bindContext: do ->
 
   _contextID = 0
 
-  getContextIDForContext = (ctx, name = 'context') ->
+  getContextIDForContext = (ctx, contextName = 'context') ->
     id = (ctx._contextID ?= ++_contextID)
-    "__bind_#{contex}_#{id}"
+    "__bind_#{contextName}_#{id}"
 
   (fn, ctx, contextName, altfn) ->
     id = getContextIDForContext ctx, contextName

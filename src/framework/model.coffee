@@ -36,9 +36,7 @@ class Leaf.Model extends Leaf.Object
   _initAssociations: ->
     for assoc, options of @constructor.associations
       collection = new Leaf.ObservableArray()
-      collection.setParent @, assoc
-      @_data[assoc] = collection
-      @_accessor assoc
+      @set assoc, collection, notify: false
 
   #  Override settings
   #-----------------------------------------------

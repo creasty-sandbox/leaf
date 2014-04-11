@@ -10,6 +10,42 @@ class NonIteratableObjectError extends Leaf.Error
 
 #  Iterator
 #-----------------------------------------------
+class ViewArray
+
+  constructor: (@$head) ->
+    @_views = []
+
+  push: (view) ->
+    view.insertAfter @$head
+    @_views.push view.$view
+
+  insertAt: (index, view) ->
+    if ($idx = @_views[index])
+      view.$view.insertBefore $idx
+    else
+      view.$view.insertAfter @$head
+
+    @_views.splice index, -1, view
+
+  removeAt: (index) ->
+    view = @_views[index]
+    view.detach()
+    @_views.splice index
+
+  swap: (i, j) ->
+    vi = @_views[i]
+    vj = @_views[j]
+
+    vi.insertBefore vj
+
+    vi = @_views[i]
+    vj.insertBefore vi
+
+    tmp = @_views[i]
+    @_views[i] = @_views[j]
+    @_views[j] = tmp
+
+
 class IteratorView extends Leaf.Object
 
   @structure: true
@@ -30,7 +66,7 @@ class IteratorView extends Leaf.Object
     iv.init node, $marker, $parent, obj
 
   init: (@node, @$marker, @$parent, @obj) ->
-    @collectionViews = []
+    @viewArray = new ViewArray @$marker
 
     binder = new Leaf.Template.Binder @obj
     bindingObj = binder.getBindingObject @node.localeBindings
@@ -41,19 +77,28 @@ class IteratorView extends Leaf.Object
       throw new NonIteratableObjectError @node.iterator, @collection
 
     @collection.forEach @addOne
-    @collection.observe => @applyPatch @collection.getPatch()
+
+    handler =
+      insertAt: (i, element) =>
+        view = @createView element
+        @viewArray.insertAt i, view
+      removeAt: (i) =>
+        @viewArray.removeAt i
+      swap: (i, j) =>
+        @viewArray.swap i, j
+
+    @collection.observe => @sync handler
 
   addOne: (item) =>
     view = @createView item
-    view.$view.insertBefore @$marker
-    @collectionViews.push view
+    @viewArray.push view
 
   createView: (item) ->
     id = "#{@_observableID}:#{item._observableID}"
 
     IteratorItemView.findOrCreate id, (klass) =>
-      scope = @obj.delegatedClone()
-      scope.set @node.iterator, item, overrideDelegate: true
+      scope = @obj.syncedClone()
+      scope.set @node.iterator, item, withoutDelegation: true
 
       new klass
         tree: @node.contents
@@ -62,19 +107,6 @@ class IteratorView extends Leaf.Object
       ,
         model: item
         collection: @collection
-
-  applyPatch: (patch) ->
-    for p in patch
-      switch p.method
-        when 'insertAt'
-          view = @createView p.element
-          $idx = @collectionViews[p.index]?.$view ? @$marker
-          view.render $idx
-          @collectionViews.splice p.index, -1, view
-        when 'removeAt'
-          if view = @collectionViews[p.index]
-            view.detach()
-            @collectionViews.splice p.index, 1
 
 
 #  Iterator item

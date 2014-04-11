@@ -1,17 +1,6 @@
 
 describe 'Leaf.ObservableArray', ->
 
-  it 'should be defined', ->
-    expect(Leaf.ObservableArray).toBeDefined()
-
-  it 'should create an instance', ->
-    ob = new Leaf.ObservableArray()
-    expect(ob).not.toBeNull()
-    expect(ob.constructor).toBe Leaf.ObservableArray
-
-
-describe 'observableArray', ->
-
   beforeEach ->
     @oba = new Leaf.ObservableArray [1, 2, 3]
     @callback = jasmine.createSpy 'observer'
@@ -48,15 +37,6 @@ describe 'observableArray', ->
 
         expect(@callback).toHaveBeenCalled()
 
-      it 'should create diff patch for an operation', ->
-        @oba.push 4
-
-        patch = [
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 3, 4
-        ]
-
-        expect(@oba.getPatch()).toHaveContents patch
-
 
     describe '#pop()', ->
 
@@ -77,15 +57,6 @@ describe 'observableArray', ->
 
         expect(@callback).toHaveBeenCalled()
 
-      it 'should create diff patch for an operation', ->
-        @oba.pop()
-
-        patch = [
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 2, 3
-        ]
-
-        expect(@oba.getPatch()).toHaveContents patch
-
 
     describe '#shift()', ->
       it 'should remove the last element from an array', ->
@@ -104,15 +75,6 @@ describe 'observableArray', ->
         @oba.shift()
 
         expect(@callback).toHaveBeenCalled()
-
-      it 'should create diff patch for an operation', ->
-        @oba.shift()
-
-        patch = [
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0, 1
-        ]
-
-        expect(@oba.getPatch()).toHaveContents patch
 
 
     describe '#unshift(elements...)', ->
@@ -141,15 +103,6 @@ describe 'observableArray', ->
 
         expect(@callback).toHaveBeenCalled()
 
-      it 'should create diff patch for an operation', ->
-        @oba.unshift 0
-
-        patch = [
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, 0
-        ]
-
-        expect(@oba.getPatch()).toHaveContents patch
-
 
     describe '#sort([compareFunc])', ->
 
@@ -173,15 +126,6 @@ describe 'observableArray', ->
 
         expect(@callback).toHaveBeenCalled()
 
-      it 'should create diff patch for an operation', ->
-        @oba.sort()
-
-        patch = [
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, -1
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 4, -1
-        ]
-
-        expect(@oba.getPatch()).toHaveContents patch
 
     describe '#splice(index [, size [, elements...]])', ->
 
@@ -196,17 +140,6 @@ describe 'observableArray', ->
         @oba.splice 1, 1, 8, 9
 
         expect(@callback).toHaveBeenCalled()
-
-      it 'should create diff patch for an operation', ->
-        @oba.splice 1, 1, 8, 9
-
-        patch = [
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 1, 2
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 0, 8
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, 9
-        ]
-
-        expect(@oba.getPatch()).toHaveContents patch
 
 
     describe '#reverse()', ->
@@ -223,17 +156,65 @@ describe 'observableArray', ->
 
         expect(@callback).toHaveBeenCalled()
 
-      it 'should create diff patch for an operation', ->
-        @oba.reverse()
 
-        patch = [
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0, 1
-          Leaf.ArrayDiffPatch.createPatch 'removeAt', 0, 2
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 1, 2
-          Leaf.ArrayDiffPatch.createPatch 'insertAt', 2, 1
-        ]
+    describe '#swap(i, j)', ->
 
-        expect(@oba.getPatch()).toHaveContents patch
+      it 'should swap the elements at `i` and `j`', ->
+        @oba.swap 0, 1
+
+        expect(@oba.toArray()).toHaveContents [2, 1, 3]
+
+      it 'should call registered observers', ->
+        @oba.observe @callback
+
+        @oba.swap 0, 1
+
+        expect(@callback).toHaveBeenCalled()
+
+
+    describe '#removeAt(index)', ->
+
+      it 'should remove the element at index', ->
+        @oba.removeAt 1
+
+        expect(@oba.toArray()).toHaveContents [1, 3]
+
+      it 'should call registered observers', ->
+        @oba.observe @callback
+
+        @oba.removeAt 1
+
+        expect(@callback).toHaveBeenCalled()
+
+
+    describe '#insertAt(index, elements)', ->
+
+      it 'should remove the element at index', ->
+        @oba.insertAt 1, [99]
+
+        expect(@oba.toArray()).toHaveContents [1, 99, 2, 3]
+
+      it 'should call registered observers', ->
+        @oba.observe @callback
+
+        @oba.insertAt 1, [99]
+
+        expect(@callback).toHaveBeenCalled()
+
+
+    describe '#_set(index, val, options = {})', ->
+
+      it 'should replace the element at index', ->
+        @oba._set 1, 99
+
+        expect(@oba.toArray()).toHaveContents [1, 99, 3]
+
+      it 'should call registered observers', ->
+        @oba.observe @callback
+
+        @oba._set 1, 99
+
+        expect(@callback).toHaveBeenCalled()
 
 
   describe 'Accessor methods', ->
@@ -311,4 +292,16 @@ describe 'observableArray', ->
         res = @oba.reduceRight (a, b, i) -> a + i * b
 
         expect(res).toBe 3 + 1 * 2 + 0 * 1
+
+
+  describe 'Element detaching', ->
+
+    it 'should remove an element if the element has fired `detach` event', ->
+      obj = new Leaf.ObservableObject foo: 1
+      ary = new Leaf.ObservableArray [1, obj, 2]
+
+      obj.detach()
+
+      expect(ary.length).toBe 2
+      expect(ary.toArray()).toHaveContents [1, 2]
 

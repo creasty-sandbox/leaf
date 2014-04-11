@@ -13,7 +13,7 @@ describe 'Iterator statements', ->
   describe '<each $model="collection[]">', ->
 
     beforeEach ->
-      @obj = new Leaf.Observable
+      @obj = new Leaf.ObservableObject
         posts: [
           { id: 1, title: 'Alpha' }
           { id: 2, title: 'Beta' }

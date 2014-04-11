@@ -12,173 +12,178 @@ class Leaf.ObservableBase extends Leaf.Class
     @_tracked = {}
     @_tracking = {}
     @_delegates = {}
+    @_propagateHandlers = {}
+
+    @_emitter = new Leaf.EventEmitter()
+
+    @compiler = new Leaf.ExpressionCompiler @
 
     @setData data
 
   setData: (data, accessor) ->
 
-  _makeObservable: (o, parentObj, parentProp) ->
-    if _.isArray o
-      new Leaf.ObservableArray o
-    else if _.isPlainObject o
-      new Leaf.ObservableObject o
-    else
-      o
-
-  setParent: (obj, prop) ->
-    return unless obj
-    @_parents[obj._leafID] = { obj, prop }
-
-  unsetParent: (obj) ->
-    @_parents[obj._leafID] = undefined
-
-  _sendToParents: (method, args...) ->
-    for id, p of @_parents when p
-      p.obj[method].apply p, args
-
-    null
-
-  clone: ->
-    o = new @constructor()
-    o.delegate @
-    o
-
-  delegate: (o) ->
-
-  _isTracking: (name) ->
-    @_tracking[name] || @_hasParent && @_parentObj._isTracking(name)
-
-  _beginTrack: (name) ->
-    @_parentObj._beginTrack name if @_hasParent
-
-    return if @_tracking[name]
-    @_tracked[name] ?= []
-    @_tracking[name] = true
-
-  _createTrack: (name, val) ->
-    @_parentObj._createTrack name, @_keypathFrom(@_parentProp, val) if @_hasParent
-
-    return unless @_tracking[name]
-    @_tracked[name].push val
-
-  _endTrack: (name) ->
-    @_parentObj._endTrack name if @_hasParent
-
-    return unless @_tracking[name]
-
-    tracked = @_tracked[name]
-    @_tracked[name] = []
-    @_tracking[name] = false
-
-    keypaths = _.unique tracked
-    stacks = {}
-
-    # find terminal keypaths:
-    # ['a.x', 'a.b.d', 'a.b.c.e']
-    # in
-    # ['a', 'a.b', 'a.x', 'a.b.c', 'a.b.d', 'a.b.c.e']
-    for keypath in keypaths
-      stacks[keypath] = true
-
-      props = keypath.split '.'
-
-      # negate all the parents
-      stacks[props.join('.')] = false while props.pop() && props[0]
-
-    (path for path, flag of stacks when flag)
-
-  beginBatch: ->
-    @_inBatch = true
-    @_beginTrack 'setter'
-
-  endBatch: ->
-    @_inBatch = false
-
-    if (tracked = @_endTrack 'setter')
-      _(tracked).forEach (prop) =>
-        @_update prop
-
   _keypathFrom: (path...) -> _.compact(path).join '.'
 
-  getDelegatedObjectForKeypath: (keypath) ->
-    len = 0
+  #  Propagation
+  #-----------------------------------------------
+  _catchPropagatedEvents: (key) ->
+    return if @_propagateHandlers[key]
 
-    if keypath?
-      keypath = String(keypath)
-        .replace(/^this\.?/, '')
-        .replace(/\[(\d+)\]/g, '.$1')
+    obj = @_data[key]
 
-      path = keypath.split '.'
-      len = path.length
+    return unless obj && obj.__observable
 
-    return { obj: @ } if len == 0
+    general = (e, args...) =>
+      e = e.clone()
+      e.keypath = @_keypathFrom key, e.keypath
+      e.propagated = true
+      e.propagatedKeypath = e.keypath.split('.')[0...-1].join '.'
+      @trigger e, args...
 
-    id = @_leafID
-    ref = @
+    detach = (e) =>
+      @unset @_keypathFrom(key, e.keypath)
 
-    while ref && (p = path.shift())
-      rid = ref._delegates[p]
-      ref = @getCache rid
-      return { obj: ref, key: p } if rid == id
-      id = rid
+    handler = @_propagateHandlers[key] = { general, detach }
 
-    { obj: ref }
+    obj.on 'detach', handler.detach
+    obj.on handler.general
 
-  _getComputedPropertyValue: (fn) ->
-    @_beginTrack 'getter' unless @_dependents[key]
+  _uncatchPropagatedEvents: (key) ->
+    return unless @_propagateHandlers[key]
 
-    val = fn.call @
+    obj = @_data[key]
+    handler = @_propagateHandlers[key]
 
-    if (tracked = @_endTrack 'getter')
-      @_dependents[key] = tracked
+    @_propagateHandlers[key] = null
+    obj.off 'detach', handler.detach
+    obj.off handler.general
 
-      _(tracked).forEach (dependent) =>
-        fn = (val, id) => @_update prop, true
-        fn._dependentHandler = true
-        @_observe dependent, fn
 
-    val
+  #  Batch
+  #-----------------------------------------------
+  beginBatch: ->
+    @_inBatch = true
+    @_batchTracker ?= new Leaf.AffectedKeypathTracker @, 'set'
 
-  _getValue: (key) ->
+  endBatch: ->
+    return unless @_inBatch
+
+    tracker = @_batchTracker
+
+    @_inBatch = false
+    @_batchTracker = null
+
+    keypaths = tracker.getAffectedKeypaths()
+
+    _(keypaths).forEach (keypath) =>
+      { obj, key } = @getTerminalObjectForKeypath keypath
+
+      event = new Leaf.Event
+        name: 'set'
+        keypath: key
+
+      if obj && obj.__observable
+        obj.trigger event, obj._get(key)
+
+
+  #  Getter
+  #-----------------------------------------------
+  getTerminalObjectForKeypath: (keypath, withoutDelegation) ->
+    keypath = String(keypath)
+      .replace(/^this\.?/, '')
+      .replace(/\[(\d+)\]/g, '.$1')
+
+    path = keypath.split '.'
+    len = path.length
+
+    key = path.pop()
+    obj = @
+
+    if len > 1
+      if withoutDelegation
+        obj = obj._data[p] while obj && obj.__observable && (p = path.shift())
+      else
+        obj = obj._delegates[p]?.obj._data[p] ? obj._data[p] while obj && obj.__observable && (p = path.shift())
+    else if !withoutDelegation
+      obj = @_delegates[key]?.obj ? @
+
+    { obj, key }
+
+  _get: (key) ->
     return @ unless key?
 
-    @_createTrack 'getter', key
+    return @_delegates[key].obj._get key if @_delegates[key]
+
+    e = new Leaf.Event
+      name: 'get'
+      keypath: key
+
+    @trigger e
 
     val = @_data[key]
 
     if _.isFunction val
-      @_getComputedPropertyValue val
-    else
-      val
+      tracker = new Leaf.AffectedKeypathTracker @, 'get' unless @_dependents[key]
+
+      fn = val
+      val = fn.call @
+      fn._cachedValue = val
+
+      if tracker
+        dependents = tracker.getAffectedKeypaths()
+        @_dependents[key] = dependents
+
+        _(dependents).forEach (dependent) =>
+          @on 'set', (e) =>
+            return unless dependent == e.keypath
+
+            event = new Leaf.Event
+              name: 'update'
+              keypath: key
+
+            oldValue = fn._cachedValue
+            newValue = fn.call @
+            fn._cachedValue = newValue
+            @trigger event, newValue, oldValue
+
+    val
 
   get: (keypath) ->
-    { obj, key } = @getDelegatedObjectForKeypath keypath
-    obj?._getValue key
+    { obj, key } = @getTerminalObjectForKeypath keypath
+    obj?._get key
 
-  _set: (prop, val, options = {}) ->
-    return unless prop
 
-    options = _.defaults options,
-      notify: true
-      bubbling: false
+  #  Setter
+  #-----------------------------------------------
+  _set: (key, val, options = {}) ->
+    return unless key
 
-    if options.overrideDelegate
-      @_delegated[prop] = @_observableID
+    if (delegate = @_delegates[key])
+      if options.withoutDelegation
+        @undelegate key
+      else
+        return delegate.obj._set key, val, options
 
-    if _.isFunction @_data[prop]
-      @_data[prop].call @, val
+    options.notify ?= true
+
+    @_accessor key
+
+    oldValue = @_get key
+
+    if _.isFunction @_data[key]
+      @_data[key].call @, val
     else
-      obj = @_makeObservable val, @, prop
-      @_data[prop] = obj
+      val = Leaf.Observable val
+      @_uncatchPropagatedEvents key
+      @_data[key] = val
+      @_catchPropagatedEvents key
 
-    @_createTrack 'setter', prop if options.notify
-    @_createTrack 'setter' if options.bubbling
+    if options.notify
+      e = new Leaf.Event
+        name: 'set'
+        keypath: key
 
-    unless @_inBatch
-      @_update prop, options.dependent if options.notify
-      @_update null, options.dependent if options.bubbling
-
-    @_accessor prop
+      @trigger e, val, oldValue
 
     val
 
@@ -189,86 +194,126 @@ class Leaf.ObservableBase extends Leaf.Class
     , arguments
 
     if pairs
-      for k, v of pairs
+      for own k, v of pairs
         if _.isPlainObject v
-          @get(k).set v, options
+          @get(k)?.set v, options
         else
           @set k, v, options
 
       return @
 
-    { obj, prop } = @getTerminalParent keypath
+    { obj, key } = @getTerminalObjectForKeypath keypath, options?.withoutDelegation
 
-    @_createTrack 'setter', keypath if options?.notify
-    @_createTrack 'setter' if options?.bubbling
+    obj?._set key, val, options
 
-    obj._set prop, val, options
-
-  _unset: (prop, options) ->
-    @_set prop, undefined, options
+  _unset: (key, options) ->
+    @_set key, undefined, options
 
   unset: (keypath, options) ->
-    { obj, prop } = @getTerminalParent keypath
+    { obj, key } = @getTerminalObjectForKeypath keypath
+    obj?._unset key, options
 
-    @_createTrack 'setter', keypath if options?.notify
-    @_createTrack 'setter' if options?.bubbling
 
-    obj._unset prop, options
+  #  Event
+  #-----------------------------------------------
+  trigger: ->
+    @_emitter.trigger arguments...
+    @
 
-  getEventName: (event, id = @_leafID) ->
-    "observer:#{id}.#{event}"
+  on: ->
+    @_emitter.on arguments...
+    @
 
-  trigger: (event, args...) ->
-    Leaf.sharedEvent.trigger @_getEventName(event), args...
+  once: ->
+    @_emitter.once arguments...
+    @
 
-  on: (event, handler) ->
-    Leaf.sharedEvent.on @_getEventName(event), handler
+  off: ->
+    @_emitter.off arguments...
+    @
 
-  one: (event, handler) ->
-    Leaf.sharedEvent.one @_getEventName(event), handler
 
-  off: (event, handler) ->
-    Leaf.sharedEvent.off @_getEventName(event), handler
+  #  Notify update
+  #-----------------------------------------------
+  _update: (key) ->
+    e = new Leaf.Event
+      name: 'update'
+      keypath: key
 
-  _update: (prop, dependentCall = false) ->
-    $(window).trigger @_getEventName(prop), [@_leafID, prop, @_get(prop), dependentCall]
-    @_parentObj._update @_parentProp if @_hasParent
+    @trigger e
 
   update: (keypath) ->
-    { obj, prop } = @getTerminalParent keypath
-    obj._update prop
-
-  _observe: (prop, handler) ->
-    event = 'valueDidChange'
-    event = "#{event}.#{prop}" if prop?
-    @on event, -> callback
+    { obj, key } = @getTerminalObjectForKeypath keypath
+    obj?._update key
 
   observe: ->
     { keypath, callback } = _.polymorphic
       's?f': 'keypath callback'
     , arguments
 
-    { obj, prop } = @getDelegatedObjectForKeypath keypath
-    obj.on 'valueDidChange', callback, @
+    _callback = callback
+    callback = _.bindContext callback, @, 'observer', (e) =>
+      if !@_inBatch && (
+        !keypath \
+        || e.keypath == keypath \
+        || "#{e.keypath}.".indexOf("#{keypath}.") == 0
+      )
+        _callback arguments...
+
+    @on 'set', callback
+    @on 'update', callback
 
   unobserve: ->
     { keypath, callback } = _.polymorphic
       's?f': 'keypath callback'
     , arguments
 
-    { obj, prop } = @getTerminalParent keypath
-    @on 'valueDidChange', callback, @
-    obj._unobserve prop, callback
+    callback = _.bindContext callback, @, 'observer' if keypath
+    @off 'set', callback
+    @off 'update', callback
 
-  detachFromParent: ->
-    if @_hasParent
-      if @_parentObj instanceof Leaf.ObservableObject
-        @_parentObj.unset @_parentProp
-      else
-        @_parentObj.removeAt @_parentObj.indexOf(@)
+
+  #  Clone
+  #-----------------------------------------------
+  clone: ->
+    new @constructor @_data
+
+  syncedClone: ->
+    o = new @constructor()
+    o.delegate key, @ for own key of @_data
+    o
+
+
+  #  Delegation
+  #-----------------------------------------------
+  delegate: (key, obj) ->
+    delegate =
+      obj: obj
+      handler: => @trigger arguments...
+
+    @undelegate key
+
+    @_accessor key
+    @_delegates[key] = delegate
+    delegate.obj.on delegate.handler
+
+  undelegate: (key) ->
+    return unless (delegate = @_delegates[key])
+    @_delegates[key] = null
+    delegate.obj.off delegate.handler
+
+
+  #  Detach / destroy
+  #-----------------------------------------------
+  detach: ->
+    @trigger 'detach', @
 
   destroy: ->
-    @detachFromParent()
+    @detatch()
+    @trigger 'destroy', @
+    @_destroy()
+
+  _destroy: ->
     @_data = null
     @unsetCache @toLeafID()
 

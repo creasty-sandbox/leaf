@@ -1,17 +1,6 @@
 
 describe 'Leaf.ObservableObject', ->
 
-  it 'should be defined', ->
-    expect(Leaf.ObservableObject).toBeDefined()
-
-  it 'should create an instance', ->
-    ob = new Leaf.ObservableObject()
-    expect(ob).not.toBeNull()
-    expect(ob.constructor).toBe Leaf.ObservableObject
-
-
-describe 'observableObject', ->
-
   beforeEach ->
     @obo = new Leaf.ObservableObject
       foo: 1
@@ -129,11 +118,11 @@ describe 'observableObject', ->
 
       @obo.set 'foo', 100
 
-      expect(@callback).toHaveBeenCalledWith 100, @obo.toLeafID(), 'foo'
+      expect(@callback).toHaveBeenCalledWith jasmine.any(Leaf.Event), 100, 1
 
     it 'should call registered observers every time when setting a property value', ->
       n = 0
-      callback = jasmine.createSpy('observer').andCallFake -> ++n
+      callback = jasmine.createSpy('observer').and.callFake -> ++n
 
       @obo.observe 'foo', callback
 
@@ -164,10 +153,17 @@ describe 'observableObject', ->
 
     describe 'Event bubbling on nested properties', ->
 
-      it 'should call registered observer of parent properties when setting children values', ->
-        @obo.observe 'nested', @callback
+      it 'should call event handler on parents when event is fired on children', ->
+        @obo.on 'bubble', @callback
 
-        @obo.set 'nested.prop1', 200, bubbling: true
+        @obo.nested.trigger 'bubble'
+
+        expect(@callback).toHaveBeenCalled()
+
+      it 'should call registered observer on parents when setting children values', ->
+        @obo.observe @callback
+
+        @obo.set 'nested.prop1', 200
 
         expect(@callback).toHaveBeenCalled()
 
@@ -180,7 +176,7 @@ describe 'observableObject', ->
         @obo.get 'dependentComputed'
         @obo.set 'foo', 100
 
-        expect(@callback).toHaveBeenCalledWith 110, @obo.toLeafID(), 'dependentComputed'
+        expect(@callback).toHaveBeenCalledWith jasmine.any(Leaf.Event), 110, 11
 
       it 'should call registered observers of dependent properties when setting a computed property value', ->
         callbackComp = jasmine.createSpy 'observer of settable computed property'
@@ -208,12 +204,76 @@ describe 'observableObject', ->
 
       it 'should call registered observers once after ending batch', ->
         n = 0
-        callback = jasmine.createSpy('observer').andCallFake -> ++n
+        callback = jasmine.createSpy('observer').and.callFake -> ++n
         @obo.observe 'foo', callback
 
         @obo.beginBatch()
         @obo.set 'foo', 100
         @obo.set 'foo', 200
+        @obo.endBatch()
 
-        expect(callback).not.toHaveBeenCalled()
+        expect(callback).toHaveBeenCalled()
+        expect(n).toBe 1
+
+
+  describe 'Cloning', ->
+
+    beforeEach ->
+      @callback = jasmine.createSpy 'observer'
+
+
+    describe '#clone', ->
+
+      beforeEach ->
+        @clone = @obo.clone()
+
+      it 'should create new instance of ObservableObject', ->
+        expect(@clone instanceof Leaf.ObservableObject).toBe true
+
+      it 'every properties of original should be readable from a clone', ->
+        expect(@clone.foo).toBe @obo.foo
+        expect(@clone.dependentComputed).toBe @obo.dependentComputed
+        expect(@clone.nested.prop1).toBe @obo.nested.prop1
+
+
+    describe '#syncedClone', ->
+
+      beforeEach ->
+        @clone = @obo.syncedClone()
+        @callbackOriginal = jasmine.createSpy 'observer on original'
+        @callbackClone = jasmine.createSpy 'observer on clone'
+
+      it 'should create new instance of ObservableObject', ->
+        expect(@clone instanceof Leaf.ObservableObject).toBe true
+
+      it 'every properties of original should be readable from a clone', ->
+        expect(@clone.foo).toBe @obo.foo
+        expect(@clone.dependentComputed).toBe @obo.dependentComputed
+        expect(@clone.nested).toBeDefined()
+        expect(@clone.get 'nested.prop1').toBe @obo.nested.prop1
+
+
+      describe 'Event delegates', ->
+        it 'should delegate events to clone', ->
+          @obo.observe 'foo', @callbackOriginal
+          @clone.observe 'foo', @callbackClone
+
+          @clone.foo = 123
+
+          expect(@clone.foo).toBe 123
+          expect(@obo.foo).toBe 123
+          expect(@callbackOriginal).toHaveBeenCalled()
+          expect(@callbackClone).toHaveBeenCalled()
+
+        it 'should remove delegation and set value with `removeDelegation` option', ->
+          @obo.observe 'foo', @callbackOriginal
+          @clone.observe 'foo', @callbackClone
+
+          @clone.set 'foo', 123, withoutDelegation: true
+
+          expect(@clone.foo).toBe 123
+          expect(@obo.foo).toBe 1
+          expect(@callbackOriginal).not.toHaveBeenCalled()
+          expect(@callbackClone).toHaveBeenCalled()
+
 

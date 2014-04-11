@@ -124,44 +124,6 @@ HTMl5_ATTR_PRESERVED =
 
 HTML5_ATTR_BOOLEANS = /^(disabled|selected|checked|contenteditable)$/
 
-#  JavaScript
-#-----------------------------------------------
-JS_RESERVED_WORDS = ///
-  ^(
-    break|case|catch|continue|debugger|default|delete|do|else|finally|for|function|if
-    |in|instanceof|new|return|switch|this|throw|try|typeof|var|void|while|with|class|enum
-    |export|extends|import|super|implements|interface|let|package|private|protected|public
-    |static|yield|null|true|false
-  )$
-///
-
-JS_GLOBAL_VARIABLES = ///
-  ^(
-    window|document|$|_
-  )$
-///
-
-JS_NON_VARIABLE_REGEXP = ///
-  (?: # hash key literal
-    ({|,)
-    \s*
-    \w+:
-  )
-  |
-  (?: # property access by dot notation
-    \.
-    [a-z]\w*
-    (?:\.\w+)*
-    \b
-  )
-  |
-  (?: # function call
-    \w+\s*\(
-  )
-///g
-
-JS_VARIABLE_REGEXP = /\b[a-z]\w*/g
-
 
 #  Errors
 #-----------------------------------------------
@@ -222,39 +184,6 @@ class Leaf.Template.Parser
     for r in customTags.closeOthers when r != node.name
       customTags.def[r].closeOther node, parent
 
-  parseExpression: (expr) ->
-    value = {}
-    value.expr = expr
-    value.vars = []
-
-    return value unless expr
-
-    buf = ''
-    i = 0
-    len = expr.length
-
-    # strip string and regexp literal
-    while i < len
-      buf += (c = expr[i])
-
-      if '\'' == c || '"' == c || '/' == c
-        idx = i + 1
-        true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
-        return value if (i = idx) == -1 # unbalance: expression has syntax error
-      else
-        i++
-
-    expr = buf.replace JS_NON_VARIABLE_REGEXP, '#'
-
-    return value unless (m = expr.match JS_VARIABLE_REGEXP)
-
-    value.vars = m.filter (arg) ->
-      !arg.match(JS_RESERVED_WORDS) && !arg.match(JS_GLOBAL_VARIABLES)
-
-    value.vars = _.uniq value.vars
-
-    value
-
   parseTagAttrs: (node, attrs) ->
     node.attrs = {}
     node.attrBindings = {}
@@ -274,9 +203,9 @@ class Leaf.Template.Parser
 
       if '$' == binding
         if isNormalAttr node.name, key
-          node.attrBindings[key] = @parseExpression val
+          node.attrBindings[key] = val
         else
-          node.localeBindings[key] = @parseExpression val
+          node.localeBindings[key] = val
       else if '@' == binding
         node.actions[key] = val
       else if !node.customTag && isNormalAttr(node.name, key)
@@ -315,7 +244,7 @@ class Leaf.Template.Parser
     node.type = token.type
     node.escape = token.textBinding.escape
     expr = _.unescape token.textBinding.val
-    node.value = @parseExpression expr
+    node.value = expr
     node
 
   parseNode: (parents, token) ->
