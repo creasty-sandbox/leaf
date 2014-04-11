@@ -34,9 +34,9 @@ $ grunt dev
 
 # Test: compile coffee and run test with Jasmine on PhantomJS
 $ grunt test
-$ grunt test --filter group_name
+$ grunt test --group test_group --filter file_name
 
-# Release: concatenate all files and create a minified version
+# Release: concatenate all files into one and create its minified version
 $ grunt release
 ```
 
