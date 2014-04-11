@@ -51,6 +51,7 @@ FILES =
     'object.coffee'
   ]
   view: [
+    'view_array.coffee'
     'view.coffee'
     'conditional_view.coffee'
     'iterator_view.coffee'
