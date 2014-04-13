@@ -138,17 +138,14 @@ class Leaf.Template.Parser
 
   customTags = Leaf.Template.customTags
 
-  constructor: ->
-
-  init: (@buffer) ->
+  constructor: (@buffer) ->
     unless @buffer?
       throw new RequiredArgumentsError('buffer')
 
     preformatter = new Leaf.Template.Preformatter @buffer
     @buffer = preformatter.getResult()
 
-    @tokenizer = new Leaf.Template.Tokenizer()
-    @tokenizer.init @buffer
+    @tokenizer = new Leaf.Template.Tokenizer @buffer
 
     @bindings = {}
 

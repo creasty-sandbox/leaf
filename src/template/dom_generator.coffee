@@ -12,31 +12,25 @@ class Leaf.Template.DOMGenerator
 
   { customTags } = Leaf.Template
 
-  constructor: ->
-
-  init: (@tree, @obj) ->
+  constructor: (@tree, @obj, @scope) ->
     unless @tree
       throw new RequiredArgumentsError('tree')
 
     unless @obj
       throw new RequiredArgumentsError('obj')
 
-    @binder = new Leaf.Template.Binder @obj
-    @$parent = $ doc.createElement 'body'
+    @compiler = new Leaf.ExpressionCompiler @obj, @scope
 
-  getBinder: (value) ->
-    @binder.getBinder value, @obj
+    @$parent = $ doc.createElement 'body'
 
   bindAttributes: ($el, attrs) ->
     name = $el.get(0).nodeName.toLowerCase()
 
     _(attrs).forEach (val, key) =>
-      bind = @getBinder val
-
       if 'value' == key && 'option' != name
         user = false
 
-        bind (result) ->
+        @compiler.bind val, (result) ->
           $el.val result unless user
           user = false
           null
@@ -45,22 +39,22 @@ class Leaf.Template.DOMGenerator
 
         $el.on 'change keyup keydown keypress', =>
           user = true
-          @obj.set val.expr, $el.val()
+          @obj.set val, $el.val()
       else if 'style' == key
-        bind (result) -> $el.css result # slow?
+        @compiler.bind val, (result) -> $el.css result # slow?
       else
         if 'option' == name
-          $(document).on 'viewDidRender', -> # TODO: document is bad
+          $(document).on 'viewDidRender', => # TODO: document is bad
             $select = $el.parent()
 
             if $select.length
               evaluate = $select.data 'value-evaluator'
-              $el.prop 'selected', (evaluate() == bind.evaluate())
+              $el.prop 'selected', (evaluate() == @compiler.eval())
 
-        bind (result) -> $el.attr key, result
+        @compiler.bind val, (result) -> $el.attr key, result
 
   bindLocales: ($el, attrs) ->
-    bindingObj = @binder.getBindingObject attrs
+    bindingObj = @compiler.evalObject attrs
 
     $el.data 'leaf-locale', bindingObj
 
@@ -73,7 +67,7 @@ class Leaf.Template.DOMGenerator
   createMarker: (node, closing) ->
     if Leaf.develop
       if node.type == T_INTERPOLATION
-        $ doc.createComment "= '#{node.value.expr}'"
+        $ doc.createComment "= '#{node.value}'"
       else
         $ doc.createComment "<#{(if closing then '/' else '')}#{node.name}:#{node._nodeID}>"
     else
@@ -119,8 +113,6 @@ class Leaf.Template.DOMGenerator
     $text.appendTo $parent
 
   createInterpolationNode: (node, $parent) ->
-    bind = @getBinder node.value
-
     $marker = @createMarker node
     $marker.appendTo $parent
 
@@ -129,11 +121,12 @@ class Leaf.Template.DOMGenerator
       $el = $ el
       $el.appendTo $parent
 
-      bind (result) -> el.nodeValue = result
+      @compiler.bind node.value, (result) ->
+        el.nodeValue = result
     else
       $el = null
 
-      bind (result) ->
+      @compiler.bind node.value, (result) ->
         if $el
           $el.remove()
           $el = null

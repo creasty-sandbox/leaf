@@ -22,6 +22,8 @@ customMatchers =
 
 
 beforeEach ->
+  Leaf.develop = true
+
   flag = false
   spy = (name) -> jasmine.createSpy(name).and.callFake -> flag = true
 
