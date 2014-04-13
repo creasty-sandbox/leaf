@@ -126,14 +126,12 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_update()
     @
 
-  splice: (args...) ->
-    [index, size, elements...] = args
-
+  splice: (index, size, elements...) ->
     len = elements.length
     diff = len - size
 
     op =
-      locally: false
+      locally: true
       method: 'splice'
 
     if size + 1 > 0
@@ -150,9 +148,10 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       res = @_data.splice index, size, elements...
       @_catchDetachEventOn element for element in elements
     else
-      [rf, rt] = op.removed
-      @_uncatchDetachEventOn @_data[i] for i in [rf..rt] by 1
       res = @_data.splice index, size
+      if op.removed
+        [rf, rt] = op.removed
+        @_uncatchDetachEventOn @_data[i] for i in [rf..rt] by 1
 
     @_update()
     res
@@ -171,7 +170,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
     @_recordOperation
       locally: true
       method: 'swap'
-      args: [i, j]
+      swap: [i, j]
 
     @_archiveCurrentData()
 
@@ -185,7 +184,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
   removeAt: (index) ->
     @splice index, 1
 
-  insertAt: (index, elements) ->
+  insertAt: (index, elements...) ->
     @splice index, -1, elements...
 
 
@@ -304,15 +303,15 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       if op.removed
         [rf, rt] = op.removed
 
-        handlers.insertAt rf, @_data[i] for i in [rf..rt] by 1
+        handlers.removeAt rf for i in [rf..rt] by 1
 
       if op.added
         [af, at] = op.added
 
-        handlers.removeAt i - rf for i in [af..at] by 1
+        handlers.insertAt i, @_data[i] for i in [af..at] by 1
 
-      if 'swap' == op.method
-        handlers.swap op.args...
+      if op.swap
+        handlers.swap op.swap...
     else
       prev = [@_prev...]
       len = prev.length

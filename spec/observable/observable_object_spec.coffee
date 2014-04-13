@@ -222,7 +222,7 @@ describe 'Leaf.ObservableObject', ->
       @callback = jasmine.createSpy 'observer'
 
 
-    describe '#clone', ->
+    describe '#clone()', ->
 
       beforeEach ->
         @clone = @obo.clone()
@@ -236,7 +236,7 @@ describe 'Leaf.ObservableObject', ->
         expect(@clone.nested.prop1).toBe @obo.nested.prop1
 
 
-    describe '#syncedClone', ->
+    describe '#syncedClone()', ->
 
       beforeEach ->
         @clone = @obo.syncedClone()

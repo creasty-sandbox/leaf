@@ -190,14 +190,14 @@ describe 'Leaf.ObservableArray', ->
     describe '#insertAt(index, elements)', ->
 
       it 'should remove the element at index', ->
-        @oba.insertAt 1, [99]
+        @oba.insertAt 1, 99
 
         expect(@oba.toArray()).toHaveContents [1, 99, 2, 3]
 
       it 'should call registered observers', ->
         @oba.observe @callback
 
-        @oba.insertAt 1, [99]
+        @oba.insertAt 1, 99
 
         expect(@callback).toHaveBeenCalled()
 
@@ -304,4 +304,36 @@ describe 'Leaf.ObservableArray', ->
 
       expect(ary.length).toBe 2
       expect(ary.toArray()).toHaveContents [1, 2]
+
+
+  describe '#sync(handler)', ->
+
+    it 'should sync mutations by handler', ->
+      ary1 = new Leaf.ObservableArray()
+      ary2 = new Leaf.ObservableArray()
+
+      handler =
+        insertAt: (i, element) ->
+          ary2.insertAt i, element * 2
+        removeAt: (i) ->
+          ary2.removeAt i
+        swap: (i, j) ->
+          ary2.swap i, j
+
+      ary1.observe (e) -> ary1.sync handler
+
+      ary1.push 1
+
+      expect(ary1.toArray()).toHaveContents [1]
+      expect(ary2.toArray()).toHaveContents [2]
+
+      ary1.insertAt 1, 2, 3
+
+      expect(ary1.toArray()).toHaveContents [1, 2, 3]
+      expect(ary2.toArray()).toHaveContents [2, 4, 6]
+
+      ary1.pop()
+
+      expect(ary1.toArray()).toHaveContents [1, 2]
+      expect(ary2.toArray()).toHaveContents [2, 4]
 

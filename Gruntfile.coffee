@@ -34,11 +34,11 @@ FILES =
   ]
   observable: [
     'affected_keypath_tracker.coffee'
-    'expression_compiler.coffee'
     'observable.coffee'
     'observable_base.coffee'
     'observable_object.coffee'
     'observable_array.coffee'
+    'expression_compiler.coffee'
   ]
   template: [
     'template.coffee'
@@ -51,8 +51,8 @@ FILES =
     'object.coffee'
   ]
   view: [
-    'view_array.coffee'
     'view.coffee'
+    'view_array.coffee'
     'conditional_view.coffee'
     'iterator_view.coffee'
     'component.coffee'

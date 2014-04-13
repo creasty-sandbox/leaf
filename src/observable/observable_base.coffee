@@ -22,7 +22,15 @@ class Leaf.ObservableBase extends Leaf.Class
 
   setData: (data, accessor) ->
 
-  _keypathFrom: (path...) -> _.compact(path).join '.'
+  regulateKeypath: (keypath) ->
+    return '' unless keypath?
+
+    String(keypath)
+    .replace(/^this\.?/, '')
+    .replace(/\[(\d+)\]/g, '.$1')
+
+  _buildKeypath: (paths...) -> _.compact(paths).join '.'
+
 
   #  Propagation
   #-----------------------------------------------
@@ -35,13 +43,13 @@ class Leaf.ObservableBase extends Leaf.Class
 
     general = (e, args...) =>
       e = e.clone()
-      e.keypath = @_keypathFrom key, e.keypath
+      e.keypath = @_buildKeypath key, e.keypath
       e.propagated = true
       e.propagatedKeypath = e.keypath.split('.')[0...-1].join '.'
       @trigger e, args...
 
     detach = (e) =>
-      @unset @_keypathFrom(key, e.keypath)
+      @unset @_buildKeypath(key, e.keypath)
 
     handler = @_propagateHandlers[key] = { general, detach }
 
@@ -89,9 +97,7 @@ class Leaf.ObservableBase extends Leaf.Class
   #  Getter
   #-----------------------------------------------
   getTerminalObjectForKeypath: (keypath, withoutDelegation) ->
-    keypath = String(keypath)
-      .replace(/^this\.?/, '')
-      .replace(/\[(\d+)\]/g, '.$1')
+    keypath = @regulateKeypath keypath
 
     path = keypath.split '.'
     len = path.length
@@ -251,8 +257,10 @@ class Leaf.ObservableBase extends Leaf.Class
       's?f': 'keypath callback'
     , arguments
 
+    keypath = @regulateKeypath keypath
+
     _callback = callback
-    callback = _.bindContext callback, @, 'observer', (e) =>
+    callback = _.bindContext callback, @, "observer:#{keypath}", (e) =>
       if !@_inBatch && (
         !keypath \
         || e.keypath == keypath \
@@ -268,7 +276,10 @@ class Leaf.ObservableBase extends Leaf.Class
       's?f': 'keypath callback'
     , arguments
 
-    callback = _.bindContext callback, @, 'observer' if keypath
+    keypath = @regulateKeypath keypath
+
+    callback = _.bindContext callback, @, "observer:#{keypath}"
+
     @off 'set', callback
     @off 'update', callback
 

@@ -29,14 +29,20 @@ JS_NON_VARIABLE_REGEXP = ///
   )
 ///g
 
-JS_VARIABLE_REGEXP = /\b[a-z]\w*/g
+JS_VARIABLE_REGEXP            = /\b[a-z]\w*/g
+JS_STRING_LITERAL_DELIMITER_1 = '"'
+JS_STRING_LITERAL_DELIMITER_2 = "'"
+JS_REGEXP_LITERAL_DELIMITER   = '/'
+JS_REGEXP_LITERAL_FLAGS       = /[gimy]/
+JS_CONTEXT_BORDERS            = /[{(\[\-+=!&|:;,?]/
 
 
 class Leaf.ExpressionCompiler
 
   _scopedExpressionCache = {}
 
-  constructor: (@obj, @self) ->
+  constructor: (@obj, @scope) ->
+    @_localVar = 'self'
     @_evaluators = {}
     @_dependents = {}
 
@@ -49,17 +55,35 @@ class Leaf.ExpressionCompiler
     buf = ''
     i = 0
     len = expr.length
+    prev = ''
 
     # strip string and regexp literal
     while i < len
       buf += (c = expr[i])
 
-      if '\'' == c || '"' == c || '/' == c
+      if (
+        JS_STRING_LITERAL_DELIMITER_1 == c \
+        || JS_STRING_LITERAL_DELIMITER_2 == c \
+        || (
+          JS_REGEXP_LITERAL_DELIMITER == c \
+          && prev.match JS_CONTEXT_BORDERS # slash as division
+        )
+      )
         idx = i + 1
+
         true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
-        buf += Array(idx - i).join c
-        return '' if (i = idx) == -1 # unbalance: expression has syntax error
+
+        if idx == -1 # unbalance: expression has syntax error
+          return expr
+        else
+          if JS_REGEXP_LITERAL_DELIMITER == c
+            # strip flags
+            true while expr[idx++].match JS_REGEXP_LITERAL_FLAGS
+
+          buf += Array(idx - i).join c
+          i = idx
       else
+        prev = c unless c.match /\s/
         i++
 
     # expression that only contains local variables
@@ -79,13 +103,13 @@ class Leaf.ExpressionCompiler
     expr = expr.split ''
 
     i = varsAt.length
-    expr.splice varsAt[i], -1, 'self.' while i--
+    expr.splice varsAt[i], -1, "#{@_localVar}." while i--
 
     _scopedExpressionCache[expr] = expr.join ''
 
   makeGetter: (expr, orgExpr) ->
     try
-      new Function 'self', "return (#{expr})"
+      new Function @_localVar, "return (#{expr})"
     catch e
       Leaf.warn 'Syntax error:', orgExpr
       (->)
@@ -97,36 +121,42 @@ class Leaf.ExpressionCompiler
 
     evaluator = =>
       try
-        getter.call @obj, @self
+        getter.call @obj, @scope
       catch e
         Leaf.warn 'Invalid expression:', expr
         ''
 
     @_evaluators[expr] = evaluator
 
-  createBinder: (expr, bind) ->
+  bind: (expr, routine) ->
     evaluator = @getEvaluator expr
 
-    tracker = new Leaf.AffectedKeypathTracker @obj, 'get' unless @_dependents[expr]
+    unless @_dependents[expr]
+      tracker = new Leaf.AffectedKeypathTracker @obj, 'get'
+      trackerOnScope = new Leaf.AffectedKeypathTracker @scope, 'get' if @scope
 
     res = evaluator()
 
-    if tracker
+    unless @_dependents[expr]
       dependents = tracker.getAffectedKeypaths()
-      @_dependents[key] = dependents
+      dependentsOnScope = trackerOnScope.getAffectedKeypaths() if @scope
+
+      @_dependents[expr] = { dependents, dependentsOnScope }
 
       _(dependents).forEach (dependent) =>
-        @obj.observe dependent, ->
-          bind evaluator()
+        @obj.observe dependent, -> routine evaluator()
 
-    bind res
+      if @scope
+        _(dependentsOnScope).forEach (dependent) =>
+          @scope.observe dependent, -> routine evaluator()
+
+    routine res
 
   evalObject: (pairs) ->
     obj = new Leaf.ObservableObject()
 
     _(pairs).forEach (expr, key) =>
-      @createBinder expr, (res) ->
-        obj.set key, res
+      @bind expr, (res) -> obj.set key, res
 
     obj
 

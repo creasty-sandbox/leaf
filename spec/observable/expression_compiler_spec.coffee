@@ -11,113 +11,96 @@ describe 'Leaf.ExpressionCompiler', ->
         abc: 789
       }
 
-    @compiler = new Leaf.ExpressionCompiler @obj
+    @scope = new Leaf.ObservableObject
+      foo: 888
+      bar: 999
+
+    @compiler = new Leaf.ExpressionCompiler @obj, @scope
 
 
-  describe '#getFunction(expr, vars)', ->
+  describe '#scopedExpression(expr)', ->
 
-    it 'should return a function that evaluate `expr` with arguments of `vars`', ->
-      fn = @binder.getFunction 'a + b', ['a', 'b']
+    it 'should replace local variables in the expression with scoped variables', ->
+      expr = 'this.foo + abc'
+      res  = 'this.foo + self.abc'
 
-      expect(_.isFunction(fn)).toBe true
+      expect(@compiler.scopedExpression expr).toEqual res
 
-    it 'should return noop function when `expr` has errors and fail creating function', ->
-      fn = @binder.getFunction '@@@', []
+    it 'should skip processing inside regular expression literals', ->
+      expr = 'a[1]/b/x/g + /x/g (/x/ g)'
+      res  = 'self.a[1]/self.b/self.x/self.g + /x/g (/x/ self.g)'
 
-      expect(fn).toBe _.noop
+      expect(@compiler.scopedExpression expr).toEqual res
 
+    it 'should skip processing inside string literals', ->
+      expr = 'a + "a \\" \' \\\' a" + \'a " \\" \\\' a\' + a'
+      res  = 'self.a + "a \\" \' \\\' a" + \'a " \\" \\\' a\' + self.a'
 
-  describe 'getEvaluator(fn, vars)', ->
-
-    it 'should return an evaluator function that call `fn` function with the values of the object', ->
-      expr = 'foo + 1'
-      vars = ['foo']
-
-      fn = @binder.getFunction expr, vars
-      evaluate = @binder.getEvaluator fn, vars
-
-      expect(_.isFunction(evaluate)).toBe true
+      expect(@compiler.scopedExpression expr).toEqual res
 
 
-    describe 'an evaluator function', ->
+  describe '#eval(expr)', ->
 
-      it 'should return the result of `expr`', ->
-        expr = 'foo + 1'
-        vars = ['foo']
+    it 'should return undefined if the expression has syntastic or runtime errors', ->
+      expr = '@@@'
 
-        fn = @binder.getFunction expr, vars
-        evaluate = @binder.getEvaluator fn, vars
+      expect(@compiler.eval expr).not.toBeDefined()
 
-        expect(evaluate()).toBe 124
+    it 'should return evaluated value of expression', ->
+      expr = 'this.foo + this.bars[0].bar / foo'
+      res  = @obj.foo + @obj.bars[0].bar / @scope.foo
 
-      it 'should return empty string if `expr` is invalid', ->
-          expr = 'foo.zoo()'
-          vars = ['foo']
-
-          fn = @binder.getFunction expr, vars
-          evaluate = @binder.getEvaluator fn, vars
-
-          expect(evaluate()).toBe ''
+      expect(@compiler.eval expr).toBe res
 
 
-  describe '#getBinder(value)', ->
+  describe '#bind(expr, routine)', ->
+
+    it 'should invoke a routine function immediately with the result', ->
+      result = null
+
+      @compiler.bind 'this.foo + 1', (r) -> result = r
+
+      expect(result).toBe @obj.foo + 1
+
+    it 'should invoke a routine function when the value of the object has been updated', ->
+      result = null
+
+      @compiler.bind 'this.foo + 1', (r) -> result = r
+
+      @obj.foo = 99
+
+      expect(result).toBe @obj.foo + 1
+
+
+  describe '#evalObject(pairs)', ->
 
     beforeEach ->
-      @values =
-        a: { expr: 'foo + 1', vars: ['foo'] }
-        b: { expr: 'bars[0].bar + 10', vars: ['bars'] }
-        c: { expr: 'baz.abc + 100', vars: ['baz'] }
+      obj =
+        a: 'this.foo + foo'
+        b: 'bar - this.baz.abc'
+
+      @obo = @compiler.evalObject obj
 
 
-    it 'should return a binder function that observes object for update', ->
-      bind = @binder.getBinder @values.a
+    it 'should create ObservableObject of binded expressions', ->
+      expect(@obo instanceof Leaf.ObservableObject).toBe true
+      expect(@obo.a).toBe @obj.foo + @scope.foo
+      expect(@obo.b).toBe @scope.bar - @obj.baz.abc
 
-      expect(_.isFunction(bind)).toBe true
+    it 'should call registered observer when dependents of the expressions has been updated', ->
+      observerA = jasmine.createSpy 'observer a'
+      observerB = jasmine.createSpy 'observer b'
 
+      @obo.observe 'a', observerA
+      @obo.observe 'b', observerB
 
-    describe 'a binder function', ->
+      @obj.foo = 99
 
-      it 'should invoke a routine function immediately with the result', ->
-        bind = @binder.getBinder @values.a
+      expect(observerA).toHaveBeenCalled()
+      expect(@obo.a).toBe @obj.foo + @scope.foo
 
-        result = null
-        bind (r) -> result = r
+      @scope.bar = 99
 
-        expect(result).toBe 124
-
-      it 'should be invoked when the value of the object has updated', ->
-        bind = @binder.getBinder @values.c
-
-        result = null
-        bind (r) -> result = r
-
-        @obj.baz.abc = 890
-
-        expect(result).toBe 990
-
-
-  describe '#getBindingValue(value)', ->
-
-    it 'should return a result value of expression', ->
-      value = expr: 'foo + 1', vars: ['foo']
-      result = @binder.getBindingValue value
-
-      expect(result).toBe 124
-
-
-  describe '#getBindingObject(values)', ->
-
-    it 'should return result object of values', ->
-      values =
-        a: { expr: 'foo + 1', vars: ['foo'] }
-        b: { expr: 'bars[0].bar + 10', vars: ['bars'] }
-        c: { expr: 'baz.abc + 100', vars: ['baz'] }
-
-      results = @binder.getBindingObject values
-
-      expect(results instanceof Leaf.ObservableObject).toBe true
-      expect(results.a).toBe 124
-      expect(results.b).toBe 466
-      expect(results.c).toBe 889
-
+      expect(observerB).toHaveBeenCalled()
+      expect(@obo.b).toBe @scope.bar - @obj.baz.abc
 
