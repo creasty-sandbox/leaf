@@ -51,29 +51,31 @@ class ComponentView
 
   @structure: true
 
-  @create: (node, $marker, $parent, obj) ->
-    tree = Leaf.Component.get node.name
+  @create: (viewData) ->
+    tree = Leaf.Component.get viewData.node.name
 
     unless tree
-      throw new UndefinedComponentTagError "<#{node.name}>"
-
-    binder = new Leaf.Template.Binder obj
-    bindingObj = binder.getBindingObject node.localeBindings
+      throw new UndefinedComponentTagError "<#{viewData.node.name}>"
 
     klass =
       if Leaf.hasApp()
-        Leaf.getComponentClassFor node.name
+        Leaf.getComponentClassFor viewData.node.name
       else
         Leaf.View
 
     unless klass
-      throw new ComponentClassNotFoundError node.name
+      throw new ComponentClassNotFoundError viewData.node.name
+
+    compiler = new Leaf.ExpressionCompiler viewData.controller, viewData.scope
+    scope = compiler.evalObject viewData.node.localeBindings
 
     view = new klass
       tree: tree
-      obj: bindingObj
+      controller: viewData.controller
+      scope: scope
 
-    view.render $marker
+    view.$view.insertAfter viewData.$marker
+    view.render()
 
 
 #  Component def tag
@@ -82,15 +84,12 @@ Leaf.Template.registerTag 'component',
   structure: true
 
   open: (node, parent) ->
-    { name } = node.localeBindings
+    { name } = node.attrs
 
     unless name
       throw new NoNameAttributeWithComponentTagError()
 
-    unless name.raw
-      throw new ComponentNameMustBeConstantError()
-
-    Leaf.Component.register name.rawValue, node
+    Leaf.Component.register name, node
 
 
 Leaf.Template.registerTag 'component:poly',
@@ -100,10 +99,8 @@ Leaf.Template.registerTag 'component:poly',
     unless node.localeBindings.poly
       throw new NoPolyBindingWithPolymorphicComponentTagError()
 
-  create: (node, $marker, $parent, obj) ->
-    binder = new Leaf.Template.Binder obj
-    poly = binder.getBindingValue node.localeBindings.poly
-
-    node.name = "component:#{Leaf.Component.regulateName poly}"
-    ComponentView.create node, $marker, $parent, obj
+  create: (viewData) ->
+    poly = viewData.scope.get 'poly'
+    viewData.node.name = "component:#{Leaf.Component.regulateName poly}"
+    ComponentView.create viewData
 

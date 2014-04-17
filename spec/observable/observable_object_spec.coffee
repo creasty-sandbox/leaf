@@ -1,5 +1,5 @@
 
-describe 'Leaf.ObservableObject', ->
+describe 'new Leaf.ObservableObject(data = {})', ->
 
   beforeEach ->
     @obo = new Leaf.ObservableObject

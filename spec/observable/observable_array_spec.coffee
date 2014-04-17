@@ -1,5 +1,5 @@
 
-describe 'Leaf.ObservableArray', ->
+describe 'new Leaf.ObservableArray(data = [])', ->
 
   beforeEach ->
     @oba = new Leaf.ObservableArray [1, 2, 3]
@@ -58,25 +58,6 @@ describe 'Leaf.ObservableArray', ->
         expect(@callback).toHaveBeenCalled()
 
 
-    describe '#shift()', ->
-      it 'should remove the last element from an array', ->
-        @oba.shift()
-
-        expect(@oba.toArray()).toHaveContents [2, 3]
-
-      it 'should return the element that is removed', ->
-        el = @oba.shift()
-
-        expect(el).toBe 1
-
-      it 'should call registered observers', ->
-        @oba.observe @callback
-
-        @oba.shift()
-
-        expect(@callback).toHaveBeenCalled()
-
-
     describe '#unshift(elements...)', ->
 
       it 'should add one or more elements to the front of an array', ->
@@ -100,6 +81,26 @@ describe 'Leaf.ObservableArray', ->
         @oba.observe @callback
 
         @oba.unshift 0
+
+        expect(@callback).toHaveBeenCalled()
+
+
+    describe '#shift()', ->
+
+      it 'should remove the first element from an array', ->
+        @oba.shift()
+
+        expect(@oba.toArray()).toHaveContents [2, 3]
+
+      it 'should return the element that is removed', ->
+        el = @oba.shift()
+
+        expect(el).toBe 1
+
+      it 'should call registered observers', ->
+        @oba.observe @callback
+
+        @oba.shift()
 
         expect(@callback).toHaveBeenCalled()
 
@@ -189,7 +190,7 @@ describe 'Leaf.ObservableArray', ->
 
     describe '#insertAt(index, elements)', ->
 
-      it 'should remove the element at index', ->
+      it 'should insert the element at index', ->
         @oba.insertAt 1, 99
 
         expect(@oba.toArray()).toHaveContents [1, 99, 2, 3]

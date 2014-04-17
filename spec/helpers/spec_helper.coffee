@@ -24,16 +24,5 @@ customMatchers =
 beforeEach ->
   Leaf.develop = true
 
-  flag = false
-  spy = (name) -> jasmine.createSpy(name).and.callFake -> flag = true
-
-  @done = spy 'Async done'
-  @fail = spy 'Async fail'
-  @stop = spy 'Async stop'
-
-  @async = (fn) ->
-    waitsFor -> flag
-    runs fn
-
   jasmine.addMatchers customMatchers
 

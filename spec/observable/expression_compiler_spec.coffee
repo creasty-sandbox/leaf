@@ -1,5 +1,5 @@
 
-describe 'Leaf.ExpressionCompiler', ->
+describe 'new Leaf.ExpressionCompiler(obj [, scope])', ->
 
   beforeEach ->
     @obj = new Leaf.ObservableObject

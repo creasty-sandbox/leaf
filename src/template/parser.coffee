@@ -205,10 +205,8 @@ class Leaf.Template.Parser
           node.localeBindings[key] = val
       else if '@' == binding
         node.actions[key] = val
-      else if !node.customTag && isNormalAttr(node.name, key)
+      else# if !node.customTag && isNormalAttr(node.name, key)
         node.attrs[key] = val
-      else
-        node.localeBindings[key] = raw: true, rawValue: val
 
     ATTR_REGEXP.lastIndex = 0
 
@@ -225,7 +223,7 @@ class Leaf.Template.Parser
     node.contents = []
     node.context = {}
     node.name = token.name
-    node.customTag = !node.name.match HTML5_TAGS
+    node.customTag = !!customTags.def[node.name]
     @parseTagAttrs node, token.attrPart
     node
 

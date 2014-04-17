@@ -17,18 +17,3 @@ class Leaf.Cacheable extends Leaf.Identifiable
 
   clearCache: (key) -> @_cache.clear key
 
-  @findOrCreate: (id, factory = null) ->
-    cache = new Leaf.Cache @cacheGroup
-
-    if (obj = cache.get id)
-      obj
-    else
-      obj =
-        if _.isFunction factory
-          factory @
-        else
-          new @()
-
-      cache.set id, obj
-      obj
-

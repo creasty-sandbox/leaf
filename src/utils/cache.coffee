@@ -19,3 +19,22 @@ class Leaf.Cache
     storage[@namespace] = null
     @storage = null
 
+  @findOrCreate: ->
+    { id, group, factory } = _.polymorphic
+      '.s?f?': 'id group factory'
+    , arguments
+
+    cache = new Leaf.Cache group
+
+    if (obj = cache.get id)
+      obj
+    else
+      obj =
+        if _.isFunction factory
+          factory @
+        else
+          new @()
+
+      cache.set id, obj
+      obj
+

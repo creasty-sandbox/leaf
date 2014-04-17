@@ -1,5 +1,5 @@
 
-describe 'Leaf.AffectedKeypathTracker', ->
+describe 'new Leaf.AffectedKeypathTracker(obj, event)', ->
 
   beforeEach ->
     @obj = new Leaf.ObservableObject

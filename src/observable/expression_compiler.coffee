@@ -152,11 +152,12 @@ class Leaf.ExpressionCompiler
 
     routine res
 
-  evalObject: (pairs) ->
-    obj = new Leaf.ObservableObject()
+  evalObject: (pairs, obj) ->
+    obj ?= new Leaf.ObservableObject()
 
     _(pairs).forEach (expr, key) =>
-      @bind expr, (res) -> obj.set key, res
+      return unless expr?
+      @bind expr, (res) -> obj.set key, res, withoutDelegation: true
 
     obj
 

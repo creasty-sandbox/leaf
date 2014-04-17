@@ -1,16 +1,5 @@
 
-describe 'Leaf.View', ->
-
-  it 'should be defined', ->
-    expect(Leaf.View).toBeDefined()
-
-  it 'should create instance', ->
-    view = new Leaf.View()
-    expect(view).not.toBeNull()
-    expect(view.constructor).toBe Leaf.View
-
-
-describe 'view', ->
+describe 'new Leaf.View()', ->
 
   class TestView extends Leaf.View
 
@@ -44,7 +33,7 @@ describe 'view', ->
     '''
     @$el.appendTo $ 'body'
 
-    @view = new TestView @$el
+    @view = new TestView element: @$el
 
   afterEach ->
     @view.destroy()

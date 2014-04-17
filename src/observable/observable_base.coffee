@@ -287,11 +287,14 @@ class Leaf.ObservableBase extends Leaf.Class
   #  Clone
   #-----------------------------------------------
   clone: ->
-    new @constructor @_data
+    o = new @constructor @_data
+    o.set key, @_get(key) for own key of @_delegates when obj
+    o
 
   syncedClone: ->
     o = new @constructor()
     o.delegate key, @ for own key of @_data
+    o.delegate key, obj.obj for own key, obj of @_delegates when obj
     o
 
 

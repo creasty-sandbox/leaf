@@ -10,37 +10,31 @@ class Leaf.View extends Leaf.Object
   @setLeafClass()
 
   @parse: (buffer) ->
-    psr = new Leaf.Template.Parser()
-    psr.init buffer
+    psr = new Leaf.Template.Parser buffer
     tree = psr.getTree()
 
-    (obj) ->
-      gen = new Leaf.Template.DOMGenerator()
-      gen.init tree, obj
+    (controller, scope) ->
+      gen = new Leaf.Template.DOMGenerator tree, controller, scope
       gen.getDOM()
 
-  initialize: (elementOrTree, data = {}) ->
+  initialize: (@viewData = {}) ->
     @inherit 'elements'
     @inherit 'events'
 
     @$body = $ 'body'
 
-    fromTree = _.isPlainObject(elementOrTree) && elementOrTree.tree
+    @controller = @viewData.controller
+    @scope = @viewData.scope
 
-    if fromTree
-      @$view = @_elementFromParseTree elementOrTree
-      @$view.data 'leaf-locale', elementOrTree.obj
-    else
-      @$view = elementOrTree ? $('<div/>')
+    @$view =
+      if @viewData.tree
+        @_elementFromParseTree @viewData.tree
+      else
+        @viewData.element ? $('<div/>')
+
+    @$view.attr 'data-leaf-id', @_leafID
 
     @$view.data 'view', @
-    @$view.attr "data-leaf-id", @_leafID
-    @$view.data 'leaf-view-data', data
-
-    @locale = @$view.data 'leaf-locale'
-    @data = @$view.data 'leaf-view-data'
-
-    @setCache elementOrTree.id, @ if fromTree && elementOrTree.id
 
     p = @constructor
 
@@ -62,9 +56,8 @@ class Leaf.View extends Leaf.Object
       )
         @$view.on method, => callback.apply @, arguments
 
-  _elementFromParseTree: ({ tree, obj }) ->
-    gen = new Leaf.Template.DOMGenerator()
-    gen.init _.cloneDeep(tree), obj
+  _elementFromParseTree: (tree) ->
+    gen = new Leaf.Template.DOMGenerator _.cloneDeep(tree), @controller, @scope
     gen.getDOM()
 
   setup: ->
@@ -143,8 +136,7 @@ class Leaf.View extends Leaf.Object
   send: ->
     # TODO
 
-  render: ($marker) ->
-    @$view.insertBefore $marker
+  render: ->
 
   detach: ->
     @$view.detach()
