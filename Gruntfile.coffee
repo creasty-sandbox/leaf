@@ -13,18 +13,21 @@ FILES =
   ]
   utils: [
     'lodash/*.coffee'
+    'util.coffee'
     'class.coffee'
     'error.coffee'
-    'event.coffee'
-    'event_emitter.coffee'
     'cache.coffee'
     'inflector.coffee'
-    'array_diff_patch.coffee'
     'identifiable.coffee'
     'cacheable.coffee'
     'accessible.coffee'
     'hookable.coffee'
-    'object.coffee'
+    'array_diff_patch.coffee'
+    'remove_js_literals.coffee'
+  ]
+  event: [
+    'event.coffee'
+    'event_emitter.coffee'
   ]
   support: [
     'support.coffee'
@@ -81,21 +84,25 @@ FILE_DEPENDENCIES =
   support: [
     'headers'
     'utils'
+    'event'
   ]
   observable: [
     'headers'
     'utils'
+    'event'
     'support'
   ]
   template: [
     'headers'
     'utils'
+    'event'
     'support'
     'observable'
   ]
   view: [
     'headers'
     'utils'
+    'event'
     'support'
     'observable'
     'template'
@@ -104,6 +111,7 @@ FILE_DEPENDENCIES =
   framework: [
     'headers'
     'utils'
+    'event'
     'support'
     'observable'
     'template'

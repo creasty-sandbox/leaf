@@ -23,7 +23,8 @@ describe 'new Leaf.ViewArray($head)', ->
       v2 = createItemView 2
       v3 = createItemView 3
 
-      @viewArray.push v1, v2, v3
+      @viewArray.push v1, v2
+      @viewArray.push v3
 
       expect(@viewArray._views).toHaveContents [v1, v2, v3]
 
@@ -107,6 +108,7 @@ describe 'new Leaf.ViewArray($head)', ->
 
       expect(len).toBe @viewArray.size()
 
+
   describe '#shift()', ->
 
     it 'should remove the first element from the view array', ->
@@ -161,6 +163,7 @@ describe 'new Leaf.ViewArray($head)', ->
       expect($items.eq(2)).toEqual '.item-4'
       expect($items.eq(3)).toEqual '.item-2'
 
+
   describe '#removeAt(index)', ->
 
     it 'should remove the view at index', ->
@@ -180,6 +183,7 @@ describe 'new Leaf.ViewArray($head)', ->
       expect($items.eq(0)).toEqual '.item-1'
       expect($items.eq(1)).toEqual '.item-3'
       expect($items).not.toContainElement '.item-2'
+
 
   describe '#swap(i, j)', ->
 

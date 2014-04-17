@@ -10,7 +10,7 @@ class Leaf.ViewArray
     for view in views
       $last =
         if len
-          @_views[len - 1].$view.eq 0
+          @_views[len - 1].$view.last()
         else
           @$head
 
@@ -43,9 +43,9 @@ class Leaf.ViewArray
     len = @_views.length
 
     if index <= 0
-      @unshift view...
+      @unshift views...
     else if index >= len
-      @push view...
+      @push views...
     else
       for view in views
         view.$view.insertBefore @_views[index].$view.eq 0
@@ -72,7 +72,7 @@ class Leaf.ViewArray
       if i == 0
         @$head
       else
-        @_views[i - 1].$view.eq 0
+        @_views[i - 1].$view.last()
 
     vj.$view.insertAfter $vi
 

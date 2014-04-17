@@ -13,6 +13,7 @@ class NonIteratableObjectError extends Leaf.Error
 class IteratorView
 
   COLLECTION_BINDING = '$collection'
+  INDEX_BINDING      = '$index'
 
   @structure: true
 
@@ -59,7 +60,12 @@ class IteratorView
       { iterator } = @viewData.node
       scope = @viewData.scope.syncedClone()
       scope.set iterator, item, withoutDelegation: true
-      scope.set "$#{iterator}Index", 0
+
+      do updateIndex = =>
+        idx = @collection.indexOf item
+        scope.set INDEX_BINDING, idx, withoutDelegation: true
+
+      @collection.observe updateIndex
 
       new Leaf.View
         tree:       @viewData.node.contents

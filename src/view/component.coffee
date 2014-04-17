@@ -57,14 +57,12 @@ class ComponentView
     unless tree
       throw new UndefinedComponentTagError "<#{viewData.node.name}>"
 
-    klass =
-      if Leaf.hasApp()
-        Leaf.getComponentClassFor viewData.node.name
-      else
-        Leaf.View
+    klass = Leaf.getComponentClassFor viewData.node.name if Leaf.hasApp()
 
     unless klass
-      throw new ComponentClassNotFoundError viewData.node.name
+      Leaf.warn "Undefined view class for <#{viewData.node.name}>"
+
+    klass ?= Leaf.View
 
     compiler = new Leaf.ExpressionCompiler viewData.controller, viewData.scope
     scope = compiler.evalObject viewData.node.localeBindings

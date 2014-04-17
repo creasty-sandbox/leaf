@@ -14,27 +14,22 @@ JS_NON_VARIABLE_REGEXP = ///
   (?: # hash key literal
     ({|,)
     \s*
-    \w+\s*:
+    [$_a-z][$\w]*\s*:
   )
   |
   (?: # property access by dot notation
     \.
-    [a-z]\w*
-    (?:\.\w+)*
+    [$_a-z][$\w]*
+    (?:\.[$\w]+)*
     \b
   )
   |
   (?: # function call
-    \w+\s*\(
+    [$_a-z][$\w]*\s*\(
   )
 ///g
 
-JS_VARIABLE_REGEXP            = /\b[a-z]\w*/g
-JS_STRING_LITERAL_DELIMITER_1 = '"'
-JS_STRING_LITERAL_DELIMITER_2 = "'"
-JS_REGEXP_LITERAL_DELIMITER   = '/'
-JS_REGEXP_LITERAL_FLAGS       = /[gimy]/
-JS_CONTEXT_BORDERS            = /[{(\[\-+=!&|:;,?]/
+JS_VARIABLE_REGEXP = /([\b$]|\b[_a-z])[$\w]*/g
 
 
 class Leaf.ExpressionCompiler
@@ -42,7 +37,7 @@ class Leaf.ExpressionCompiler
   _scopedExpressionCache = {}
 
   constructor: (@obj, @scope) ->
-    @_localVar = 'self'
+    @_scopeVar = 'self'
     @_evaluators = {}
     @_dependents = {}
 
@@ -52,41 +47,8 @@ class Leaf.ExpressionCompiler
     return _scopedExpressionCache[expr] if _scopedExpressionCache[expr]
     _scopedExpressionCache[expr] = ''
 
-    buf = ''
-    i = 0
-    len = expr.length
-    prev = ''
-
-    # strip string and regexp literal
-    while i < len
-      buf += (c = expr[i])
-
-      if (
-        JS_STRING_LITERAL_DELIMITER_1 == c \
-        || JS_STRING_LITERAL_DELIMITER_2 == c \
-        || (
-          JS_REGEXP_LITERAL_DELIMITER == c \
-          && prev.match JS_CONTEXT_BORDERS # slash as division
-        )
-      )
-        idx = i + 1
-
-        true while ~(idx = expr.indexOf(c, idx)) && '\\' == expr[idx++ - 1]
-
-        if idx == -1 # unbalance: expression has syntax error
-          return expr
-        else
-          if JS_REGEXP_LITERAL_DELIMITER == c
-            # strip flags
-            true while expr[idx++].match JS_REGEXP_LITERAL_FLAGS
-
-          buf += Array(idx - i).join c
-          i = idx
-      else
-        prev = c unless c.match /\s/
-        i++
-
     # expression that only contains local variables
+    buf = Leaf.Util.removeJsLiterals expr
     vars = buf.replace JS_NON_VARIABLE_REGEXP, (str) -> Array(str.length + 1).join '#'
 
     # gather indexes of local variables
@@ -103,13 +65,13 @@ class Leaf.ExpressionCompiler
     expr = expr.split ''
 
     i = varsAt.length
-    expr.splice varsAt[i], -1, "#{@_localVar}." while i--
+    expr.splice varsAt[i], -1, "#{@_scopeVar}." while i--
 
     _scopedExpressionCache[expr] = expr.join ''
 
   makeGetter: (expr, orgExpr) ->
     try
-      new Function @_localVar, "return (#{expr})"
+      new Function @_scopeVar, "return (#{expr})"
     catch e
       Leaf.warn 'Syntax error:', orgExpr
       (->)

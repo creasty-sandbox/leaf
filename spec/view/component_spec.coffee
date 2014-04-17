@@ -106,15 +106,6 @@ describe 'Component views', ->
         ]
 
 
-    it 'should throw an exception if component is not defined', ->
-      buffer = '''
-        <component:zzz>
-      '''
-
-      ctx = => Leaf.View.parse(buffer)(@obj)
-
-      expect(ctx).toThrow()
-
     it 'should append contents of a defined component', ->
       bufferDefComponent = '''
         <component name="foo">

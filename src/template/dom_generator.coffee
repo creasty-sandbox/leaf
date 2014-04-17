@@ -67,11 +67,8 @@ class Leaf.Template.DOMGenerator
     null
 
   createMarker: (node, closing) ->
-    if Leaf.develop
-      if node.type == T_INTERPOLATION
-        $ doc.createComment "exp = #{node.value}"
-      else
-        $ doc.createComment "<#{(if closing then '/' else '')}#{node.name}:#{node._nodeID}>"
+    if node && Leaf.develop
+      $ doc.createComment "<#{(if closing then '/' else '')}#{node.name}:#{node._nodeID}>"
     else
       $ doc.createTextNode ''
 
@@ -137,7 +134,7 @@ class Leaf.Template.DOMGenerator
     $text.appendTo $parent
 
   createInterpolationNode: (node, $parent) ->
-    $marker = @createMarker node
+    $marker = @createMarker()
     $marker.appendTo $parent
 
     if node.escape
