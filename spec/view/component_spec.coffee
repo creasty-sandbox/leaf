@@ -84,8 +84,7 @@ describe 'Component views', ->
 
       dom = Leaf.View.parse(buffer)(@obj)
 
-      # expect(dom).toBeEmpty() # this will fail because of a marker node
-      expect(dom).toHaveText ''
+      expect(dom).toBeEmpty()
 
     it 'should define component by the name of name attribute', ->
       buffer = '''
@@ -97,7 +96,7 @@ describe 'Component views', ->
       expect(Leaf.Component.components['foo']).toBeDefined()
 
 
-  describe '<component:foo>', ->
+  describe '<foo>', ->
 
     beforeEach ->
       @obj = new Leaf.ObservableObject
@@ -118,7 +117,7 @@ describe 'Component views', ->
 
       buffer = '''
         <div>
-          <component:foo>
+          <foo>
         </div>
       '''
 
@@ -137,7 +136,7 @@ describe 'Component views', ->
 
       buffer = '''
         <div>
-          <component:foo $user="this.users[0]">
+          <foo $user="this.users[0]">
         </div>
       '''
 

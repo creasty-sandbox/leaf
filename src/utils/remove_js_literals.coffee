@@ -6,10 +6,9 @@ JS_REGEXP_LITERAL_FLAGS       = /[gimy]/
 JS_CONTEXT_BORDERS            = /[{(\[\-+=!&|:;,?]/
 
 
-Leaf.Util.removeJsLiterals = (js) ->
+Leaf.Util.removeJsLiterals = (js, i = 0, callback) ->
   return '' unless js
 
-  i = 0
   len = js.length
 
   buf = ''
@@ -47,6 +46,9 @@ Leaf.Util.removeJsLiterals = (js) ->
       buf += c
       prev = c unless c.match /\s/
       ++i
+
+      if callback?
+        break unless callback c, i
 
   buf
 

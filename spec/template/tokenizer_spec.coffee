@@ -104,38 +104,44 @@ describe 'new Leaf.Template.Tokenizer(buffer)', ->
       token = type: T_NONE
       expect(@tk.getTag('')).toHaveContents token
 
-    it 'should return T_TAG_OPEN token for opening tags', ->
+    it 'should return T_TAG token for opening tags', ->
       buffer = 'text <div id="foo">'
       token =
-        type: T_TAG_OPEN
+        type: T_TAG
         buffer: '<div id="foo">'
         attrPart: ' id="foo"'
+        closing: false
+        selfClosing: false
         name: 'div'
         index: 5
         length: 14
 
       expect(@tk.getTag(buffer)).toHaveContents token
 
-    it 'should return T_TAG_CLOSE token for closing tag', ->
+    it 'should return T_TAG token for closing tag', ->
       buffer = 'text</div>'
       token =
-        type: T_TAG_CLOSE
+        type: T_TAG
         buffer: '</div>'
         name: 'div'
+        closing: true
+        selfClosing: false
         index: 4
         length: 6
 
       expect(@tk.getTag(buffer)).toHaveContents token
 
-    it 'should return T_TAG_SELF token for self closing tag', ->
-      buffer = 'text <img src="img.gif">'
+    it 'should return T_TAG token for self closing tag', ->
+      buffer = 'text <img src="img.gif" />'
       token =
-        type: T_TAG_SELF
-        buffer: '<img src="img.gif">'
-        attrPart: ' src="img.gif"'
+        type: T_TAG
+        buffer: '<img src="img.gif" />'
         name: 'img'
+        attrPart: ' src="img.gif"'
+        closing: false
+        selfClosing: true
         index: 5
-        length: 19
+        length: 21
 
       expect(@tk.getTag(buffer)).toHaveContents token
 
@@ -159,10 +165,12 @@ describe 'new Leaf.Template.Tokenizer(buffer)', ->
 
       tokens = [
         {
-          type: T_TAG_OPEN
+          type: T_TAG
           buffer: '<div id="foo" class="bar">'
           attrPart: ' id="foo" class="bar"'
           name: 'div'
+          closing: false
+          selfClosing: false
           index: 0
           length: 26
         }
@@ -173,10 +181,12 @@ describe 'new Leaf.Template.Tokenizer(buffer)', ->
           length: 10
         }
         {
-          type: T_TAG_OPEN
+          type: T_TAG
           buffer: '<i>'
           attrPart: ''
           name: 'i'
+          closing: false
+          selfClosing: false
           index: 10
           length: 3
         }
@@ -187,9 +197,11 @@ describe 'new Leaf.Template.Tokenizer(buffer)', ->
           length: 5
         }
         {
-          type: T_TAG_CLOSE
+          type: T_TAG
           buffer: '</i>'
           name: 'i'
+          closing: true
+          selfClosing: false
           index: 5
           length: 4
         }
@@ -200,17 +212,21 @@ describe 'new Leaf.Template.Tokenizer(buffer)', ->
           length: 5
         }
         {
-          type: T_TAG_SELF
+          type: T_TAG
           buffer: '<img src="img.gif">'
-          attrPart: ' src="img.gif"'
           name: 'img'
+          attrPart: ' src="img.gif"'
+          closing: false
+          selfClosing: false
           index: 5
           length: 19
         }
         {
-          type: T_TAG_CLOSE
+          type: T_TAG
           buffer: '</div>'
           name: 'div'
+          closing: true
+          selfClosing: false
           index: 0
           length: 6
         }
@@ -219,5 +235,4 @@ describe 'new Leaf.Template.Tokenizer(buffer)', ->
       tk = getTokenizer html
 
       expect(tk.getToken()).toHaveContents token for token in tokens
-
 

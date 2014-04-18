@@ -48,31 +48,19 @@ describe 'new Leaf.Template.Parser(buffer)', ->
 
     it 'should create hash object for each attributes, bindings and actions', ->
       node = {}
-      @psr.parseTagAttrs node, 'id="foo" $class="bar" $my="baz" @click="alert"', ''
+      @psr.parseTagAttrs node, 'id="foo" class="bar-{{bar}}" $my="baz" @click="alert"', ''
 
       token =
-        attrs: { 'id': 'foo' }
+        attrs:
+          'id': 'foo'
         attrBindings:
-          'class': 'bar'
+          'class': 'bar-{{bar}}'
         localeBindings:
           'my': 'baz'
         actions:
           'click': 'alert'
 
       expect(node).toHaveContents token
-
-    it 'should treat attr as a locale binding if its name is not vaild for tag', ->
-      n1 = name: 'a'
-      @psr.parseTagAttrs n1, '$href="link"'
-
-      expect(n1.attrBindings).toBeDefined()
-      expect(n1.attrBindings.href).toBeDefined()
-
-      n2 = name: 'div'
-      @psr.parseTagAttrs n2, '$href="link"'
-
-      expect(n2.localeBindings).toBeDefined()
-      expect(n2.localeBindings.href).toBeDefined()
 
 
   describe '#parseNode(parents, token)', ->
@@ -120,7 +108,9 @@ describe 'new Leaf.Template.Parser(buffer)', ->
 
     it 'should should append self-closing tag nodes to their parent', ->
       token =
-        type: T_TAG_SELF
+        type: T_TAG
+        closing: false
+        selfClosing: false
         buffer: '<img src="sample.gif">'
         attrPart: ' src="sample.gif"'
         name: 'img'
@@ -130,8 +120,9 @@ describe 'new Leaf.Template.Parser(buffer)', ->
       @psr.parseNode @psr.parents, token
 
       node =
-        type: T_TAG_SELF
+        type: T_TAG
         customTag: false
+        selfClosing: true
         contents: []
         context: {}
         name: 'img'
@@ -145,7 +136,9 @@ describe 'new Leaf.Template.Parser(buffer)', ->
 
     it 'should append opening tag nodes to their parent and set current parent to self', ->
       token =
-        type: T_TAG_OPEN
+        type: T_TAG
+        closing: false
+        selfClosing: false
         buffer: '<div>'
         attrPart: ''
         name: 'div'
@@ -155,8 +148,9 @@ describe 'new Leaf.Template.Parser(buffer)', ->
       @psr.parseNode @psr.parents, token
 
       node =
-        type: T_TAG_OPEN
+        type: T_TAG
         customTag: false
+        selfClosing: false
         contents: []
         context: {}
         name: 'div'
@@ -174,7 +168,9 @@ describe 'new Leaf.Template.Parser(buffer)', ->
         @psr.init DUMMY_BUFFER
 
         token =
-          type: T_TAG_CLOSE
+          type: T_TAG
+          closing: true
+          selfClosing: false
           buffer: '</div>'
           name: 'div'
           index: 0
@@ -186,7 +182,9 @@ describe 'new Leaf.Template.Parser(buffer)', ->
 
     it 'should close current parent and set current parent to self when closing tags appear', ->
       tokenOpen =
-        type: T_TAG_OPEN
+        type: T_TAG
+        closing: false
+        selfClosing: false
         buffer: '<div>'
         attrPart: ''
         name: 'div'
@@ -194,7 +192,8 @@ describe 'new Leaf.Template.Parser(buffer)', ->
         length: 5
 
       node =
-        type: T_TAG_OPEN
+        type: T_TAG
+        selfClosing: false
         customTag: false
         contents: []
         context: {}
@@ -207,7 +206,9 @@ describe 'new Leaf.Template.Parser(buffer)', ->
       @psr.parseNode @psr.parents, tokenOpen
 
       tokenClose =
-        type: T_TAG_CLOSE
+        type: T_TAG
+        closing: true
+        selfClosing: false
         buffer: '</div>'
         name: 'div'
         index: 0
@@ -228,7 +229,8 @@ describe 'new Leaf.Template.Parser(buffer)', ->
 
       result = [
         {
-          type: T_TAG_OPEN
+          type: T_TAG
+          selfClosing: false
           customTag: false
           context: {}
           name: 'div'
@@ -254,7 +256,8 @@ describe 'new Leaf.Template.Parser(buffer)', ->
 
       result = [
         {
-          type: T_TAG_OPEN
+          type: T_TAG
+          selfClosing: false
           customTag: false
           context: {}
           name: 'section'
@@ -264,7 +267,8 @@ describe 'new Leaf.Template.Parser(buffer)', ->
           actions: {}
           contents: [
             {
-              type: T_TAG_OPEN
+              type: T_TAG
+              selfClosing: false
               customTag: false
               contents: []
               context: {}

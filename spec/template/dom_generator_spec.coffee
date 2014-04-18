@@ -76,7 +76,7 @@ describe 'new Leaf.Template.DOMGenerator(tree, obj, scope)', ->
 
       $parent = $ '<div/>'
       node =
-        type: T_TAG_OPEN
+        type: T_TAG
         name: 'span'
         attrs: 'class': 'foo'
         attrBindings: {}

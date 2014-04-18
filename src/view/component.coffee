@@ -15,13 +15,12 @@ class Leaf.Component extends Leaf.View
     .replace(/\-*:+\-*/g, ':')
     .replace(/\-+/g, '-')
     .replace(/^(\-|:)|(\-|:)$/g, '')
-    .replace(/^component:/, '')
     .toLowerCase()
 
   @register: (name, node) ->
     name = @regulateName name
-    Leaf.Component.components[name] = node.contents
-    Leaf.Template.registerTag "component:#{name}", ComponentView
+    Leaf.Component.components[name] = node
+    Leaf.Template.registerTag name, ComponentView
 
   @get: (name) ->
     name = @regulateName name
@@ -30,7 +29,7 @@ class Leaf.Component extends Leaf.View
   @unregister: (name) ->
     name = @regulateName name
     @components[name] = undefined
-    Leaf.Template.unregisterTag "component:#{name}"
+    Leaf.Template.unregisterTag name
 
   @reset: ->
     @unregister name for name in _.keys(@components)
@@ -52,9 +51,9 @@ class ComponentView
   @structure: true
 
   @create: (viewData) ->
-    tree = Leaf.Component.get viewData.node.name
+    component = Leaf.Component.get viewData.node.name
 
-    unless tree
+    unless component
       throw new UndefinedComponentTagError "<#{viewData.node.name}>"
 
     klass = Leaf.getComponentClassFor viewData.node.name if Leaf.hasApp()
@@ -68,9 +67,9 @@ class ComponentView
     scope = compiler.evalObject viewData.node.localeBindings
 
     view = new klass
-      tree: tree
+      tree:       component.contents
       controller: viewData.controller
-      scope: scope
+      scope:      scope
 
     view.$view.insertAfter viewData.$marker
     view.render()
@@ -87,18 +86,7 @@ Leaf.Template.registerTag 'component',
     unless name
       throw new NoNameAttributeWithComponentTagError()
 
+    node.selfClosing = !!node.attrs.block
+
     Leaf.Component.register name, node
-
-
-Leaf.Template.registerTag 'component:poly',
-  structure: true
-
-  open: (node, parent) ->
-    unless node.localeBindings.poly
-      throw new NoPolyBindingWithPolymorphicComponentTagError()
-
-  create: (viewData) ->
-    poly = viewData.scope.get 'poly'
-    viewData.node.name = "component:#{Leaf.Component.regulateName poly}"
-    ComponentView.create viewData
 

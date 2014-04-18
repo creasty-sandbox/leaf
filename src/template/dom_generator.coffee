@@ -161,9 +161,7 @@ class Leaf.Template.DOMGenerator
       return
 
     switch node.type
-      when T_TAG_OPEN
-        @createElement node, $parent
-      when T_TAG_SELF
+      when T_TAG
         @createElement node, $parent
       when T_TEXT
         @createTextNode node, $parent

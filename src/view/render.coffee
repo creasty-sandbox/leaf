@@ -1,5 +1,5 @@
 
-class NoPartialBindingWithRenderTagError extends Leaf.Error
+class NoFileSpecifiedWithRenderTagError extends Leaf.Error
 class PartialPathResolveError extends Leaf.Error
 
 
@@ -7,24 +7,28 @@ Leaf.Template.registerTag 'render',
   structure: true
 
   open: (node, parent) ->
-    unless node.localeBindings.partial
-      throw new NoPartialBindingWithRenderTagError()
+    unless node.attrBindings.partial && node.attrBindings.poly
+      throw new NoFileSpecifiedWithRenderTagError()
 
-  create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.DOMGenerator()
+  create: (viewData) ->
+    if node.attrBindings.partial
+      partial = viewData.scope.get 'partial'
 
-    binder = new Leaf.Template.Binder obj
-    bindingObj = binder.getBindingObject node.localeBindings
+      if Leaf.hasApp()
+        tree = Leaf.sharedApp.getPartial partial
 
-    if Leaf.hasApp()
-      { partial } = node.localeBindings
-      tree = Leaf.sharedApp.getPartial partial, node
+        unless tree
+          throw new PartialPathResolveError partial
 
-      unless tree
-        throw new PartialPathResolveError partial
+        view = Leaf.View
+          tree:       tree
+          controller: viewData.controller
+          scope:      viewData.scope
 
-      view.init tree, bindingObj
-
-      $el = view.getDOM()
-      $el.insertAfter $marker
+        view.$view.insertAfter viewData.$marker
+        view.render()
+    else if node.attrBindings.poly
+      component = viewData.scope.get 'component'
+      viewData.node.name = Leaf.Component.regulateName component
+      ComponentView.create viewData
 
