@@ -15,13 +15,12 @@ class Leaf.Component extends Leaf.View
     .replace(/\-*:+\-*/g, ':')
     .replace(/\-+/g, '-')
     .replace(/^(\-|:)|(\-|:)$/g, '')
-    .replace(/^component:/, '')
     .toLowerCase()
 
   @register: (name, node) ->
     name = @regulateName name
-    Leaf.Component.components[name] = node.contents
-    Leaf.Template.registerTag "component:#{name}", ComponentView
+    Leaf.Component.components[name] = node
+    Leaf.Template.registerTag name, ComponentView
 
   @get: (name) ->
     name = @regulateName name
@@ -30,7 +29,7 @@ class Leaf.Component extends Leaf.View
   @unregister: (name) ->
     name = @regulateName name
     @components[name] = undefined
-    Leaf.Template.unregisterTag "component:#{name}"
+    Leaf.Template.unregisterTag name
 
   @reset: ->
     @unregister name for name in _.keys(@components)
@@ -39,6 +38,7 @@ class Leaf.Component extends Leaf.View
 #  Error
 #-----------------------------------------------
 class NoNameAttributeWithComponentTagError extends Leaf.Error
+class ComponentNameMustBeConstantError extends Leaf.Error
 class NoPolyBindingWithPolymorphicComponentTagError extends Leaf.Error
 class UndefinedComponentTagError extends Leaf.Error
 class ComponentClassNotFoundError extends Leaf.Error
@@ -50,28 +50,29 @@ class ComponentView
 
   @structure: true
 
-  @create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.DOMGenerator()
+  @create: (viewData) ->
+    component = Leaf.Component.get viewData.node.name
 
-    binder = new Leaf.Template.Binder obj
-    bindingObj = binder.getBindingObject node.localeBindings
-    tree = Leaf.Component.get node.name
+    unless component
+      throw new UndefinedComponentTagError "<#{viewData.node.name}>"
 
-    unless tree
-      throw new UndefinedComponentTagError "<#{node.name}>"
+    klass = Leaf.getComponentClassFor viewData.node.name if Leaf.hasApp()
 
-    view.init tree, bindingObj
+    unless klass
+      Leaf.warn "Undefined view class for <#{viewData.node.name}>"
 
-    $el = view.getDOM()
-    $el.appendTo $parent
+    klass ?= Leaf.View
 
-    if Leaf.hasApp()
-      klass = Leaf.getComponentClassFor node.name
+    compiler = new Leaf.ExpressionCompiler viewData.controller, viewData.scope
+    scope = compiler.evalObject viewData.node.localeBindings
 
-      unless klass
-        throw new ComponentClassNotFoundError node.name
+    view = new klass
+      tree:       component.contents
+      controller: viewData.controller
+      scope:      scope
 
-      new klass $el
+    view.$view.insertAfter viewData.$marker
+    view.render()
 
 
 #  Component def tag
@@ -85,23 +86,7 @@ Leaf.Template.registerTag 'component',
     unless name
       throw new NoNameAttributeWithComponentTagError()
 
+    node.selfClosing = !!node.attrs.block
+
     Leaf.Component.register name, node
-
-
-Leaf.Template.registerTag 'component:poly',
-  structure: true
-
-  open: (node, parent) ->
-    unless node.attrs.poly || node.localeBindings.poly
-      throw new NoPolyBindingWithPolymorphicComponentTagError()
-
-  create: (node, $marker, $parent, obj) ->
-    name = node.attrs.poly
-
-    unless name
-      binder = new Leaf.Template.Binder obj
-      name = binder.getBindingValue node.localeBindings.poly
-
-    node.name = "component:#{Leaf.Component.regulateName name}"
-    ComponentView.create node, $marker, $parent, obj
 

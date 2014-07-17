@@ -1,140 +1,45 @@
 
-describe 'Leaf.Template.Parser', ->
-
-  it 'should be defined', ->
-    expect(Leaf.Template.Parser).toBeDefined()
-
-  it 'should create instance', ->
-    psr = new Leaf.Template.Parser()
-    expect(psr).not.toBeNull()
-    expect(psr.constructor).toBe Leaf.Template.Parser
-
-
-describe 'parser', ->
+describe 'new Leaf.Template.Parser(buffer)', ->
 
   DUMMY_BUFFER = 'buffer'
 
-  beforeEach ->
-    @psr = new Leaf.Template.Parser()
+  withoutNodeId = (o) ->
+    if _.isArray o
+      omitted = []
+      omitted.push withoutNodeId(val) for val in o
+    else if _.isPlainObject o
+      omitted = {}
+
+      for key, val of o when '_nodeID' != key
+        omitted[key] =
+          if _.isPlainObject(val) || _.isArray(val)
+            withoutNodeId val
+          else
+            val
+    else
+      omitted = o
+
+    omitted
 
 
-  describe '#init(buffer)', ->
+  it 'should throw an exception if `buffer` is not given', ->
+    ctx = => new Leaf.Template.Parser()
+    expect(ctx).toThrow()
 
-    it 'should throw an exception if `buffer` is not given', ->
-      ctx = => @psr.init()
-      expect(ctx).toThrow()
-
-    it 'should have root and parents stack with initialization', ->
-      @psr.init DUMMY_BUFFER
-      expect(@psr.root).toBeDefined()
-      expect(@psr.parents).toBeDefined()
-      expect(@psr.parents[0]).toBe @psr.root
-
-
-  describe '#parseExpression(node, expr)', ->
-
-    it 'should return top level variables', ->
-      @psr.init DUMMY_BUFFER
-
-      expr = 'foo.bar.baz'
-
-      node = @psr.parseExpression expr
-
-      expect(node.vars).toHaveContents ['foo']
-
-    it 'should ignore JavaScript\'s keywords and reserved words', ->
-      @psr.init DUMMY_BUFFER
-
-      expr = 'window.location.href + document.title'
-
-      node = @psr.parseExpression expr
-
-      expect(node.vars.length).toBe 0
-
-    it 'should ignore variables starting with a capital letter', ->
-      @psr.init DUMMY_BUFFER
-
-      expr = 'new Date() + OFFSET'
-
-      node = @psr.parseExpression expr
-
-      expect(node.vars.length).toBe 0
-
-    it 'should ignore variables starting with underscore', ->
-      @psr.init DUMMY_BUFFER
-
-      expr = '_tmp_var'
-
-      node = @psr.parseExpression expr
-
-      expect(node.vars.length).toBe 0
-
-    it 'should handle property accessor with brackets', ->
-      @psr.init DUMMY_BUFFER
-
-      expr = 'foo.bar[xx.yy].baz'
-
-      node = @psr.parseExpression expr
-
-      expect(node.vars).toHaveContents ['foo', 'xx']
-
-    it 'should handle function call', ->
-      @psr.init DUMMY_BUFFER
-
-      expr = 'foo.bar(xx.yy).baz'
-
-      node = @psr.parseExpression expr
-
-      expect(node.vars).toHaveContents ['foo', 'xx']
-
-    it 'should omit hash key literals', ->
-      @psr.init DUMMY_BUFFER
-
-      expr = '{ key1: val1, key2: val2.val21 }'
-
-      node = @psr.parseExpression expr
-
-      expect(node.vars).toHaveContents ['val1', 'val2']
-
-    it 'should omit string literals', ->
-      @psr.init DUMMY_BUFFER
-
-      e1 = 'foo + "this string"'
-
-      n1 = @psr.parseExpression e1
-
-      expect(n1.vars).toHaveContents ['foo']
-
-      e2 = "foo + 'this string'"
-
-      n2 = @psr.parseExpression e2
-
-      expect(n2.vars).toHaveContents ['foo']
-
-    it 'should omit string literals with escaped quotes', ->
-      @psr.init DUMMY_BUFFER
-
-      expr = 'foo + "this \\"st\'ring" + bar + \'this "is \\\' string\''
-
-      node = @psr.parseExpression expr
-
-      expect(node.vars).toHaveContents ['foo', 'bar']
-
-    it 'should omit regexp literals', ->
-      @psr.init DUMMY_BUFFER
-
-      expr = '/\\d+\\/\\d+/.exec(foo)'
-
-      node = @psr.parseExpression expr
-
-      expect(node.vars).toHaveContents ['foo']
+  it 'should have root and parents stack with initialization', ->
+    psr = new Leaf.Template.Parser DUMMY_BUFFER
+    expect(psr.root).toBeDefined()
+    expect(psr.parents).toBeDefined()
+    expect(psr.parents[0]).toBe psr.root
 
 
   describe '#parseTagAttrs(node, attrs)', ->
 
-    it 'should create empty hash when `attrs` has no vaild definitions of attribute', ->
-      @psr.init DUMMY_BUFFER
+    beforeEach ->
+      @psr = new Leaf.Template.Parser DUMMY_BUFFER
 
+
+    it 'should create empty hash when `attrs` has no vaild definitions of attribute', ->
       node = {}
       @psr.parseTagAttrs node, '', ''
 
@@ -142,43 +47,29 @@ describe 'parser', ->
       expect(Object.keys(node.attrs).length).toBe 0
 
     it 'should create hash object for each attributes, bindings and actions', ->
-      @psr.init DUMMY_BUFFER
-
       node = {}
-      @psr.parseTagAttrs node, 'id="foo" $class="bar" $my="baz" @click="alert"', ''
+      @psr.parseTagAttrs node, 'id="foo" class="bar-{{bar}}" $my="baz" @click="alert"', ''
 
       token =
-        attrs: { 'id': 'foo' }
+        attrs:
+          'id': 'foo'
         attrBindings:
-          'class': { expr: 'bar', vars: ['bar'] }
+          'class': 'bar-{{bar}}'
         localeBindings:
-          'my': { expr: 'baz', vars: ['baz'] }
+          'my': 'baz'
         actions:
           'click': 'alert'
 
       expect(node).toHaveContents token
 
-    it 'should treat attr as a locale binding if its name is not vaild for tag', ->
-      @psr.init DUMMY_BUFFER
-
-      n1 = name: 'a'
-      @psr.parseTagAttrs n1, '$href="link"'
-
-      expect(n1.attrBindings).toBeDefined()
-      expect(n1.attrBindings.href).toBeDefined()
-
-      n2 = name: 'div'
-      @psr.parseTagAttrs n2, '$href="link"'
-
-      expect(n2.localeBindings).toBeDefined()
-      expect(n2.localeBindings.href).toBeDefined()
-
 
   describe '#parseNode(parents, token)', ->
 
-    it 'should should append text nodes to their parent', ->
-      @psr.init DUMMY_BUFFER
+    beforeEach ->
+      @psr = new Leaf.Template.Parser DUMMY_BUFFER
 
+
+    it 'should should append text nodes to their parent', ->
       token =
         type: T_TEXT
         buffer: 'this will be a text'
@@ -190,13 +81,12 @@ describe 'parser', ->
       node =
         type: T_TEXT
         buffer: 'this will be a text'
+        empty: false
 
       expect(@psr.root.contents.length).toBe 1
-      expect(@psr.root.contents[0]).toHaveContents node
+      expect(withoutNodeId(@psr.root.contents[0])).toHaveContents node
 
     it 'should should append interpolation nodes to their parent', ->
-      @psr.init DUMMY_BUFFER
-
       token =
         type: T_INTERPOLATION
         buffer: '{{ interpolation }}'
@@ -210,19 +100,17 @@ describe 'parser', ->
 
       node =
         type: T_INTERPOLATION
-        value:
-          expr: 'interpolation'
-          vars: ['interpolation']
+        value: 'interpolation'
         escape: true
 
       expect(@psr.root.contents.length).toBe 1
       expect(@psr.root.contents[0]).toHaveContents node
 
     it 'should should append self-closing tag nodes to their parent', ->
-      @psr.init DUMMY_BUFFER
-
       token =
-        type: T_TAG_SELF
+        type: T_TAG
+        closing: false
+        selfClosing: false
         buffer: '<img src="sample.gif">'
         attrPart: ' src="sample.gif"'
         name: 'img'
@@ -232,8 +120,9 @@ describe 'parser', ->
       @psr.parseNode @psr.parents, token
 
       node =
-        type: T_TAG_SELF
+        type: T_TAG
         customTag: false
+        selfClosing: true
         contents: []
         context: {}
         name: 'img'
@@ -243,13 +132,13 @@ describe 'parser', ->
         actions: {}
 
       expect(@psr.root.contents.length).toBe 1
-      expect(@psr.root.contents[0]).toHaveContents node
+      expect(withoutNodeId(@psr.root.contents[0])).toHaveContents node
 
-    it 'should should append opening tag nodes to their parent and set current parent to self', ->
-      @psr.init DUMMY_BUFFER
-
+    it 'should append opening tag nodes to their parent and set current parent to self', ->
       token =
-        type: T_TAG_OPEN
+        type: T_TAG
+        closing: false
+        selfClosing: false
         buffer: '<div>'
         attrPart: ''
         name: 'div'
@@ -259,8 +148,9 @@ describe 'parser', ->
       @psr.parseNode @psr.parents, token
 
       node =
-        type: T_TAG_OPEN
+        type: T_TAG
         customTag: false
+        selfClosing: false
         contents: []
         context: {}
         name: 'div'
@@ -270,7 +160,7 @@ describe 'parser', ->
         actions: {}
 
       expect(@psr.root.contents.length).toBe 1
-      expect(@psr.root.contents[0]).toHaveContents node
+      expect(withoutNodeId(@psr.root.contents[0])).toHaveContents node
       expect(@psr.parents[0]).toBe @psr.root.contents[0]
 
     it 'should throw an exception when attempt to close tag which has not been open', ->
@@ -278,7 +168,9 @@ describe 'parser', ->
         @psr.init DUMMY_BUFFER
 
         token =
-          type: T_TAG_CLOSE
+          type: T_TAG
+          closing: true
+          selfClosing: false
           buffer: '</div>'
           name: 'div'
           index: 0
@@ -289,10 +181,10 @@ describe 'parser', ->
       expect(ctx).toThrow()
 
     it 'should close current parent and set current parent to self when closing tags appear', ->
-      @psr.init DUMMY_BUFFER
-
       tokenOpen =
-        type: T_TAG_OPEN
+        type: T_TAG
+        closing: false
+        selfClosing: false
         buffer: '<div>'
         attrPart: ''
         name: 'div'
@@ -300,7 +192,8 @@ describe 'parser', ->
         length: 5
 
       node =
-        type: T_TAG_OPEN
+        type: T_TAG
+        selfClosing: false
         customTag: false
         contents: []
         context: {}
@@ -313,7 +206,9 @@ describe 'parser', ->
       @psr.parseNode @psr.parents, tokenOpen
 
       tokenClose =
-        type: T_TAG_CLOSE
+        type: T_TAG
+        closing: true
+        selfClosing: false
         buffer: '</div>'
         name: 'div'
         index: 0
@@ -322,20 +217,20 @@ describe 'parser', ->
       @psr.parseNode @psr.parents, tokenClose
 
       expect(@psr.root.contents.length).toBe 1
-      expect(@psr.root.contents[0]).toHaveContents node
+      expect(withoutNodeId(@psr.root.contents[0])).toHaveContents node
       expect(@psr.parents.length).toBe 1
 
 
   describe '#parseTree(parents)', ->
 
     it 'should return parse tree of basic DOM structure', ->
-      buffer = '<div>text</div>'
-      @psr.init buffer
-      @psr.parseTree @psr.parents
+      psr = new Leaf.Template.Parser '<div>text</div>'
+      psr.parseTree psr.parents
 
       result = [
         {
-          type: T_TAG_OPEN
+          type: T_TAG
+          selfClosing: false
           customTag: false
           context: {}
           name: 'div'
@@ -347,21 +242,22 @@ describe 'parser', ->
             {
               type: T_TEXT
               buffer: 'text'
+              empty: false
             }
           ]
         }
       ]
 
-      expect(@psr.root.contents).toHaveContents result
+      expect(withoutNodeId(psr.root.contents)).toHaveContents result
 
     it 'should return parse tree of nested tags', ->
-      buffer = '<section><div></div></section>'
-      @psr.init buffer
-      @psr.parseTree @psr.parents
+      psr = new Leaf.Template.Parser '<section><div></div></section>'
+      psr.parseTree psr.parents
 
       result = [
         {
-          type: T_TAG_OPEN
+          type: T_TAG
+          selfClosing: false
           customTag: false
           context: {}
           name: 'section'
@@ -371,7 +267,8 @@ describe 'parser', ->
           actions: {}
           contents: [
             {
-              type: T_TAG_OPEN
+              type: T_TAG
+              selfClosing: false
               customTag: false
               contents: []
               context: {}
@@ -385,5 +282,5 @@ describe 'parser', ->
         }
       ]
 
-      expect(@psr.root.contents).toHaveContents result
+      expect(withoutNodeId(psr.root.contents)).toHaveContents result
 

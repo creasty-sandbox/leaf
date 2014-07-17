@@ -1,95 +1,138 @@
 
 class Leaf.ObservableArray extends Leaf.ObservableBase
 
-  toLeafIDs = (ary) -> Array::map.call ary, (v) -> if v?.__observable then v.toLeafID() else v
-
-  constructor: (_data = []) ->
-    super()
+  setData: (data = [], accessor = true) ->
     @_data = []
 
-    @_saveCurrentMap()
     @_lastOperation = {}
+    @_detachHandlers = {}
 
-    for i in [0..._data.length] by 1
-      val = @_makeObservable _data[i], @
+    for i in [0...data.length] by 1
+      val = Leaf.Observable data[i]
       @_data[i] = val
-      @_accessor i
+      @_catchDetachEventOn val
+      @_accessor i if accessor
 
-    @length = @_data.length
-    @_map = toLeafIDs @_data
+    @defineProperty 'length',
+      enumerable: false
+      configurable: true
+      get: -> @_data.length
+      set: (val) -> val
 
-  _saveCurrentMap: -> @_prev = _.clone @_map
+    @_archiveCurrentData()
+
+  _archiveCurrentData: -> @_prev = _.clone @_data
 
   _recordOperation: (@_lastOperation = {}) ->
-    @_lastPatch = null
 
-  indexOf: (v) ->
-    if v._leafObject
-      @_map.indexOf v.toLeafID()
-    else
-      @_data.indexOf v
+  _makeElementsObservable: (elements) ->
+    elements.map (el) -> Leaf.Observable el
 
+
+  #  Detach
+  #-----------------------------------------------
+  _catchDetachEventOn: (obj) ->
+    return unless obj instanceof Leaf.ObservableObject
+
+    id = obj._leafID
+
+    return if @_detachHandlers[id]
+
+    handler = (e, element) =>
+      idx = @indexOf element
+      @removeAt idx if ~idx
+
+    @_detachHandlers[id] = handler
+    obj.on 'detach', handler
+
+  _uncatchDetachEventOn: (obj) ->
+    return unless obj instanceof Leaf.ObservableObject
+
+    id = obj._leafID
+    return unless (handler = @_detachHandlers[id])
+
+    @_detachHandlers[id] = null
+    obj.off 'detach', handler
+
+
+  #  Mutator methods
+  #-----------------------------------------------
   push: (elements...) ->
-    len = elements.length
-    elements = elements.map (el) => @_makeObservable el, @
+    len = @_data.length
+
+    elen = elements.length
+    elements = @_makeElementsObservable elements
+    @_catchDetachEventOn element for element in elements
 
     @_recordOperation
+      locally: true
       method: 'push'
-      args: elements
-      added: [@length, @length + len - 1]
+      added: [len, len + elen - 1]
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     @_data.push elements...
-    @_map.push toLeafIDs(elements)...
     @_update()
-    @length
+    @_data.length
 
   unshift: (elements...) ->
     len = elements.length
-    elements = elements.map (el) => @_makeObservable el, @
+    elements = @_makeElementsObservable elements
+    @_catchDetachEventOn element for element in elements
 
     @_recordOperation
+      locally: true
       method: 'unshift'
-      args: elements
       added: [0, len - 1]
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     @_data.unshift elements...
-    @_map.unshift toLeafIDs(elements)...
     @_update()
-    @length
+    @_data.length
 
   pop: ->
-    @_recordOperation
-      method: 'pop'
-      removed: [@length - 1, @length - 1]
+    len = @_data.length
 
-    @_saveCurrentMap()
+    @_recordOperation
+      locally: true
+      method: 'pop'
+      removed: [len - 1, len - 1]
+
+    @_archiveCurrentData()
     res = @_data.pop()
-    @_map.pop()
+    @_uncatchDetachEventOn res
     @_update()
     res
 
   shift: ->
     @_recordOperation
+      locally: true
       method: 'shift'
       removed: [0, 0]
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     res = @_data.shift()
-    @_map.shift()
+    @_uncatchDetachEventOn res
     @_update()
     res
 
-  splice: (args...) ->
-    [index, size, elements...] = args
+  sort: (compareFunc) ->
+    @_recordOperation
+      locally: false
+      method: 'sort'
+      args: [compareFunc]
 
+    @_archiveCurrentData()
+    @_data.sort compareFunc
+    @_update()
+    @
+
+  splice: (index, size, elements...) ->
     len = elements.length
     diff = len - size
 
     op =
+      locally: true
       method: 'splice'
-      args: args
 
     if size + 1 > 0
       op.removed = [index, index + size - 1]
@@ -98,64 +141,112 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
       op.added = [index, index + len - 1]
 
     @_recordOperation op
-    @_saveCurrentMap()
+    @_archiveCurrentData()
 
     if len
-      elements = elements.map (el) => @_makeObservable el, @
+      elements = @_makeElementsObservable elements
       res = @_data.splice index, size, elements...
-      @_map.splice index, size, toLeafIDs(elements)...
+      @_catchDetachEventOn element for element in elements
     else
       res = @_data.splice index, size
-      @_map.splice index, size
+      if op.removed
+        [rf, rt] = op.removed
+        @_uncatchDetachEventOn @_data[i] for i in [rf..rt] by 1
 
     @_update()
     res
 
   reverse: ->
     @_recordOperation
+      locally: false
       method: 'reverse'
-      changed: true
 
-    @_saveCurrentMap()
+    @_archiveCurrentData()
     @_data.reverse()
-    @_map.reverse()
     @_update()
     @
 
-  sort: (compareFunc) ->
+  swap: (i, j) ->
     @_recordOperation
-      method: 'sort'
-      changed: true
+      locally: true
+      method: 'swap'
+      swap: [i, j]
 
-    @_saveCurrentMap()
-    @_data.sort compareFunc
-    @_map = toLeafIDs @_data
+    @_archiveCurrentData()
+
+    tmp = @_data[i]
+    @_data[i] = @_data[j]
+    @_data[j] = tmp
+
     @_update()
     @
 
   removeAt: (index) ->
     @splice index, 1
 
-  insertAt: (index, elements) ->
+  insertAt: (index, elements...) ->
     @splice index, -1, elements...
 
+
+  #  Setter
+  #-----------------------------------------------
+  _set: (index, val, options = {}) ->
+    return unless index?
+
+    index >>>= 0
+
+    @_recordOperation
+      locally: true
+      method: 'set'
+      removed: [index, index]
+      added: [index, index]
+
+    options.notify ?= true
+
+    @_accessor index
+
+    oldValue = @_data[index]
+    val = Leaf.Observable val
+
+    @_uncatchPropagatedEvents oldValue
+    @_data[index] = val
+    @_catchPropagatedEvents val
+
+    if options.notify
+      e = new Leaf.Event
+        name: 'set'
+        keypath: index
+
+      @trigger e, val, oldValue
+
+    val
+
+
+  #  Accessor methods
+  #-----------------------------------------------
+  indexOf: (element, offset) -> @_data.indexOf element, offset
+  lastIndexOf: (element, offset) -> @_data.lastIndexOf element, offset
+
+
+  #  Iterator methods
+  #-----------------------------------------------
   forEach: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
-    fn @get(i), i for i in [0...@length] by 1
+    fn @get(i), i for i in [0...@_data.length] by 1
     null
 
   map: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
-    (fn @get(i), i for i in [0...@length] by 1)
+    (fn @get(i), i for i in [0...@_data.length] by 1)
 
   every: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
-    return false for i in [0...@length] by 1 when !fn @get(i), i
+    return false for i in [0...@_data.length] by 1 when !fn @get(i), i
     true
 
   some: (fn, thisObject) ->
     fn = fn.bind thisObject if thisObject
-    return true for i in [0...@length] by 1 when fn @get(i), i
+    return true for i in [0...@_data.length] by 1 when fn @get(i), i
     false
 
   filter: (fn, thisObject) ->
@@ -163,7 +254,7 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
     result = new @constructor
 
-    for i in [0...@length] by 1
+    for i in [0...@_data.length] by 1
       val = @get i
       result.push val if fn val, i
 
@@ -171,63 +262,74 @@ class Leaf.ObservableArray extends Leaf.ObservableBase
 
   reduce: (fn, initialValue) ->
     result = initialValue ? @get 0
-    result = fn result, @get(i), i, @ for i in [0...@length] by 1
+    result = fn result, @get(i), i, @ for i in [0...@_data.length] by 1
     result
 
   reduceRight: (fn) ->
-    i = @length
+    i = @_data.length
     result = @get i - 1
     result = fn result, @get(i - 1), i - 1, @ while --i
     result
 
-  getSimplePatch: ->
-    patch = []
 
-    [rf, rt] = @_lastOperation.removed ? [0, -1]
-    [af, at] = @_lastOperation.added ? [0, -1]
-
-    for i in [rf..rt] by 1
-      patch.push Leaf.ArrayDiffPatch.createPatch 'removeAt', rf
-
-    for i in [af..at] by 1
-      patch.push Leaf.ArrayDiffPatch.createPatch 'insertAt', i - rf, @_map[i]
-
-    patch.forEach (p) => p.element = @_cacheOrValue p.element
-    patch
-
-  _cacheOrValue: (o) ->
-    if Leaf.Identifiable.isLeafID o
-      @getCache o
-    else
-      o
-
-  getPatch: ->
-    return @_lastPatch if @_lastPatch
-
-    if @_lastOperation.changed
-      patch = Leaf.ArrayDiffPatch.getPatch @_prev, @_map
-      patch.forEach (p) => p.element = @_cacheOrValue p.element
-    else
-      patch = @getSimplePatch()
-
-    @_lastPatch = patch
-
-  _set: (prop, val, options = {}) ->
-    @_lastPatch = []
-    @_lastOperation = method: 'set', args: [val, options]
-    super prop, val, options
-
-  _update: (prop) ->
+  #  Mutation notify
+  #-----------------------------------------------
+  _update: ->
     len = @_data.length
+    plen = @_prev.length
 
-    if @length < len
-      @_accessor i for i in [@length...len] by 1
-    else if @length > len
-      @_removeAccessor i for i in [len...@length] by 1
+    if plen < len
+      @_accessor i for i in [plen...len] by 1
 
-    @length = len
+    super()
 
-    super prop
 
-  toArray: -> @_data
+  #  Sync
+  #-----------------------------------------------
+  sync: (handlers) ->
+    ###
+    # handlers =
+    #   insertAt: (i, element) =>
+    #     obj.insertAt i, element
+    #   removeAt: (i) =>
+    #     obj.removeAt i
+    #   swap: (i, j) =>
+    #     obj.swap i, j
+    ###
+
+    op = @_lastOperation
+
+    if op.locally
+      if op.removed
+        [rf, rt] = op.removed
+
+        handlers.removeAt rf for i in [rf..rt] by 1
+
+      if op.added
+        [af, at] = op.added
+
+        handlers.insertAt i, @_data[i] for i in [af..at] by 1
+
+      if op.swap
+        handlers.swap op.swap...
+    else
+      prev = [@_prev...]
+      len = prev.length
+
+      for i in [0...len] by 1
+        unless prev[i] == @_data[i]
+          j = @_data.indexOf prev[i]
+
+          tmp = prev[i]
+          prev[i] = prev[j]
+          prev[j] = tmp
+
+          handlers.swap i, j
+
+    @
+
+
+  #  Utils
+  #-----------------------------------------------
+  toArray: -> [@_data...]
 

@@ -27,24 +27,21 @@ Leaf.Template.registerTag 'if',
     unless condition
       throw new NoConditionBindingsParseError()
 
-    stack = ["(#{condition.expr})"]
+    stack = ["(#{condition})"]
 
     node.condition =
       stack: stack
       expr: stack.join '&&'
-      vars: condition.vars
 
     parent.context.if = node
 
-  create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.DOMGenerator()
-    view.init node.contents, obj
+  create: (viewData) ->
+    view = new Leaf.Template.DOMGenerator viewData.node.contents, viewData.controller, viewData.scope
     $el = view.getDOM()
-    bind = view.getBinder node.condition
 
-    bind (result) ->
+    viewData.compiler.bind viewData.node.condition.expr, (result) ->
       if !!result
-        $el.insertAfter $marker
+        $el.insertAfter viewData.$marker
       else
         $el.detach()
 
@@ -67,24 +64,21 @@ Leaf.Template.registerTag 'elseif',
     { stack } = n.condition
     prev = stack.pop()
     stack.push '!' + prev
-    stack.push "(#{condition.expr})"
+    stack.push "(#{condition})"
 
     node.condition =
       stack: stack
       expr: stack.join '&&'
-      vars: _.union n.condition.vars, condition.vars
 
     parent.context.if = node
 
-  create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.DOMGenerator()
-    view.init node.contents, obj
+  create: (viewData) ->
+    view = new Leaf.Template.DOMGenerator viewData.node.contents, viewData.controller, viewData.scope
     $el = view.getDOM()
-    bind = view.getBinder node.condition
 
-    bind (result) ->
+    view.compiler.bind viewData.node.condition.expr, (result) ->
       if !!result
-        $el.insertAfter $marker
+        $el.insertAfter viewData.$marker
       else
         $el.detach()
 
@@ -106,19 +100,16 @@ Leaf.Template.registerTag 'else',
     node.condition =
       stack: stack
       expr: stack.join '&&'
-      vars: n.condition.vars
 
     parent.context.if = null
 
-  create: (node, $marker, $parent, obj) ->
-    view = new Leaf.Template.DOMGenerator()
-    view.init node.contents, obj
+  create: (viewData) ->
+    view = new Leaf.Template.DOMGenerator viewData.node.contents, viewData.controller, viewData.scope
     $el = view.getDOM()
-    bind = view.getBinder node.condition
 
-    bind (result) ->
+    viewData.compiler.bind viewData.node.condition.expr, (result) ->
       if !!result
-        $el.insertAfter $marker
+        $el.insertAfter viewData.$marker
       else
         $el.detach()
 

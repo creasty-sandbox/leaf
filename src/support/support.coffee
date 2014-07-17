@@ -3,10 +3,11 @@ class Leaf.Support
 
   @add: (klass) ->
     primitive = switch klass.name.replace(/Support$/, '')
-      when 'String' then String
+      when 'Array'  then Array
+      when 'Date'   then Date
       when 'Number' then Number
       when 'Object' then Object
-      when 'Date'   then Date
+      when 'String' then String
 
     instance = new klass()
 
@@ -19,16 +20,4 @@ class Leaf.Support
     null
 
   addMethod = (to, method, fn) -> to[method] = -> fn @, arguments...
-
-  @inject: (to, implement) ->
-    klass = ->
-      o = new to arguments...
-      o.__proto__ = implement::
-      o
-
-    klass:: = new to
-    _.extends klass, implement
-    _.extends klass::, implement::
-
-    klass
 

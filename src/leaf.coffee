@@ -3,8 +3,10 @@ class Leaf
 
   LOCAL_SERVER = /(^localhost$)|(\.(dev|local)$)/
 
-  app: null
+  sharedEvent: null
+  sharedApp: null
   develop: false
+  context: null
 
   constructor: ->
     @develop = !!window.location.hostname.match LOCAL_SERVER
@@ -19,21 +21,21 @@ class Leaf
     msg = ['[Leaf] Warn:', args...]
     console.error msg...
 
-  hasApp: -> !!@app
+  hasApp: -> !!@sharedApp
 
   getComponentClassFor: (name) ->
     className = "#{name.replace(/^component:/, '')}_component".classify()
-    @app[className]
+    @sharedApp[className]
 
   getModelClassFor: (name) ->
     className = (name + '').classify()
-    @app[className]
+    @sharedApp[className]
 
   getControllerClassFor: (name) ->
     className = "#{name}_controller".classify()
 
 
-
 # Framework namespace
-window.Leaf = Leaf = new Leaf()
+Leaf = new Leaf()
+(Leaf.context = @).Leaf = Leaf
 

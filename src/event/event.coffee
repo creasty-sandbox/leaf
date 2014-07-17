@@ -1,29 +1,13 @@
 
-class Leaf.Event extends Leaf.Cacheable
+class Leaf.Event
 
-  __event: true
+  constructor: (data = {}) ->
+    @name = ''
+    @propagated = false
 
-  constructor: (obj) ->
-    super()
-    obj ?= @
-    @_eventObj = $ obj
+    @[key] = val for own key, val of data when val?
 
-  on: (event, handler, ctx = global) ->
-    @_eventObj.on event, (e, args...) ->
-      handler.apply ctx, args
+  clone: ->
+    new @constructor @
 
-  off: (event, handler) ->
-    @_eventObj.on event, handler
-
-  one: (event, handler, ctx = global) ->
-    @_eventObj.one event, (e, args...) ->
-      handler.apply ctx, args
-
-  trigger: (event, args...) ->
-    @_eventObj.trigger event, args...
-
-  delegate: ->
-  undelegate: ->
-
-  fire: ->
 

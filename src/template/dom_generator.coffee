@@ -10,39 +10,65 @@ class Leaf.Template.DOMGenerator
 
   doc = document # copying global variable to local make js faster
 
-  customTags = Leaf.Template.customTags
+  { customTags } = Leaf.Template
 
-  constructor: ->
-
-  init: (@tree, @obj) ->
+  constructor: (@tree, @controller, @scope, @$parent) ->
     unless @tree
       throw new RequiredArgumentsError('tree')
 
-    unless @obj
-      throw new RequiredArgumentsError('obj')
+    unless @controller
+      throw new RequiredArgumentsError('controller')
 
-    @$parent = $ doc.createElement 'body'
+    @scope ?= new Leaf.ObservableObject()
 
-  getBinder: (value) ->
-    binder = new Leaf.Template.Binder @obj
-    binder.getBinder value, @obj
+    @compiler = new Leaf.ExpressionCompiler @controller, @scope
+
+    @$parent ?= $ doc.createElement 'body'
+    @$parent.data 'leaf-scope', @scope
 
   bindAttributes: ($el, attrs) ->
+    name = $el.get(0).nodeName.toLowerCase()
+
     _(attrs).forEach (val, key) =>
-      bind = @getBinder val
-      bind (result) -> $el.attr key, result
+      if 'value' == key && 'option' != name
+        user = false
+
+        @compiler.bind val, (result) ->
+          $el.val result unless user
+          user = false
+          null
+
+        $el.data 'value-evaluator', => @compiler.eval val
+
+        $el.on 'change keyup keydown keypress', =>
+          user = true
+          @controller.set val, $el.val()
+      else if 'style' == key
+        @compiler.bind val, (result) -> $el.css result # slow?
+      else
+        if 'option' == name
+          $(doc).on 'viewDidRender', => # TODO: document is bad
+            $select = $el.parent()
+
+            if $select.length
+              evaluate = $select.data 'value-evaluator'
+              $el.prop 'selected', (evaluate() == @compiler.eval(val))
+
+        @compiler.bind val, (result) -> $el.attr key, result
 
   bindLocales: ($el, attrs) ->
-    # TODO
-    $el.data 'leaf-locale', attrs
+    @compiler.evalObject attrs, @scope
+    $el.data 'leaf-scope', @scope
 
   registerActions: ($el, actions) ->
-    for event, handler of actions
+    _(actions).forEach (handler, event) ->
       $el.on event, (e) -> $el.trigger handler, [e]
 
-  createMarker: (name = '') ->
-    if Leaf.develop
-      $ doc.createComment 'leaf: ' + name
+    null
+
+  createMarker: (node, closing) ->
+    if node && Leaf.develop
+      $ doc.createComment "<#{(if closing then '/' else '')}#{node.name}:#{node._nodeID}>"
     else
       $ doc.createTextNode ''
 
@@ -54,10 +80,25 @@ class Leaf.Template.DOMGenerator
 
     c ?= {}
 
+    scope = @scope.syncedClone()
+    @compiler.evalObject node.localeBindings, scope
+
     if c.structure
-      $marker = @createMarker node.name
-      $marker.appendTo $parent
-      c.create? node, $marker, $parent, @obj
+      $begin = @createMarker node
+      $end = @createMarker node, true
+
+      $begin.appendTo $parent
+      $end.appendTo $parent
+
+      c.create?(
+        node:       node
+        $marker:    $begin
+        $parent:    $parent
+        controller: @controller
+        scope:      scope
+        compiler:   @compiler
+      )
+
       return
 
     $el = $ doc.createElement node.name
@@ -67,32 +108,46 @@ class Leaf.Template.DOMGenerator
     @bindLocales $el, node.localeBindings
     @registerActions $el, node.actions
 
-    $el.appendTo $parent
-
     if c.block
-      c.create? node, $el, $parent, @obj
+      $begin = @createMarker node
+      $end = @createMarker node, true
+
+      $begin.appendTo $parent
+      $el.appendTo $parent
+      $end.appendTo $parent
+
+      c.create?(
+        node:       node
+        $marker:    $begin
+        $parent:    $parent
+        controller: @controller
+        scope:      scope
+        compiler:   @compiler
+      )
     else
-      @createNode $el, node.contents
+      $el.appendTo $parent
+      n = new @constructor node.contents, @controller, scope, $el
+      n.createNode n.$parent, n.tree
 
   createTextNode: (node, $parent) ->
-    $text = $ doc.createTextNode node.buffer
+    $text = $ doc.createTextNode _.unescape(node.buffer)
     $text.appendTo $parent
 
   createInterpolationNode: (node, $parent) ->
-    bind = @getBinder node.value
+    $marker = @createMarker()
+    $marker.appendTo $parent
 
     if node.escape
       el = doc.createTextNode ''
       $el = $ el
       $el.appendTo $parent
 
-      bind (result) -> el.nodeValue = result
+      @compiler.bind node.value, (result) ->
+        el.nodeValue = result
     else
-      $marker = @createMarker 'interpolation'
-      $marker.appendTo $parent
       $el = null
 
-      bind (result) ->
+      @compiler.bind node.value, (result) ->
         if $el
           $el.remove()
           $el = null
@@ -106,9 +161,7 @@ class Leaf.Template.DOMGenerator
       return
 
     switch node.type
-      when T_TAG_OPEN
-        @createElement node, $parent
-      when T_TAG_SELF
+      when T_TAG
         @createElement node, $parent
       when T_TEXT
         @createTextNode node, $parent

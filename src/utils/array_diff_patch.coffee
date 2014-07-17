@@ -78,7 +78,7 @@ class ArrayDiffPatch
         when MARK_NONE
           ++index
         when MARK_DELETION
-          patch.push @createPatch('removeAt', index)
+          patch.push @createPatch('removeAt', index, d[1])
         when MARK_ADDITION
           patch.push @createPatch('insertAt', index, d[1])
           ++index

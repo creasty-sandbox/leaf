@@ -59,15 +59,6 @@ describe 'Leaf.Component', ->
 
 describe 'Component views', ->
 
-  createDOM = (obj, buffer) ->
-    psr = new Leaf.Template.Parser()
-    psr.init buffer
-
-    gen = new Leaf.Template.DOMGenerator()
-    gen.init psr.getTree(), obj
-    gen.getDOM()
-
-
   afterEach ->
     Leaf.Component.reset()
 
@@ -75,15 +66,14 @@ describe 'Component views', ->
   describe '<component name="foo">', ->
 
     beforeEach ->
-      @obj = {}
+      @obj = new Leaf.ObservableObject()
 
     it 'should throw an exception when name attribute is not set', ->
       bufferWithError = '''
         <component></component>
       '''
 
-      ctx = =>
-        createDOM @obj, bufferWithError
+      ctx = => Leaf.View.parse(bufferWithError)(@obj)
 
       expect(ctx).toThrow()
 
@@ -92,22 +82,21 @@ describe 'Component views', ->
         <component name="foo">this is componet foo</component>
       '''
 
-      dom = createDOM @obj, buffer
+      dom = Leaf.View.parse(buffer)(@obj)
 
-      # expect(dom).toBeEmpty() # this will fail because of a marker node
-      expect(dom).toHaveText ''
+      expect(dom).toBeEmpty()
 
     it 'should define component by the name of name attribute', ->
       buffer = '''
         <component name="foo">this is componet foo</component>
       '''
 
-      createDOM @obj, buffer
+      Leaf.View.parse(buffer)(@obj)
 
       expect(Leaf.Component.components['foo']).toBeDefined()
 
 
-  describe '<component:foo>', ->
+  describe '<foo>', ->
 
     beforeEach ->
       @obj = new Leaf.ObservableObject
@@ -115,16 +104,6 @@ describe 'Component views', ->
           { name: 'John' }
         ]
 
-
-    it 'should throw an exception if component is not defined', ->
-      buffer = '''
-        <component:zzz>
-      '''
-
-      ctx = =>
-        createDOM @obj, buffer
-
-      expect(ctx).toThrow()
 
     it 'should append contents of a defined component', ->
       bufferDefComponent = '''
@@ -134,48 +113,34 @@ describe 'Component views', ->
         </component>
       '''
 
-      createDOM {}, bufferDefComponent
+      Leaf.View.parse(bufferDefComponent)(@obj)
 
       buffer = '''
-        <component:foo>
+        <div>
+          <foo>
+        </div>
       '''
 
-      dom = createDOM @obj, buffer
+      dom = Leaf.View.parse(buffer)(@obj)
 
-      expect(dom).toBe '.foo'
+      expect(dom).toContainElement '.foo'
 
     it 'should be able to access to variables of locale bindings', ->
-        bufferDefComponent = '''
-          <component name="foo">
-            {{ users[0].name }}
-          </component>
-        '''
+      bufferDefComponent = '''
+        <component name="foo">
+          {{ user.name }}
+        </component>
+      '''
 
-        createDOM {}, bufferDefComponent
+      Leaf.View.parse(bufferDefComponent)(@obj)
 
-        buffer = '''
-          <component:foo $users="users">
-        '''
+      buffer = '''
+        <div>
+          <foo $user="this.users[0]">
+        </div>
+      '''
 
-        dom = createDOM @obj, buffer
+      dom = Leaf.View.parse(buffer)(@obj)
 
-        expect(dom).toHaveText 'John'
-
-    it 'should be able to access to the value of locale bindings\' expression', ->
-        bufferDefComponent = '''
-          <component name="foo">
-            {{ user.name }}
-          </component>
-        '''
-
-        createDOM {}, bufferDefComponent
-
-        buffer = '''
-          <component:foo $user="users[0]">
-        '''
-
-        dom = createDOM @obj, buffer
-
-        expect(dom).toHaveText 'John'
-
+      expect(dom).toHaveText 'John'
 

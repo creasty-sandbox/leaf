@@ -1,36 +1,12 @@
 
-describe 'Leaf.Template.Preformatter(html)', ->
-
-  it 'should be defined', ->
-    expect(Leaf.Template.Preformatter).toBeDefined()
-
-
-  describe 'instantiate without `html`', ->
-
-    it 'should throw an exception', ->
-      ctx = ->
-        pf = new Leaf.Template.Preformatter()
-
-      expect(ctx).toThrow()
-
-
-  describe 'instantiate with `html`', ->
-
-    it 'should create an instance', ->
-      html = '<p>dummy html</p>'
-      pf = new Leaf.Template.Preformatter html
-      expect(pf).not.toBeNull()
-      expect(pf.constructor).toBe Leaf.Template.Preformatter
-
-
-describe 'preformatter', ->
+describe 'new Leaf.Template.Preformatter(html)', ->
 
   beforeEach ->
     html = '<p>dummy html</p>'
     @pf = new Leaf.Template.Preformatter html
 
 
-  it 'should have `#html` already', ->
+  it 'should have `.html` already', ->
     expect(@pf.html).toBeDefined()
 
 

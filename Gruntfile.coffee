@@ -13,17 +13,21 @@ FILES =
   ]
   utils: [
     'lodash/*.coffee'
+    'util.coffee'
     'class.coffee'
     'error.coffee'
-    'event.coffee'
     'cache.coffee'
     'inflector.coffee'
-    'array_diff_patch.coffee'
     'identifiable.coffee'
     'cacheable.coffee'
     'accessible.coffee'
     'hookable.coffee'
-    'object.coffee'
+    'array_diff_patch.coffee'
+    'remove_js_literals.coffee'
+  ]
+  event: [
+    'event.coffee'
+    'event_emitter.coffee'
   ]
   support: [
     'support.coffee'
@@ -31,22 +35,19 @@ FILES =
     'number.coffee'
     'date.coffee'
   ]
-  event: [
-    'event.coffee'
-    'lifecycle_event.coffee'
-  ]
   observable: [
+    'affected_keypath_tracker.coffee'
+    'observable.coffee'
     'observable_base.coffee'
     'observable_object.coffee'
     'observable_array.coffee'
-    'observable.coffee'
+    'expression_compiler.coffee'
   ]
   template: [
     'template.coffee'
     'preformatter.coffee'
     'tokenizer.coffee'
     'parser.coffee'
-    'binder.coffee'
     'dom_generator.coffee'
   ]
   _object: [
@@ -54,11 +55,13 @@ FILES =
   ]
   view: [
     'view.coffee'
+    'view_array.coffee'
     'conditional_view.coffee'
     'iterator_view.coffee'
     'component.coffee'
     'render.coffee'
-    'outlet.coffee'
+    'yield.coffee'
+    'content_for.coffee'
   ]
   framework: [
     # 'router.coffee'
@@ -81,25 +84,26 @@ FILE_DEPENDENCIES =
   support: [
     'headers'
     'utils'
+    'event'
   ]
   observable: [
     'headers'
     'utils'
-    'support'
     'event'
+    'support'
   ]
   template: [
     'headers'
     'utils'
-    'support'
     'event'
+    'support'
     'observable'
   ]
   view: [
     'headers'
     'utils'
-    'support'
     'event'
+    'support'
     'observable'
     'template'
     'object'
@@ -107,8 +111,8 @@ FILE_DEPENDENCIES =
   framework: [
     'headers'
     'utils'
-    'support'
     'event'
+    'support'
     'observable'
     'template'
     'object'
@@ -241,7 +245,7 @@ gruntConfig.watch =
       "#{TMP_DIR}#{SPEC_DIR}**/*.js"
       "#{TMP_DIR}#{SRC_DIR}**/*.js"
     ]
-    tasks: ['filtered_test']
+    tasks: ['group_test']
 
 
 #=== Banner
@@ -267,10 +271,6 @@ module.exports = (grunt) ->
   #-----------------------------------------------
   require('matchdep').filterDev('grunt-*').forEach grunt.loadNpmTasks
 
-  #  Option
-  #-----------------------------------------------
-  filter = grunt.option 'filter'
-
   #  Config
   #-----------------------------------------------
   gruntConfig.pkg = grunt.file.readJSON 'package.json'
@@ -280,12 +280,12 @@ module.exports = (grunt) ->
   #  Tasks
   #-----------------------------------------------
   grunt.option 'force', true
+
+  testGroup = grunt.option 'group'
+  grunt.registerTask 'group_test', [if testGroup then "jasmine:#{testGroup}" else 'jasmine']
+
   grunt.registerTask 'default', ['dev']
-
-  filteredTest = if filter then "jasmine:#{filter}" else 'jasmine'
-  grunt.registerTask 'filtered_test', [filteredTest]
-
   grunt.registerTask 'dev', ['clean', 'coffee:src', 'watch:coffee']
-  grunt.registerTask 'test', ['clean', 'coffee:src', 'coffee:test', 'filtered_test', 'watch']
+  grunt.registerTask 'test', ['clean', 'coffee:src', 'coffee:test', 'group_test', 'watch']
   grunt.registerTask 'release', ['clean', 'coffee:release', 'concat', 'uglify']
 

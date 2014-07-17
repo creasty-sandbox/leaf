@@ -1,12 +1,10 @@
 
 class Leaf.ObservableObject extends Leaf.ObservableBase
 
-  constructor: (_data) ->
-    super()
-    @_data = {}
+  setData: (data = {}, accessor = true) ->
+    @_data ?= {}
+    @_set key, val for own key, val of data
+    null
 
-    for own key, val of _data
-      obj = @_makeObservable val, @, key
-      @_data[key] = obj
-      @_accessor key
+  toObject: -> _.clone @_data
 

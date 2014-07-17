@@ -10,80 +10,67 @@ class NonIteratableObjectError extends Leaf.Error
 
 #  Iterator
 #-----------------------------------------------
-class IteratorView extends Leaf.Object
+class IteratorView
+
+  COLLECTION_BINDING = '$collection'
+  INDEX_BINDING      = '$index'
 
   @structure: true
 
   @open: (node, parent) ->
     node.iterator = null
 
-    for key, value of node.localeBindings when value.expr.match /\w+\[\]$/
-      value.expr = value.expr.replace '[]', ''
+    for key, value of node.localeBindings when value.match /\w+\[\]$/
       node.iterator = key
-      break
+      node.localeBindings[key] = null
+      node.localeBindings[COLLECTION_BINDING] = value.replace '[]', ''
+      return
 
-    unless node.iterator
-      throw new NoIteratorBindingsError()
+    throw new NoIteratorBindingsError()
 
-  @create: (node, $marker, $parent, obj) ->
-    iv = new IteratorView()
-    iv.init node, $marker, $parent, obj
+  @create: (viewData) -> new IteratorView viewData
 
-  init: (@node, @$marker, @$parent, @obj) ->
-    @collectionViews = new Leaf.ObservableArray []
+  constructor: (@viewData) ->
+    @viewArray = new Leaf.ViewArray @viewData.$marker
 
-    binder = new Leaf.Template.Binder @obj
-    bindingObj = binder.getBindingObject @node.localeBindings
-
-    @collection = bindingObj.get @node.iterator
+    @collection = @viewData.scope.get COLLECTION_BINDING
 
     unless @collection instanceof Leaf.ObservableArray
-      throw new NonIteratableObjectError @node.iterator, @collection
+      throw new NonIteratableObjectError COLLECTION_BINDING, @collection
 
-    @collection.forEach @addOne
-    @collection.observe @update
+    @collection.forEach (item) =>
+      view = @createView item
+      @viewArray.push view
 
-  addOne: (item) =>
-    view = @createView item
-    view.$view.insertBefore @$marker
-    @collectionViews.push view
+    handler =
+      insertAt: (i, element) =>
+        view = @createView element
+        @viewArray.insertAt i, view
+      removeAt: (i) =>
+        @viewArray.removeAt i
+      swap: (i, j) =>
+        @viewArray.swap i, j
+
+    @collection.observe => @collection.sync handler
 
   createView: (item) ->
-    id = "#{@node._nodeID}:#{item.toLeafID()}"
+    id = "iteratorItemView:#{@_leafID}:#{item._leafID}"
 
-    IteratorItemView.findOrCreate id, (klass) =>
-      obj = @obj.clone()
-      obj.set @node.iterator, item
+    Leaf.Cache.findOrCreate id, =>
+      { iterator } = @viewData.node
+      scope = @viewData.scope.syncedClone()
+      scope.set iterator, item, withoutDelegation: true
 
-      new klass
-        tree: @node.contents
-        obj: obj
-      ,
-        model: item
-        collection: @collection
+      do updateIndex = =>
+        idx = @collection.indexOf item
+        scope.set INDEX_BINDING, idx, withoutDelegation: true
 
-  update: (models) =>
-    @applyPatch op for op in models.getPatch()
+      @collection.observe updateIndex
 
-  applyPatch: ({ method, index, element }) ->
-    switch method
-      when 'insertAt'
-        view = @createView element
-
-        $idx = @collectionViews[index]?.$view ? @$marker
-
-        view.$view.insertBefore $idx
-
-        @collectionViews.insertAt index, [view]
-      when 'removeAt'
-        if (cv = @collectionViews[index])
-          cv.detach()
-          @collectionViews.removeAt index
-
-
-#  Iterator item
-#-----------------------------------------------
-class IteratorItemView extends Leaf.View
+      new Leaf.View
+        tree:       @viewData.node.contents
+        controller: @viewData.controller
+        scope:      scope
 
 
 #  Registeration

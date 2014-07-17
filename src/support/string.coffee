@@ -1,22 +1,36 @@
 
 class StringSupport
 
+  NON_TITLECASED_WORDS = [
+    'and', 'or', 'nor', 'a', 'an', 'the', 'so', 'but', 'to', 'of', 'at',
+    'by', 'from', 'into', 'on', 'onto', 'off', 'out', 'in', 'over',
+    'with', 'for'
+  ]
+
   pluralize: (str, count, withNumber) ->
     Leaf.Inflector.pluralize str, count, withNumber
 
   singularize: (str) ->
     Leaf.Inflector.singularize str
 
-  camelize: (str, lowFirstLetter = false) ->
-    str = str.replace /_([a-z])/g, (_, c) -> c.toUpperCase()
-    str = @capitalize str unless lowFirstLetter
-    str
+  dasherize: (str) ->
+    str.replace /[_\s\-]+/g, '-'
 
   underscore: (str) ->
     str
-    .replace(/\-+/g, '_')
+    .replace(/[\-\s_]+/g, '_')
     .replace /([a-z])([A-Z])/g, (_, l, r) ->
       "#{l}_#{r.toLowerCase()}"
+
+  capitalize: (str, lowOtherLetter = false) ->
+    other = str[1..]
+    other = other.toLowerCase() if lowOtherLetter
+    str[0].toUpperCase() + other
+
+  camelize: (str, lowFirstLetter = false) ->
+    str = @underscore(str).replace /_([a-z])/g, (_, c) -> c.toUpperCase()
+    str = @capitalize str unless lowFirstLetter
+    str
 
   humanize: (str, lowFirstLetter = false) ->
     str = str.toLowerCase()
@@ -26,22 +40,9 @@ class StringSupport
     str = @capitalize str unless lowFirstLetter
     str
 
-  capitalize: (str, lowOtherLetter = false) ->
-    other = str[1..]
-    other = other.toLowerCase() if lowOtherLetter
-    str[0].toUpperCase() + other
-
-  dasherize: (str) ->
-    str.replace /[_\s]+/g, '-'
-
-  NON_TITLECASED_WORDS = [
-    'and', 'or', 'nor', 'a', 'an', 'the', 'so', 'but', 'to', 'of', 'at',
-    'by', 'from', 'into', 'on', 'onto', 'off', 'out', 'in', 'over',
-    'with', 'for'
-  ]
   titleize: (str) ->
     str = @humanize str
-    str = str.replace /\b[a-z]+\b/g, (word) ->
+    str = str.replace /\b[a-z]+\b/g, (word) =>
       if word in NON_TITLECASED_WORDS
         word
       else
@@ -51,14 +52,13 @@ class StringSupport
     @pluralize @underscore(str)
 
   classify: (str) ->
-    @singularize @camelize(@underscore(str))
+    @singularize @camelize(str)
 
   foreignKey: (str, withUnderscore = true) ->
     @singularize(@underscore(str)) + ('_' if withUnderscore) + 'id'
 
   ordinalize: (str) ->
-    str.replace /\b\d+\b/g, (num) ->
-      Leaf.Support.Number.ordinalize parseInt(num)
+    str.replace /\b\d+\b/g, (num) -> parseInt(num).ordinalize()
 
 
 Leaf.Support.add StringSupport

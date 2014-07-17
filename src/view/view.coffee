@@ -3,49 +3,61 @@ class Leaf.View extends Leaf.Object
 
   VAR_SELECTOR = /^\$(\w+)\s*(.+)/
 
+  @_view: true
+
+  __globallyUnique: true
+
   @setLeafClass()
-  # @cacheGroup = 'view'
 
   @parse: (buffer) ->
-    psr = new Leaf.Template.Parser()
-    psr.init buffer
+    psr = new Leaf.Template.Parser buffer
     tree = psr.getTree()
 
-    (obj) ->
-      gen = new Leaf.Template.DOMGenerator()
-      gen.init tree, obj
+    (controller, scope) ->
+      gen = new Leaf.Template.DOMGenerator tree, controller, scope
       gen.getDOM()
 
-  initialize: (elementOrTree, data = {}) ->
+  initialize: (@viewData = {}) ->
     @inherit 'elements'
     @inherit 'events'
 
     @$body = $ 'body'
 
-    fromTree = _.isPlainObject(elementOrTree) && elementOrTree.tree
+    @controller = @viewData.controller
+    @scope = @viewData.scope
 
     @$view =
-      if fromTree
-        @_elementFromParseTree elementOrTree
+      if @viewData.tree
+        @_elementFromParseTree @viewData.tree
       else
-        elementOrTree ? $('<div/>')
+        @viewData.element ? $('<div/>')
 
-    if data.model
-      @model = data.model
+    @$view.attr 'data-leaf-id', @_leafID
 
-      if fromTree
-        @setCache "#{elementOrTree._nodeID}:#{@model.toLeafID()}", @
+    @$view.data 'view', @
 
-    if data.collection
-      @collection = data.collection
+    p = @constructor
+
+    while p && p._view
+      @_registerMethodAsEventHandler p::
+      p = p.__super__?.constructor
 
     @_setupElements()
     @setup()
     @_subscribeEvents()
 
-  _elementFromParseTree: ({ tree, obj, scope }) ->
-    gen = new Leaf.Template.DOMGenerator()
-    gen.init _.cloneDeep(tree), obj, scope
+  _registerMethodAsEventHandler: (o) ->
+    _(o).forOwn (callback, method) =>
+      unless (
+        '_' == method[0] \           # private method
+        || method == 'constructor' \ # class constructor
+        || !_.isFunction(callback) \ # not function
+        || Leaf.View::[method]       # method defined in Leaf.View
+      )
+        @$view.on method, => callback.apply @, arguments
+
+  _elementFromParseTree: (tree) ->
+    gen = new Leaf.Template.DOMGenerator _.cloneDeep(tree), @controller, @scope
     gen.getDOM()
 
   setup: ->
@@ -124,11 +136,13 @@ class Leaf.View extends Leaf.Object
   send: ->
     # TODO
 
+  render: ->
+
   detach: ->
     @$view.detach()
 
   destroy: ->
     @_unsubscribeEvents()
-    @$view.remove()
+    @$view.detach()
     @$view = null
 

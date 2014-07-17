@@ -1,20 +1,20 @@
 
-describe 'Leaf.Event', ->
+describe 'Leaf.EventEmitter', ->
 
   it 'should be defined', ->
-    expect(Leaf.Event).toBeDefined()
+    expect(Leaf.EventEmitter).toBeDefined()
 
   it 'should create instance', ->
-    ev = new Leaf.Event()
-    expect(ev).not.toBeNull()
-    expect(ev.constructor).toBe Leaf.Event
+    emitter = new Leaf.EventEmitter()
+    expect(emitter).not.toBeNull()
+    expect(emitter.constructor).toBe Leaf.EventEmitter
 
 
-describe 'event', ->
+describe 'eventEmitter', ->
 
   beforeEach ->
     @localObj = {}
-    @ev = new Leaf.Event @localObj
+    @emitter = new Leaf.EventEmitter @localObj
 
 
   describe '#on(eventName, handler)', ->
@@ -22,9 +22,9 @@ describe 'event', ->
     it 'should register an event handler', ->
       called = []
 
-      @ev.on 'test', -> called.push 1
-      @ev.on 'test', -> called.push 2
-      @ev.trigger 'test'
+      @emitter.on 'test', -> called.push 1
+      @emitter.on 'test', -> called.push 2
+      @emitter.trigger 'test'
 
       expect(called).toEqual [1, 2]
 
@@ -34,39 +34,39 @@ describe 'event', ->
     it 'should unsubscribe the event handler', ->
       called = []
 
-      @ev.on 'test', -> called.push 1
+      @emitter.on 'test', -> called.push 1
 
       handler = -> called.push 2
-      @ev.on 'test', handler
-      @ev.off 'test', handler
+      @emitter.on 'test', handler
+      @emitter.off 'test', handler
 
-      @ev.trigger 'test'
+      @emitter.trigger 'test'
 
       expect(called).toEqual [1]
 
 
-  describe '#one(eventName, handler)', ->
+  describe '#once(eventName, handler)', ->
 
     it 'should register an event handler that will fire only once', ->
       called = 0
 
-      @ev.one 'test', -> ++called
+      @emitter.once 'test', -> ++called
 
-      @ev.trigger 'test' for i in [0...3]
+      @emitter.trigger 'test' for i in [0...3]
 
       expect(called).toEqual 1
 
 
   it 'should maintain event subscriptions among instances for the same object', ->
-    e1 = new Leaf.Event @localObj
-    e2 = new Leaf.Event @localObj
+    e1 = new Leaf.EventEmitter @localObj
+    e2 = new Leaf.EventEmitter @localObj
 
     called = []
 
     e1.on 'test', -> called.push 'e1'
     e2.on 'test', -> called.push 'e2'
 
-    @ev.trigger 'test'
+    @emitter.trigger 'test'
 
     expect(called).toEqual ['e1', 'e2']
 

@@ -2,9 +2,7 @@
 #  Token types
 #-----------------------------------------------
 T_NONE          = 'T_NONE'
-T_TAG_OPEN      = 'T_TAG_OPEN'
-T_TAG_CLOSE     = 'T_TAG_CLOSE'
-T_TAG_SELF      = 'T_TAG_SELF'
+T_TAG           = 'T_TAG'
 T_TEXT          = 'T_TEXT'
 T_INTERPOLATION = 'T_INTERPOLATION'
 
@@ -25,9 +23,9 @@ INTERPOLATION_REGEXP = ///
 
 TAG_REGEXP = ///
   <
-    (/?)  # closing tag
+    (/?)       # closing tag
     ([\w\-:]+) # tag name
-    (     # attributes
+    ( # attributes
       (?:
         \s+         # need spaces seperater
         (?:\$|\@|)  # $ or @ or nothing
@@ -41,20 +39,17 @@ TAG_REGEXP = ///
         )?
       )*
     )
+    \s*
     (/?) # self closing
   >
 ///i
-
-TAG_SELF_CLOSING = /^(img|input|hr|br|wbr|outlet|render|component:[\w\-]+)$/
 
 
 #  Tokenizer
 #-----------------------------------------------
 class Leaf.Template.Tokenizer
 
-  constructor: ->
-
-  init: (@buffer) ->
+  constructor: (@buffer) ->
     unless @buffer?
       throw new RequiredArguments 'buffer'
 
@@ -63,23 +58,20 @@ class Leaf.Template.Tokenizer
     @index = 0
 
   getTag: (buffer) ->
+
     m = TAG_REGEXP.exec buffer
 
     return { type: T_NONE } unless m
 
     t = {}
+    t.type = T_TAG
     t.buffer = m[0]
     t.index = m.index
     t.length = t.buffer.length
     t.name = m[2].toLowerCase()
-    t.type =
-      if m[1]
-        T_TAG_CLOSE
-      else if m[4] || t.name.match TAG_SELF_CLOSING
-        T_TAG_SELF
-      else
-        T_TAG_OPEN
-    t.attrPart = m[3] unless T_TAG_CLOSE == t.type
+    t.closing = !!m[1]
+    t.selfClosing = !!m[4]
+    t.attrPart = m[3] unless t.closing
 
     t
 

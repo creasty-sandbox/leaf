@@ -1,59 +1,44 @@
 
-describe 'Leaf.Template.Tokenizer', ->
-
-  it 'should be defined', ->
-    expect(Leaf.Template.Tokenizer).toBeDefined()
-
-  it 'should create an instance', ->
-    tk = new Leaf.Template.Tokenizer()
-    expect(tk).not.toBeNull()
-    expect(tk.constructor).toBe Leaf.Template.Tokenizer
-
-
-describe 'tokenizer', ->
+describe 'new Leaf.Template.Tokenizer(buffer)', ->
 
   DUMMY_BUFFER = 'buffer'
 
-  beforeEach ->
-    @tk = new Leaf.Template.Tokenizer()
 
+  it 'should throw an exception if `buffer` is not given', ->
+    ctx = => new Leaf.Template.Tokenizer()
+    expect(ctx).toThrow()
 
-  describe '#init(buffer)', ->
-
-    it 'should throw an exception if `buffer` is not given', ->
-      ctx = => @tk.init()
-      expect(ctx).toThrow()
-
-    it 'should initialize index pointer and token queues', ->
-      @tk.init 'buffer'
-      expect(@tk.index).toBe 0
-      expect(@tk.tokens).toEqual {}
+  it 'should initialize index pointer and token queues', ->
+    tk = new Leaf.Template.Tokenizer DUMMY_BUFFER
+    expect(tk.index).toBe 0
+    expect(tk.tokens).toEqual {}
 
 
   describe '#eat', ->
 
     it 'should pop buffer by a length of token and return token', ->
-      @tk.init '1234$'
+      tk = new Leaf.Template.Tokenizer '1234$'
 
-      expect(@tk.buffer).toEqual '1234$'
+      expect(tk.buffer).toEqual '1234$'
 
       token = length: 4
-      ate = @tk.eat token
+      ate = tk.eat token
 
       expect(ate).toBe token
-      expect(@tk.buffer).toEqual '$'
+      expect(tk.buffer).toEqual '$'
 
 
   describe '#getText(buffer)', ->
 
+    beforeEach ->
+      @tk = new Leaf.Template.Tokenizer DUMMY_BUFFER
+
+
     it 'should return T_NONE token when `buffer` is empty', ->
-      @tk.init DUMMY_BUFFER
       token = type: T_NONE
       expect(@tk.getText('')).toHaveContents token
 
     it 'should return T_TEXT token when `buffer` is not empty', ->
-      @tk.init DUMMY_BUFFER
-
       buffer = 'text text'
       token =
         type: T_TEXT
@@ -66,25 +51,23 @@ describe 'tokenizer', ->
 
   describe '#getInterpolation(buffer)', ->
 
-    it 'should return T_NONE token when there is no interpolations in `buffer`', ->
-      @tk.init DUMMY_BUFFER
+    beforeEach ->
+      @tk = new Leaf.Template.Tokenizer DUMMY_BUFFER
 
+
+    it 'should return T_NONE token when there is no interpolations in `buffer`', ->
       buffer = 'no interpolations in here'
       token = type: T_NONE
 
       expect(@tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_NONE token for backslash-escaped interpolations', ->
-      @tk.init DUMMY_BUFFER
-
       buffer = 'no \\{{ interpolations }} in here'
       token = type: T_NONE
 
       expect(@tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_INTERPOLATION token when `buffer` contains interpolations', ->
-      @tk.init DUMMY_BUFFER
-
       buffer = 'here goes an {{ interpolation }}'
       token =
         type: T_INTERPOLATION
@@ -98,8 +81,6 @@ describe 'tokenizer', ->
       expect(@tk.getInterpolation(buffer)).toHaveContents token
 
     it 'should return T_INTERPOLATION token with no escape option for raw interpolations', ->
-      @tk.init DUMMY_BUFFER
-
       buffer = 'it is {{{ raw }}}'
       token =
         type: T_INTERPOLATION
@@ -115,49 +96,52 @@ describe 'tokenizer', ->
 
   describe '#getTag(buffer)', ->
 
+    beforeEach ->
+      @tk = new Leaf.Template.Tokenizer DUMMY_BUFFER
+
+
     it 'should return T_NONE token when `buffer` is empty', ->
-      @tk.init DUMMY_BUFFER
       token = type: T_NONE
       expect(@tk.getTag('')).toHaveContents token
 
-    it 'should return T_TAG_OPEN token for opening tags', ->
-      @tk.init DUMMY_BUFFER
-
+    it 'should return T_TAG token for opening tags', ->
       buffer = 'text <div id="foo">'
       token =
-        type: T_TAG_OPEN
+        type: T_TAG
         buffer: '<div id="foo">'
         attrPart: ' id="foo"'
+        closing: false
+        selfClosing: false
         name: 'div'
         index: 5
         length: 14
 
       expect(@tk.getTag(buffer)).toHaveContents token
 
-    it 'should return T_TAG_CLOSE token for closing tag', ->
-      @tk.init DUMMY_BUFFER
-
+    it 'should return T_TAG token for closing tag', ->
       buffer = 'text</div>'
       token =
-        type: T_TAG_CLOSE
+        type: T_TAG
         buffer: '</div>'
         name: 'div'
+        closing: true
+        selfClosing: false
         index: 4
         length: 6
 
       expect(@tk.getTag(buffer)).toHaveContents token
 
-    it 'should return T_TAG_SELF token for self closing tag', ->
-      @tk.init DUMMY_BUFFER
-
-      buffer = 'text <img src="img.gif">'
+    it 'should return T_TAG token for self closing tag', ->
+      buffer = 'text <img src="img.gif" />'
       token =
-        type: T_TAG_SELF
-        buffer: '<img src="img.gif">'
-        attrPart: ' src="img.gif"'
+        type: T_TAG
+        buffer: '<img src="img.gif" />'
         name: 'img'
+        attrPart: ' src="img.gif"'
+        closing: false
+        selfClosing: true
         index: 5
-        length: 19
+        length: 21
 
       expect(@tk.getTag(buffer)).toHaveContents token
 
@@ -166,14 +150,13 @@ describe 'tokenizer', ->
 
     getTokenizer = (buffer) ->
       preformatter = new Leaf.Template.Preformatter buffer
-      @tk = new Leaf.Template.Tokenizer()
-      @tk.init preformatter.getResult()
-      @tk
+      tk = new Leaf.Template.Tokenizer preformatter.getResult()
+      tk
 
 
     it 'should return T_NONE token when the buffer given is empty', ->
-      @tk = getTokenizer ''
-      expect(@tk.getToken()).toHaveContents { type: T_NONE }
+      tk = getTokenizer ''
+      expect(tk.getToken()).toHaveContents { type: T_NONE }
 
     it 'should return tag element and text node tokens', ->
       html = """
@@ -182,10 +165,12 @@ describe 'tokenizer', ->
 
       tokens = [
         {
-          type: T_TAG_OPEN
+          type: T_TAG
           buffer: '<div id="foo" class="bar">'
           attrPart: ' id="foo" class="bar"'
           name: 'div'
+          closing: false
+          selfClosing: false
           index: 0
           length: 26
         }
@@ -196,10 +181,12 @@ describe 'tokenizer', ->
           length: 10
         }
         {
-          type: T_TAG_OPEN
+          type: T_TAG
           buffer: '<i>'
           attrPart: ''
           name: 'i'
+          closing: false
+          selfClosing: false
           index: 10
           length: 3
         }
@@ -210,9 +197,11 @@ describe 'tokenizer', ->
           length: 5
         }
         {
-          type: T_TAG_CLOSE
+          type: T_TAG
           buffer: '</i>'
           name: 'i'
+          closing: true
+          selfClosing: false
           index: 5
           length: 4
         }
@@ -223,24 +212,27 @@ describe 'tokenizer', ->
           length: 5
         }
         {
-          type: T_TAG_SELF
+          type: T_TAG
           buffer: '<img src="img.gif">'
-          attrPart: ' src="img.gif"'
           name: 'img'
+          attrPart: ' src="img.gif"'
+          closing: false
+          selfClosing: false
           index: 5
           length: 19
         }
         {
-          type: T_TAG_CLOSE
+          type: T_TAG
           buffer: '</div>'
           name: 'div'
+          closing: true
+          selfClosing: false
           index: 0
           length: 6
         }
       ]
 
-      @tk = getTokenizer html
+      tk = getTokenizer html
 
-      expect(@tk.getToken()).toHaveContents token for token in tokens
-
+      expect(tk.getToken()).toHaveContents token for token in tokens
 

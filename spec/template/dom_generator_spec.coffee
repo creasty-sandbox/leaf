@@ -1,19 +1,8 @@
 
-describe 'Leaf.Template.DOMGenerator', ->
-
-  it 'should be defined', ->
-    expect(Leaf.Template.DOMGenerator).toBeDefined()
-
-  it 'should create instance', ->
-    gen = new Leaf.Template.DOMGenerator()
-    expect(gen).not.toBeNull()
-    expect(gen.constructor).toBe Leaf.Template.DOMGenerator
-
-
-describe 'domGenerator', ->
+describe 'new Leaf.Template.DOMGenerator(tree, obj, scope)', ->
 
   DUMMY_TREE = []
-  DUMMY_OBJ = {}
+  DUMMY_OBJ = new Leaf.ObservableObject()
 
   beforeEach ->
     @obj = new Leaf.Observable
@@ -21,62 +10,26 @@ describe 'domGenerator', ->
       name: 'John'
       age: 27
 
-    @gen = new Leaf.Template.DOMGenerator()
 
+  it 'should throw an exception if neither `tree` nor `obj` are given', ->
+    ctx = -> new Leaf.Template.DOMGenerator()
 
-  describe '#init(tree, obj)', ->
+    expect(ctx).toThrow()
 
-    it 'should throw an exception if neither `tree` nor `obj` are given', ->
-      ctx = ->
-        @gen.init()
-
-      expect(ctx).toThrow()
-
-    it 'should create new parent node', ->
-      @gen.init DUMMY_TREE, DUMMY_OBJ
-      expect(@gen.$parent).toBeDefined()
-
-
-  describe '#getBinder({ expr, vars })', ->
-
-    beforeEach ->
-      @gen.init DUMMY_TREE, @obj
-
-    it 'should return a bind function', ->
-      bind = @gen.getBinder expr: 'name.toUpperCase()', vars: ['name']
-
-      expect(typeof bind).toBe 'function'
-
-    it 'should evaluate an expression with values of the object and call a routine function with a result', ->
-      bind = @gen.getBinder expr: 'name.toUpperCase()', vars: ['name']
-
-      res = null
-
-      bind (result) -> res = result
-
-      expect(res).toBe 'JOHN'
-
-    it 'should re-evaluate expression and call a routine function when dependents value of the object are updated', ->
-      bind = @gen.getBinder expr: 'name.toUpperCase()', vars: ['name']
-
-      res = null
-
-      bind (result) -> res = result
-
-      @obj.set 'name', 'David'
-
-      expect(res).toBe 'DAVID'
+  it 'should create new parent node', ->
+    gen = new Leaf.Template.DOMGenerator DUMMY_TREE, DUMMY_OBJ
+    expect(gen.$parent).toBeDefined()
 
 
   describe '#bindAttributes($el, attrs)', ->
 
     beforeEach ->
-      @gen.init DUMMY_TREE, @obj
+      @gen = new Leaf.Template.DOMGenerator DUMMY_TREE, @obj
 
       @$el = $ '<div/>'
 
       @attrs =
-        id: { expr: "'user_' + id", vars: ['id'] }
+        id: "'user_' + this.id"
 
 
     it 'should set attributes to an element', ->
@@ -100,30 +53,30 @@ describe 'domGenerator', ->
   describe '#registerActions($el, actions)', ->
 
     it 'should register view action to user action', ->
-      @gen.init DUMMY_TREE, DUMMY_OBJ
+      gen = new Leaf.Template.DOMGenerator DUMMY_TREE, DUMMY_OBJ
 
       $el = $ '<div/>'
 
-      isClicked = false
-      $el.on 'myClickEvent', -> isClicked = true
+      handler = jasmine.createSpy 'event handler'
+      $el.on 'myClickEvent', handler
 
       actions = click: 'myClickEvent'
 
-      @gen.registerActions $el, actions
+      gen.registerActions $el, actions
 
       $el.trigger 'click'
 
-      expect(isClicked).toBe true
+      expect(handler).toHaveBeenCalled()
 
 
   describe '#createElement(node, $parent)', ->
 
     it 'should append an element node to `$parent`', ->
-      @gen.init DUMMY_TREE, DUMMY_OBJ
+      gen = new Leaf.Template.DOMGenerator DUMMY_TREE, DUMMY_OBJ
 
       $parent = $ '<div/>'
       node =
-        type: T_TAG_OPEN
+        type: T_TAG
         name: 'span'
         attrs: 'class': 'foo'
         attrBindings: {}
@@ -131,7 +84,7 @@ describe 'domGenerator', ->
         actions: {}
         contents: []
 
-      @gen.createElement node, $parent
+      gen.createElement node, $parent
 
       expect($parent).toHaveHtml '<span class="foo"></span>'
 
@@ -139,11 +92,11 @@ describe 'domGenerator', ->
   describe '#createTextNode(node, $parent)', ->
 
     it 'should append a text node to `$parent`', ->
-      @gen.init DUMMY_TREE, DUMMY_OBJ
+      gen = new Leaf.Template.DOMGenerator DUMMY_TREE, DUMMY_OBJ
 
       $parent = $ '<div/>'
       node = buffer: 'code is poetry'
-      @gen.createTextNode node, $parent
+      gen.createTextNode node, $parent
 
       expect($parent).toHaveText node.buffer
 
@@ -151,13 +104,14 @@ describe 'domGenerator', ->
   describe '#createInterpolationNode(node, $parent)', ->
 
     beforeEach ->
-      @gen.init DUMMY_TREE, @obj
+      @gen = new Leaf.Template.DOMGenerator DUMMY_TREE, @obj
       @$parent = $ '<div/>'
 
 
     it 'should append a text node with escaped-interpolation', ->
       node =
-        value: { expr: 'name.toUpperCase()', vars: ['name'] }
+        type: T_INTERPOLATION
+        value: 'this.name.toUpperCase()'
         escape: true
 
       @gen.createInterpolationNode node, @$parent
@@ -166,16 +120,20 @@ describe 'domGenerator', ->
 
     it 'should append parsed html with unescaped-interpolation', ->
       node =
-        value: { expr: "'<b>' + name.toUpperCase() + '</b>'", vars: ['name'] }
+        type: T_INTERPOLATION
+        value: "'<b>' + this.name.toUpperCase() + '</b>'"
         escape: false
 
       @gen.createInterpolationNode node, @$parent
 
-      expect(@$parent).toHaveHtml '<!--leaf: interpolation--><b>JOHN</b>'
+      html = @$parent.html()
+
+      expect(!!~html.indexOf('<b>JOHN</b>')).toBe true
 
     it 'should update the value of text node when the object value is changed', ->
       node =
-        value: { expr: 'name.toUpperCase()', vars: ['name'] }
+        type: T_INTERPOLATION
+        value: 'this.name.toUpperCase()'
         escape: true
 
       @gen.createInterpolationNode node, @$parent
@@ -186,12 +144,15 @@ describe 'domGenerator', ->
 
     it 'should update html when the object value is changed', ->
       node =
-        value: { expr: "'<b>' + name.toUpperCase() + '</b>'", vars: ['name'] }
+        type: T_INTERPOLATION
+        value: "'<b>' + this.name.toUpperCase() + '</b>'"
         escape: false
 
       @gen.createInterpolationNode node, @$parent
 
       @obj.set 'name', 'David'
 
-      expect(@$parent).toHaveHtml '<!--leaf: interpolation--><b>DAVID</b>'
+      html = @$parent.html()
+
+      expect(!!~html.indexOf('<b>DAVID</b>')).toBe true
 
