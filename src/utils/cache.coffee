@@ -1,17 +1,18 @@
+class Cache
 
-class Leaf.Cache
-
-  storage = _global: {}
+  @storage = _global: {}
 
   constructor: (@namespace = '_global') ->
-    storage[@namespace] ?= {}
+    @constructor.storage[@namespace] ?= {}
     @storage = storage[@namespace]
 
   get: (key, set) -> (@storage[key] ?= set)
 
   set: (key, val, override = false) ->
-    return if !override && @storage[key]?
-    @storage[key] = val
+    if !override && @storage[key]?
+      @storage[key]
+    else
+      @storage[key] = val
 
   unset: (key) -> @set key, undefined, true
 
@@ -19,22 +20,16 @@ class Leaf.Cache
     storage[@namespace] = null
     @storage = null
 
-  @findOrCreate: ->
-    { id, group, factory } = _.polymorphic
-      '.s?f?': 'id group factory'
-    , arguments
+  findOrCreate: (key, factory) ->
+    obj = @get key
 
-    cache = new Leaf.Cache group
+    return obj if obj
 
-    if (obj = cache.get id)
-      obj
-    else
-      obj =
-        if _.isFunction factory
-          factory @
-        else
-          new @()
+    obj = factory()
 
-      cache.set id, obj
-      obj
+    @set key, obj
 
+    obj
+
+
+module.exports = Cache

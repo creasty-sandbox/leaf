@@ -1,5 +1,4 @@
-
-class Leaf.Event
+class Event
 
   constructor: (data = {}) ->
     @name = ''
@@ -10,4 +9,6 @@ class Leaf.Event
   clone: ->
     new @constructor @
 
+
+module.exports = Event
 

@@ -2,7 +2,7 @@
 .grunt/
 node_modules/
 dev/
-vendors/
+vendor/
 tmp/
 _SpecRunner.html
 

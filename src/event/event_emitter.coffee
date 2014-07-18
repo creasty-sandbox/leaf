@@ -1,5 +1,8 @@
+_     = require 'lodash'
+Event = require './event'
 
-class Leaf.EventEmitter
+
+class EventEmitter
 
   WILD_CARD = '*'
 
@@ -34,7 +37,7 @@ class Leaf.EventEmitter
   once: (event, handler) ->
     fired = false
 
-    if handler.__once_fn
+    unless handler.__once_fn
       _once = =>
         @off event, _once
         handler arguments...
@@ -44,10 +47,10 @@ class Leaf.EventEmitter
     @
 
   trigger: (event, args...) ->
-    if event instanceof Leaf.Event
+    if event instanceof Event
       event = event.clone()
     else
-      event = new Leaf.Event name: event
+      event = new Event name: event
 
     callbacks = @_getCallbacks event.name
     wildCallbacks = @_getCallbacks WILD_CARD
@@ -60,5 +63,5 @@ class Leaf.EventEmitter
     @
 
 
-Leaf.sharedEventEmitter = new Leaf.EventEmitter Leaf
+module.exports = EventEmitter
 

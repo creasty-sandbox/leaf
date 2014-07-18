@@ -1,35 +1,23 @@
+singleton = require './singleton'
 
-class Leaf.Accessible
 
-  __accessible: true
+class Accessible
+
+  singleton @, 'Accessible'
 
   constructor: ->
     @_accessors = {}
 
-  accessors: (accessors, obj = @) ->
-    return unless accessors
-    @_accessor attr, obj for attr in accessors
+  get: -> @
+  set: (val) -> @
 
-  removeAccessors: (accessors, obj = @) ->
-    return unless accessors
-    @_removeAccessor attr, obj for attr in accessors
+  accessor: (key, desciptor) ->
+    return if @_accessors[key]
+    @_accessors[key] = desciptor
+    Object.defineProperty @, key, desciptor
 
-  defineProperty: (attr, descriptor) ->
-    Object.defineProperty @, attr, descriptor
+  @ontoClass: (klass) ->
+    klass::__proto__ = @sharedAccessible
 
-  _accessor: (attr, obj = @) ->
-    @_accessors[attr] = 1
 
-    Object.defineProperty @, attr,
-      enumerable: true
-      configurable: true
-      get: -> obj._get attr
-      set: (val) -> obj._set attr, val
-
-  _removeAccessor: (attr, obj = @) ->
-    @_accessors[attr] = null
-
-    Object.defineProperty obj, attr,
-      enumerable: false
-      configurable: true
-
+module.exports = Accessible

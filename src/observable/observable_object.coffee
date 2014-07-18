@@ -1,10 +1,7 @@
+ObservableBase = require './observable_base'
 
-class Leaf.ObservableObject extends Leaf.ObservableBase
 
-  setData: (data = {}, accessor = true) ->
-    @_data ?= {}
-    @_set key, val for own key, val of data
-    null
+class ObservableObject extends ObservableBase
 
-  toObject: -> _.clone @_data
 
+module.exports = ObservableObject
