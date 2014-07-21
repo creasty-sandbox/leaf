@@ -104,45 +104,47 @@ describe 'new ObservableObject(data = {})', ->
       expect(val2).to.equal 280
 
 
-  describe '#observe(keypath, callback)', ->
+  describe 'Event', ->
 
     beforeEach ->
       @callback = chai.spy 'observer', => @callbackLastArguments = arguments
 
 
-    it 'should call registered observers when setting a property value', ->
-      @obo.observe 'foo', @callback
+    describe '#observe(keypath, callback)', ->
 
-      @obo.set 'foo', 100
+      it 'should call registered observers when setting a property value', ->
+        @obo.observe 'foo', @callback
 
-      expect(@callback).to.have.been.called()
+        @obo.set 'foo', 100
 
-    it 'should call registered observer with new value', ->
-      @obo.observe 'foo', @callback
+        expect(@callback).to.have.been.called()
 
-      @obo.set 'foo', 100
+      it 'should call registered observer with new value', ->
+        @obo.observe 'foo', @callback
 
-      expect(@callback).to.have.been.called()
-      expect(@callbackLastArguments).to.exist
-      expect(@callbackLastArguments[0]).to.be.an.instanceof KeypathEvent
-      expect(@callbackLastArguments[1]).to.equal 100
-      expect(@callbackLastArguments[2]).to.equal 1
+        @obo.set 'foo', 100
 
-    it 'should call registered observers every time when setting a property value', ->
-      @obo.observe 'foo', @callback
+        expect(@callback).to.have.been.called()
+        expect(@callbackLastArguments).to.exist
+        expect(@callbackLastArguments[0]).to.be.an.instanceof KeypathEvent
+        expect(@callbackLastArguments[1]).to.equal 100
+        expect(@callbackLastArguments[2]).to.equal 1
 
-      @obo.set 'foo', 100
-      @obo.set 'foo', 101
+      it 'should call registered observers every time when setting a property value', ->
+        @obo.observe 'foo', @callback
 
-      expect(@callback).to.have.been.called.exactly 2
+        @obo.set 'foo', 100
+        @obo.set 'foo', 101
 
-    it 'should call registered observers only once when a property value is the same as last', ->
-      @obo.observe 'foo', @callback
+        expect(@callback).to.have.been.called.exactly 2
 
-      @obo.set 'foo', 100
-      @obo.set 'foo', 100
+      it 'should call registered observers only once when a property value is the same as last', ->
+        @obo.observe 'foo', @callback
 
-      expect(@callback).to.have.been.called.exactly 1
+        @obo.set 'foo', 100
+        @obo.set 'foo', 100
+
+        expect(@callback).to.have.been.called.exactly 1
 
 
     describe '#unobserve(keypath, callback)', ->

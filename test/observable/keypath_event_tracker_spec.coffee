@@ -3,7 +3,7 @@ Observable          = require '../../src/observable'
 KeypathEventTracker = require '../../src/observable/keypath_event_tracker'
 
 
-describe 'KeypathEventTracker(obj, event)', ->
+describe 'new KeypathEventTracker(obj, event)', ->
 
   beforeEach ->
     @obj = Observable.make
@@ -26,5 +26,4 @@ describe 'KeypathEventTracker(obj, event)', ->
         @obj.a.z
 
       expect(keypaths).to.eql ['a', 'a.b.c', 'a.z']
-
 

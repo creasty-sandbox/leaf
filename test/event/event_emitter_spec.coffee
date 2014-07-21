@@ -2,7 +2,7 @@
 EventEmitter     = require '../../src/event/event_emitter'
 
 
-describe 'EventEmitter(eventObject)', ->
+describe 'new EventEmitter(eventObject)', ->
 
   beforeEach ->
     @obj = {}
