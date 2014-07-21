@@ -47,12 +47,12 @@ class EventEmitter
     @
 
   trigger: (event, args...) ->
-    if event instanceof Event
-      event = event.clone()
-    else
-      event = new Event name: event
+    event = if event instanceof Event
+        event.clone()
+      else
+        new Event name: event
 
-    callbacks = @_getCallbacks event.name
+    callbacks = @_getCallbacks event.callbacksName ? event.name
     wildCallbacks = @_getCallbacks WILD_CARD
 
     args.unshift event
@@ -64,4 +64,3 @@ class EventEmitter
 
 
 module.exports = EventEmitter
-

@@ -8,15 +8,15 @@ class Accessible
   constructor: ->
     @_accessors = {}
 
-  get: -> @
-  set: (val) -> @
+  _get: -> @
+  _set: (val) -> @
 
   accessor: (key, desciptor) ->
     return if @_accessors[key]
     @_accessors[key] = desciptor
     Object.defineProperty @, key, desciptor
 
-  @ontoClass: (klass) ->
+  @includeAsMixin: (klass) ->
     klass::__proto__ = @sharedAccessible
 
 

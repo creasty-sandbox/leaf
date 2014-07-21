@@ -1,36 +1,37 @@
-_       = require 'lodash'
-Keypath = require './keypath'
+_            = require 'lodash'
+Keypath      = require './keypath'
+KeypathEvent = require './keypath_event'
 
 
 class KeypathEventTracker
 
   constructor: (@obj, @event) ->
-    @_tracker = @track.bind @
-    @setup()
+    @_tracker = @_track.bind @
 
-  setup: ->
-    @chainId = Keypath.sharedKeypath.chainId
+  _setup: ->
+    @chainID = Keypath.sharedKeypath.chainID
     @_stack = []
-    @_lastKeypathId = -1
 
     @obj.on @event, @_tracker
 
-  teardown: ->
+  _teardown: ->
     @obj.off @event, @_tracker
     @_stack = null
 
-  track: (e) ->
-    return unless e && e.keypath
-    return unless e.keypathChainId == @chainId
+  _track: (e) ->
+    return unless e instanceof KeypathEvent
+    return unless e.keypathChainID == @chainID
 
-    @_stack.pop() if e.propagated && e.keypathId == @_lastKeypathId + 1
+    @_stack.pop() if e.propagated
 
-    @_lastKeypathId = e.keypathId
     @_stack.push e.keypath
 
-  getActiveKeypaths: ->
+  track: (fn) ->
+    @_setup()
+    fn()
     stack = @_stack
-    @teardown()
+    @_teardown()
+
     _.unique stack
 
 

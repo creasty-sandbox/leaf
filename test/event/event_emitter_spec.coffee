@@ -1,8 +1,8 @@
-expect       = require('chai').expect
-EventEmitter = require '../../src/event/event_emitter'
+{ chai, expect } = require '../test_helpers'
+EventEmitter     = require '../../src/event/event_emitter'
 
 
-describe 'eventEmitter', ->
+describe 'EventEmitter(eventObject)', ->
 
   beforeEach ->
     @obj = {}

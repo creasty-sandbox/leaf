@@ -1,5 +1,5 @@
-expect    = require('chai').expect
-Inflector = require '../../src/supports/inflector'
+{ chai, expect } = require '../test_helpers'
+Inflector        = require '../../src/supports/inflector'
 
 
 describe 'Inflector', ->

@@ -1,32 +1,47 @@
+_          = require 'lodash'
 singleton  = require '../utils/singleton'
 Accessible = require '../utils/accessible'
+Cache      = require '../utils/cache'
 
 
 class Keypath
 
   singleton @, 'Keypath'
 
+  @regulateCache = new Cache 'keypath:regulate'
+  @ancestorsCache = new Cache 'keypath:ancestors'
+
   constructor: ->
-    @_chains = []
-    @beginChain()
+    @chainID = 0
 
   addKey: (key) ->
-    self = @
-
     Accessible.sharedAccessible.accessor key,
-      get: ->
-        id = ++self._chains[self.chainId].id
-        @get key, id, self.chainId
-      set: (val) ->
-        id = ++self._chains[self.chainId].id
-        @set key, val, id, self.chainId
+      get: -> @_get key
+      set: (val) -> @_set key, val
 
-  beginChain: ->
-    @_chains.push id: 0
-    @chainId = @_chains.length - 1
+  chain: (fn) ->
+    ++@chainID
+    try fn()
+    --@chainID
 
-  endChain: ->
-    @chainId = --@_chains.length - 1
+  @build: (paths...) -> _.compact(paths).join '.'
+
+  @regulate: (keypath) ->
+    return '' unless keypath?
+
+    @regulateCache.findOrCreate keypath, ->
+      String(keypath)
+      .replace(/^this\.?/, '')
+      .replace(/\[(\d+)\]/g, '.$1')
+
+  @ancestors: (keypath) ->
+    keypath = @regulate keypath
+
+    @ancestorsCache.findOrCreate keypath, ->
+      paths = keypath.split '.'
+      ancestors = [keypath]
+      ancestors.push paths.join('.') while paths.pop() && paths[0]
+      ancestors
 
 
 module.exports = Keypath

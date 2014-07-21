@@ -8,12 +8,7 @@ bindContext = (fn, ctx, alt) ->
   bindName = "__bind_#{id}"
 
   if alt
-    bindName +=
-      if alt._bindName
-        "_#{alt._bindName}"
-      else
-        "_#{getContextID alt}"
-
+    bindName += "_#{alt._bindName}" if alt._bindName
     fn[bindName] ?= alt
   else
     fn[bindName] ?= fn.bind ctx

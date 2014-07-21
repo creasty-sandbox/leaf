@@ -1,25 +1,21 @@
 _ = require 'lodash'
 
 
-include = (to, source = {}) ->
+_include = (to, source = {}) ->
   return false unless _.isFunction(source) || _.isPlainObject(source)
 
-  to[key] ?= val for key, val of source when key != 'prototype'
+  to[key] ?= val for own key, val of source
   true
 
-extend = (to, klass) ->
-  include to, klass
-  include to::, klass::
+include = (to, mixin) ->
+  if mixin.includeAsMixin
+    mixin.includeAsMixin to
+  else
+    _include to, mixin
+    _include to::, mixin::
 
-initMixin = (instance, mixins...) ->
-  for mixin in mixins when mixin
-    if _.isArray mixin
-      fn = mixin.shift()
-      fn.apply instance, mixin
-    else
-      mixin.apply instance
-
-  true
+initMixin = (instance, mixin, args...) ->
+  mixin.apply? instance, args
 
 
-module.exports = { include, extend, initMixin }
+module.exports = { include, initMixin }

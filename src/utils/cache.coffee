@@ -1,10 +1,9 @@
 class Cache
 
-  @storage = _global: {}
+  storage = _global: {}
 
   constructor: (@namespace = '_global') ->
-    @constructor.storage[@namespace] ?= {}
-    @storage = storage[@namespace]
+    @storage = (storage[@namespace] ?= {})
 
   get: (key, set) -> (@storage[key] ?= set)
 
@@ -17,8 +16,7 @@ class Cache
   unset: (key) -> @set key, undefined, true
 
   clear: (key) ->
-    storage[@namespace] = null
-    @storage = null
+    @storage = (storage[@namespace] = {})
 
   findOrCreate: (key, factory) ->
     obj = @get key
