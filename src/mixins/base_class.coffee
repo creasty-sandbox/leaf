@@ -1,6 +1,6 @@
 _         = require 'lodash'
 singleton = require '../utils/singleton'
-Mixin     = require '../utils/mixin'
+mixin     = require '../utils/mixin'
 
 
 class BaseClass
@@ -10,13 +10,13 @@ class BaseClass
   @singleton: ->
     singleton @, @className
 
-  @mixin: (mixin) ->
-    Mixin.include @, mixin
+  @mixin: (klass) ->
+    mixin.include @, klass
 
   initBaseClass: ->
 
   initMixin: ->
-    Mixin.initMixin @, arguments...
+    mixin.initMixin @, arguments...
 
   inheritFromSuper: (property) ->
     superClass = @constructor.__super__
@@ -41,7 +41,7 @@ class BaseClass
 
 
 make = (klass) ->
-  Mixin.include klass, BaseClass
+  mixin.include klass, BaseClass
 
 
 module.exports = { make }
