@@ -1,6 +1,6 @@
 jsIdent = require '../utils/js_ident'
 logger  = require '../utils/logger'
-Cache   = require '../mixins/cache'
+Cache   = require '../utils/cache'
 
 
 JS_RESERVED_WORDS = ///
