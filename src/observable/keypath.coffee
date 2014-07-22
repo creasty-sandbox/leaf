@@ -1,7 +1,7 @@
 _          = require 'lodash'
 singleton  = require '../utils/singleton'
-Accessible = require '../utils/accessible'
-Cache      = require '../utils/cache'
+Accessible = require '../mixins/accessible'
+Cache      = require '../mixins/cache'
 
 
 class Keypath

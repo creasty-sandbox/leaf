@@ -126,7 +126,7 @@ describe 'new ObservableObject(data = {})', ->
 
         expect(@callback).to.have.been.called()
         expect(@callbackLastArguments).to.exist
-        expect(@callbackLastArguments[0]).to.be.an.instanceof KeypathEvent
+        expect(@callbackLastArguments[0]).to.be.a.instanceof KeypathEvent
         expect(@callbackLastArguments[1]).to.equal 100
         expect(@callbackLastArguments[2]).to.equal 1
 
@@ -194,7 +194,7 @@ describe 'new ObservableObject(data = {})', ->
 
         expect(@callback).to.have.been.called()
         expect(@callbackLastArguments).to.exist
-        expect(@callbackLastArguments[0]).to.be.an.instanceof KeypathEvent
+        expect(@callbackLastArguments[0]).to.be.a.instanceof KeypathEvent
         expect(@callbackLastArguments[1]).to.equal 110
         expect(@callbackLastArguments[2]).to.equal 11
 

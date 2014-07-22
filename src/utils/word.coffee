@@ -1,1 +1,1 @@
-module.exports = (str) -> (str + '').split /\s+/
+module.exports = (str) -> String(str).split /\s+/

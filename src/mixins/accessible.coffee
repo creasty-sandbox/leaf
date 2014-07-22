@@ -1,4 +1,4 @@
-singleton = require './singleton'
+singleton = require '../utils/singleton'
 
 
 class Accessible
