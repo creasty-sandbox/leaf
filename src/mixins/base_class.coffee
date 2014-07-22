@@ -30,7 +30,7 @@ class BaseClass
     description = [
       @constructor.className
       @toID()
-      @toInspect()
+      JSON.stringify(@toInspect())
     ]
 
     "<#{_.compact(description).join ' '}>"
