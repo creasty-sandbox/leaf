@@ -1,11 +1,16 @@
-_         = require 'lodash'
-singleton = require '../utils/singleton'
-mixin     = require '../utils/mixin'
+_            = require 'lodash'
+singleton    = require '../utils/singleton'
+mixin        = require '../utils/mixin'
+StringHelper = require '../supports/string_helper'
 
 
 class BaseClass
 
   @setClassName: (@className) ->
+    cname = '__' + StringHelper.underscore(@className)
+
+    @[cname] = true
+    @::[cname] = true
 
   @singleton: ->
     singleton @, @className
