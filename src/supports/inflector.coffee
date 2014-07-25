@@ -1,6 +1,3 @@
-_ = require 'lodash'
-
-
 INFLECTOR_PLURALS = [
   ['$', 's']
   ['s$', 's']
@@ -83,9 +80,14 @@ class Inflector
   regularizeRegExp = (pattern) -> new RegExp pattern.source || pattern, 'gi'
 
   detect = (word, rules) ->
-    result = word
-    _(rules).detect (r) -> result = word.replace r[0], r[1] if r[0].test word
-    result
+    for rule in rules
+      rule[0].lastIndex = 0  # sucks
+
+      if rule[0].test word
+        word = word.replace rule[0], rule[1]
+        break
+
+    word
 
   constructor: -> @reset()
 
@@ -93,8 +95,7 @@ class Inflector
 
   pluralize: (word, count, withNumber) ->
     if count?
-      count = Math.round count
-      result = if count == 1 then @singularize word else @pluralize word
+      result = if Math.round(count) == 1 then @singularize word else @pluralize word
       if withNumber
         [count, result].join ' '
       else

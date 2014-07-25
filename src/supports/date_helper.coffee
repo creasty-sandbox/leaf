@@ -126,38 +126,63 @@ class DateHelper
 
     "#{@relativeDate date} at #{@toFormattedString date, '%H:%M'}"
 
-  @since: (date, reference) -> NumberHelper.since reference, date
+  @since: (date, reference) -> NumberHelper.since(reference, date)
 
-  @ago: (date, reference) -> NumberHelper.ago reference, date
+  @ago: (date, reference) -> NumberHelper.ago(reference, date)
 
   @beginningOfDay: (date) ->
-    new Date(date).setHours(0).setMinutes(0).setSeconds(0).setMilliseconds(0)
+    d = new Date date
+    d.setHours 0
+    d.setMinutes 0
+    d.setSeconds 0
+    d.setMilliseconds 0
+    d
 
   @beginningOfWeek: (date) ->
     daysToSunday = (date.getDay() + 6) % 7
     @until @beginningOfDay(date), NumberHelper.day(daysToSunday)
 
-  @beginningOfMonth: (date) -> @beginningOfDay(date).setDate 1
+  @beginningOfMonth: (date) ->
+    d = @beginningOfDay date
+    d.setDate 1
+    d
 
   @beginningOfQuarter: (date) ->
     month = [9, 6, 3, 0].detect (m) -> m <= date.getMonth()
-    @beginningOfMonth(date).setMonth month
 
-  @beginningOfYear: (date) -> @beginningOfMonth(date).setMonth 0
+    d = @beginningOfMonth date
+    d.setMonth month
+    d
+
+  @beginningOfYear: (date) ->
+    d = @beginningOfMonth date
+    d.setMonth 0
+    d
 
   @endOfDay: (date) ->
-    new Date(date).setHours(23).setMinutes(59).setSeconds 59
+    d = new Date date
+    d.setHours 23
+    d.setMinutes 59
+    d.setSeconds 59
+    d
 
   @endOfMonth: (date) ->
-    @beginningOfDay(date).setDate @getDaysInMonth(date)
+    d = @beginningOfDay date
+    d.setDate @getDaysInMonth(date)
+    d
 
   @endOfQuarter: (date) ->
     month = [2, 5, 8, 11].detect (m) -> m >= date.getMonth()
-    @endOfMonth date.setMonth(month)
 
-  @yesterday: (date) -> date.setDate date.getDate() - 1
+    d = new Date date
+    d.setMonth(month)
+    @endOfMonth d
 
-  @tomorrow: (date) -> date.setDate date.getDate() + 1
+  @yesterday: (date) ->
+    @ago date, NumberHelper.day(1)
+
+  @tomorrow: (date) ->
+    @since date, NumberHelper.day(1)
 
   # method aliases
   @strftime: @toFormattedString
@@ -169,7 +194,7 @@ class DateHelper
   WEEKDAYS.forEach (dayName, dayIndex) ->
     klass["is#{dayName}"] = -> @getDay() % 7 == dayIndex
 
-  _('setMilliseconds setSeconds setMinutes setHours setDays setDate setMonth setYears').word().forEach (method) ->
+  $w('setMilliseconds setSeconds setMinutes setHours setDays setDate setMonth setYears').forEach (method) ->
     org = Date::[method]
     klass[method] = (date, val) -> new Date org.call date, val
 
