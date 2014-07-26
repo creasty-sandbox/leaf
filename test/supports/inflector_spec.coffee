@@ -8,7 +8,7 @@ describe 'Inflector', ->
     Inflector.reset()
 
 
-  describe '.pluralize(word [, count [, widthNumber]])', ->
+  describe '::pluralize(word [, count [, widthNumber]])', ->
 
     it 'should pluralize the given noun', ->
       expect(Inflector.pluralize('post')).to.equal 'posts'
@@ -47,7 +47,7 @@ describe 'Inflector', ->
           expect(Inflector.pluralize('post', 1, true)).to.equal '1 post'
 
 
-  describe '.plural(rule, replacement)', ->
+  describe '::plural(rule, replacement)', ->
 
     it 'should add a new pluralization rule by explict string', ->
       Inflector.plural 'axis', 'axes'
@@ -60,7 +60,7 @@ describe 'Inflector', ->
       expect(Inflector.pluralize('axis')).to.equal 'axes'
 
 
-  describe '.singularize(word)', ->
+  describe '::singularize(word)', ->
 
     it 'should singularize the given noun', ->
       expect(Inflector.singularize('posts')).to.equal 'post'
@@ -72,7 +72,7 @@ describe 'Inflector', ->
       expect(Inflector.singularize('comments')).to.equal 'comment'
 
 
-  describe '.singular(rule, replacement)', ->
+  describe '::singular(rule, replacement)', ->
 
     it 'should add a new singularization rule by explicit string', ->
       Inflector.singular 'data', 'datum'
@@ -85,7 +85,7 @@ describe 'Inflector', ->
       expect(Inflector.singularize('data')).to.equal 'datum'
 
 
-  describe '.irregular(singular, plural)', ->
+  describe '::irregular(singular, plural)', ->
 
     it 'should add a rule to pluralize the special case', ->
       Inflector.irregular 'number', 'numb3rs'
@@ -98,7 +98,7 @@ describe 'Inflector', ->
       expect(Inflector.singularize('numb3rs')).to.equal 'number'
 
 
-  describe '.uncountable(word)', ->
+  describe '::uncountable(word)', ->
 
     it 'should note the word as a special case in pluralization', ->
       Inflector.uncountable 'qwerty'
@@ -111,7 +111,7 @@ describe 'Inflector', ->
       expect(Inflector.singularize('qwerty')).to.equal 'qwerty'
 
 
-  describe '.reset()', ->
+  describe '::reset()', ->
 
     it 'should reset the default inflections', ->
       Inflector.plural 'number', 'numb3rs'

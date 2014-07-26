@@ -1,8 +1,9 @@
 .DS_Store
-/.grunt/
-/node_modules/
-/dev/
-/vendor/
-/tmp/
-/src/testground.coffee
+.grunt/
+node_modules/
+dev/
+build/
+vendor/
+tmp/
+src/testground.coffee
 

@@ -25,15 +25,13 @@ class ObservableBase
     @_dependents = {}
     @_delegates = {}
     @_propagateHandlers = {}
+    @_cachedValues = {}
+    @_observers = {}
 
-    @_inBatch = 0
+    @_batchCount = 0
 
     @initMixin LeafID
     @initMixin EventEmitter
-
-    @_cachedValues = {}
-
-    @_observers = {}
 
     @setupPrivateEventResolvers()
     @setData data
@@ -182,9 +180,9 @@ class ObservableBase
   #  Batch
   #-----------------------------------------------
   batch: (fn) ->
-    ++@_inBatch
+    ++@_batchCount
     keypaths = @trackEvent 'set', fn
-    --@_inBatch
+    --@_batchCount
 
     _(keypaths).forEach (keypath) =>
       event = new KeypathEvent
@@ -198,10 +196,7 @@ class ObservableBase
   #-----------------------------------------------
   setupPrivateEventResolvers: ->
     handler = (e, args...) =>
-      return if @_inBatch
-
-      # event = e.clone()
-      # event.callbacksName = "#{e.name}@#{keypath}"
+      return if @_batchCount
 
       if (observers = @_observers['*'])
         event = e.clone()

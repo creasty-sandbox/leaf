@@ -43,5 +43,9 @@ class Keypath
       ancestors.push paths.join('.') while paths.pop() && paths[0]
       ancestors
 
+  @isMatch: (keypath, other) ->
+    keypath = @regulate keypath
+    !!~@ancestors(other).indexOf(keypath)
+
 
 module.exports = Keypath

@@ -18,6 +18,8 @@ class BaseClass
   @mixin: (klass) ->
     mixin.include @, klass
 
+  @_initBaseClass: ->
+
   initBaseClass: ->
 
   initMixin: ->
@@ -47,6 +49,7 @@ class BaseClass
 
 make = (klass) ->
   mixin.include klass, BaseClass
+  klass._initBaseClass()
 
 
 module.exports = { make }

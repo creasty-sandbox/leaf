@@ -3,22 +3,18 @@ glob = require 'glob'
 
 #=== Files
 #==============================================================================================
-SRC_DIR    = 'src/'
-TEST_DIR   = 'test/'
-DIST_DIR   = 'dist/'
-TMP_DIR    = 'tmp/'
-VENDOR_DIR = 'vendor/'
-
-VENDOR_FILES = [
-  'jquery/jquery.min.js'
-  'lodash/dist/lodash.min.js'
-]
+SRC_DIR    = 'src'
+TEST_DIR   = 'test'
+DIST_DIR   = 'dist'
+BUILD_DIR  = 'build'
+TMP_DIR    = 'tmp'
+VENDOR_DIR = 'vendor'
 
 COMPONENTS = [
+  'utils'
   'event'
   'observable'
   'supports'
-  'utils'
 ]
 
 BANNER =  """
@@ -38,27 +34,64 @@ BANNER =  """
 #==============================================================================================
 gruntConfig = {}
 
-# Coffee
+#  Coffee
+#-----------------------------------------------
 gruntConfig.coffee =
   src:
     expand: true
     cwd: SRC_DIR
-    dest: TMP_DIR + SRC_DIR
+    dest: "#{TMP_DIR}/#{SRC_DIR}"
     src: ['**/*.coffee']
     ext: '.js'
 
   test:
     expand: true
     cwd: TEST_DIR
-    dest: TMP_DIR + TEST_DIR
+    dest: "#{TMP_DIR}/#{TEST_DIR}"
     src: ['**/*.coffee']
     ext: '.js'
 
-# Clean
+  release:
+    expand: true
+    cwd: SRC_DIR
+    dest: "#{TMP_DIR}/#{SRC_DIR}"
+    src: ['**/*.coffee']
+    ext: '.js'
+    options:
+      bare: true
+
+
+#  Browserify
+#-----------------------------------------------
+gruntConfig.browserify =
+  options:
+    alias: [
+      "./#{VENDOR_DIR}/lodash/dist/lodash.min.js:lodash"
+      "./#{VENDOR_DIR}/jquery/jquery.min.js:jquery"
+    ]
+
+  main:
+    src: ["#{TMP_DIR}/#{SRC_DIR}/observable/index.js"]
+    dest: "#{BUILD_DIR}/leaf.js"
+    options:
+      external: [
+        "./#{VENDOR_DIR}/lodash/dist/lodash.min.js"
+        "./#{VENDOR_DIR}/jquery/jquery.min.js"
+      ]
+
+  vendor:
+    src: []
+    dest: "#{BUILD_DIR}/vendor.js"
+
+
+#  Clean
+#-----------------------------------------------
 gruntConfig.clean =
   tmp: TMP_DIR
 
-# Simple mocha
+
+#  Simple mocha
+#-----------------------------------------------
 gruntConfig.simplemocha =
   options:
     globals: ['expect']
@@ -67,48 +100,55 @@ gruntConfig.simplemocha =
     colors: true
 
   all:
-    src: ["#{TMP_DIR}#{TEST_DIR}/**/*_spec.js"]
+    src: ["#{TMP_DIR}/#{TEST_DIR}/**/*_spec.js"]
 
 for component in COMPONENTS
   gruntConfig.simplemocha[component] =
-    src: ["#{TMP_DIR}#{TEST_DIR}#{component}/**/*_spec.js"]
+    src: ["#{TMP_DIR}/#{TEST_DIR}/#{component}/**/*_spec.js"]
 
-# Concat
+
+#  Concat
+#-----------------------------------------------
 gruntConfig.concat =
   src:
     options:
       banner: BANNER
-    files:
-      'dist/leaf.js': ['dist/leaf.js']
+    src: ["#{BUILD_DIR}/leaf.js"]
+    dest: "#{BUILD_DIR}/leaf.js"
 
-# Uglify
+
+#  Uglify
+#-----------------------------------------------
 gruntConfig.uglify =
   src:
     options:
-      banner: '<%= meta.banner %>'
+      banner: BANNER
       report: 'gzip'
-    files:
-      'dist/leaf.min.js': ['dist/leaf.js']
 
-# Watch
+    src: ["#{BUILD_DIR}/leaf.js"]
+    dest: "#{BUILD_DIR}/leaf.min.js"
+
+
+#  Watch
+#-----------------------------------------------
 gruntConfig.watch =
   options:
     spawn: false
 
   src:
-    files: "#{SRC_DIR}**/*.coffee"
+    files: "#{SRC_DIR}/**/*.coffee"
     tasks: ['newer:coffee:src']
 
   test:
-    files: "#{TEST_DIR}**/*.coffee"
+    files: "#{TEST_DIR}/**/*.coffee"
     tasks: ['newer:coffee:test']
 
   karma:
     files: [
-      "#{TMP_DIR}#{SRC_DIR}**/*.js"
-      "#{TMP_DIR}#{TEST_DIR}**/*_spec.js"
+      "#{TMP_DIR}/#{SRC_DIR}/**/*.js"
+      "#{TMP_DIR}/#{TEST_DIR}/**/*_spec.js"
     ]
-    tasks: ['component_test']
+    tasks: ['group_test']
 
 
 #=== Grunt
@@ -119,16 +159,18 @@ module.exports = (grunt) ->
   #-----------------------------------------------
   require('matchdep').filterDev('grunt-*').forEach grunt.loadNpmTasks
 
+
   #  Config
   #-----------------------------------------------
   grunt.option 'force', true
   gruntConfig.pkg = grunt.file.readJSON 'package.json'
   grunt.initConfig gruntConfig
 
+
   #  Tasks
   #-----------------------------------------------
   group = grunt.option('group') ? 'all'
-  grunt.registerTask 'component_test', ["simplemocha:#{group}"]
+  grunt.registerTask 'group_test', ["simplemocha:#{group}"]
 
   grunt.registerTask 'dev', [
     'clean'
@@ -138,16 +180,23 @@ module.exports = (grunt) ->
 
   grunt.registerTask 'test', [
     'clean'
-    'coffee'
-    'component_test'
+    'coffee:src'
+    'coffee:test'
+    'group_test'
     'watch'
   ]
 
-  grunt.registerTask 'release', [
+  grunt.registerTask 'build', [
     'clean'
     'coffee:release'
+    'browserify'
     'concat'
     'uglify'
+  ]
+
+  grunt.registerTask 'release', [
+    # FIXME
+    'build'
   ]
 
   grunt.registerTask 'default', ['dev']
