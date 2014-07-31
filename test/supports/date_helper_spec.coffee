@@ -7,7 +7,7 @@ describe 'DateHelper', ->
   describe '::now()', ->
 
     it 'should return current datetime', ->
-      # untestable
+      expect(DateHelper.now()).to.be.same.datetime new Date()
 
 
   describe '::today()', ->
@@ -17,9 +17,7 @@ describe 'DateHelper', ->
       today.setHours 0
       today.setMinutes 0
       today.setSeconds 0
-      today.setMilliseconds 0
-
-      expect(DateHelper.today()).to.eql today
+      expect(DateHelper.today()).to.be.same.datetime today
 
 
   describe '::equals(one, other)', ->
@@ -123,18 +121,29 @@ describe 'DateHelper', ->
 
     it 'should return date of yesterday', ->
       today = new Date()
-      yesterday = new Date(+today - 24 * 60 * 60 * 1000)
+      today.setMilliseconds 0
 
-      expect(DateHelper.yesterday(today)).to.eql yesterday
+      d = new Date(+today - 24 * 60 * 60 * 1000)
+      d.setMilliseconds 0
+
+      yesterday = DateHelper.yesterday today
+      yesterday.setMilliseconds 0
+
+      expect(yesterday).to.be.same.datetime d
 
 
   describe '::tomorrow(date)', ->
 
     it 'should return date of tomorrow', ->
       today = new Date()
-      tomorrow = new Date(+today + 24 * 60 * 60 * 1000)
+      today.setMilliseconds 0
 
-      expect(DateHelper.tomorrow(today)).to.eql tomorrow
+      d = new Date(+today + 24 * 60 * 60 * 1000)
+      d.setMilliseconds 0
+
+      yesterday = DateHelper.tomorrow today
+
+      expect(yesterday).to.be.same.datetime d
 
 
   describe '[alias] ::strftime -> ::toFormattedString', ->
