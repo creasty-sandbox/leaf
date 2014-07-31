@@ -3,12 +3,7 @@ glob = require 'glob'
 
 #=== Files
 #==============================================================================================
-SRC_DIR    = 'src'
-TEST_DIR   = 'test'
-DIST_DIR   = 'dist'
-BUILD_DIR  = 'build'
-TMP_DIR    = 'tmp'
-VENDOR_DIR = 'vendor'
+DIRS = ['src', 'test', 'dist', 'build', 'tmp', 'vendor']
 
 COMPONENTS = [
   'utils'
@@ -16,6 +11,10 @@ COMPONENTS = [
   'observable'
   'supports'
 ]
+
+VENDOR_FILES =
+  lodash: ['lodash', 'dist', 'lodash.min.js']
+  jquery: ['jquery', 'jquery.min.js']
 
 BANNER =  """
   /*!
@@ -30,6 +29,35 @@ BANNER =  """
   """
 
 
+#=== Utils
+#==============================================================================================
+FILES = do ->
+  _path = []
+  f = {}
+
+  f.push = (paths...) ->
+    _path.push paths... if paths.length
+    f
+
+  f.join = ->
+    f.push arguments...
+    paths = _path
+    _path = []
+    paths.join '/'
+
+  DIRS.forEach (dir) ->
+    Object.defineProperty f, dir,
+      get: -> f.push dir
+
+  Object.defineProperty f, 'relative',
+    get: -> f.push '.'
+
+  Object.defineProperty f, 'path',
+    get: -> f.join()
+
+  f
+
+
 #=== Task config
 #==============================================================================================
 gruntConfig = {}
@@ -39,22 +67,22 @@ gruntConfig = {}
 gruntConfig.coffee =
   src:
     expand: true
-    cwd: SRC_DIR
-    dest: "#{TMP_DIR}/#{SRC_DIR}"
+    cwd: FILES.src.path
+    dest: FILES.tmp.src.path
     src: ['**/*.coffee']
     ext: '.js'
 
   test:
     expand: true
-    cwd: TEST_DIR
-    dest: "#{TMP_DIR}/#{TEST_DIR}"
+    cwd: FILES.test.path
+    dest: FILES.tmp.test.path
     src: ['**/*.coffee']
     ext: '.js'
 
   release:
     expand: true
-    cwd: SRC_DIR
-    dest: "#{TMP_DIR}/#{SRC_DIR}"
+    cwd: FILES.src.path
+    dest: FILES.tmp.src.path
     src: ['**/*.coffee']
     ext: '.js'
     options:
@@ -65,29 +93,28 @@ gruntConfig.coffee =
 #-----------------------------------------------
 gruntConfig.browserify =
   options:
-    alias: [
-      "./#{VENDOR_DIR}/lodash/dist/lodash.min.js:lodash"
-      "./#{VENDOR_DIR}/jquery/jquery.min.js:jquery"
-    ]
+    alias: []
 
   main:
-    src: ["#{TMP_DIR}/#{SRC_DIR}/observable/index.js"]
-    dest: "#{BUILD_DIR}/leaf.js"
+    src: [FILES.tmp.src.join('observable', 'index.js')]
+    dest: FILES.build.join 'leaf.js'
     options:
-      external: [
-        "./#{VENDOR_DIR}/lodash/dist/lodash.min.js"
-        "./#{VENDOR_DIR}/jquery/jquery.min.js"
-      ]
+      external: []
 
   vendor:
     src: []
-    dest: "#{BUILD_DIR}/vendor.js"
+    dest: FILES.build.join 'vendor.js'
+
+for alias, file of VENDOR_FILES
+  file = FILES.relative.vendor.join file...
+  gruntConfig.browserify.options.alias.push "#{file}:#{alias}"
+  gruntConfig.browserify.main.options.external.push file
 
 
 #  Clean
 #-----------------------------------------------
 gruntConfig.clean =
-  tmp: TMP_DIR
+  tmp: FILES.tmp.path
 
 
 #  Simple mocha
@@ -100,11 +127,11 @@ gruntConfig.simplemocha =
     colors: true
 
   all:
-    src: ["#{TMP_DIR}/#{TEST_DIR}/**/*_spec.js"]
+    src: [FILES.tmp.test.join('**', '*_spec.js')]
 
 for component in COMPONENTS
   gruntConfig.simplemocha[component] =
-    src: ["#{TMP_DIR}/#{TEST_DIR}/#{component}/**/*_spec.js"]
+    src: [FILES.tmp.test.join(component, '**', '*_spec.js')]
 
 
 #  Concat
@@ -113,8 +140,8 @@ gruntConfig.concat =
   src:
     options:
       banner: BANNER
-    src: ["#{BUILD_DIR}/leaf.js"]
-    dest: "#{BUILD_DIR}/leaf.js"
+    src: [FILES.build.join('leaf.js')]
+    dest: FILES.build.join 'leaf.js'
 
 
 #  Uglify
@@ -125,8 +152,8 @@ gruntConfig.uglify =
       banner: BANNER
       report: 'gzip'
 
-    src: ["#{BUILD_DIR}/leaf.js"]
-    dest: "#{BUILD_DIR}/leaf.min.js"
+    src: [FILES.build.join('leaf.js')]
+    dest: FILES.build.join 'leaf.min.js'
 
 
 #  Watch
@@ -136,17 +163,17 @@ gruntConfig.watch =
     spawn: false
 
   src:
-    files: "#{SRC_DIR}/**/*.coffee"
+    files: FILES.src.join '**', '*.coffee'
     tasks: ['newer:coffee:src']
 
   test:
-    files: "#{TEST_DIR}/**/*.coffee"
+    files: FILES.test.join '**', '*.coffee'
     tasks: ['newer:coffee:test']
 
   karma:
     files: [
-      "#{TMP_DIR}/#{SRC_DIR}/**/*.js"
-      "#{TMP_DIR}/#{TEST_DIR}/**/*_spec.js"
+      FILES.tmp.src.join('**', '*.js')
+      FILES.tmp.test.join('**', '*_spec.js')
     ]
     tasks: ['group_test']
 
