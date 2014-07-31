@@ -1,6 +1,6 @@
-_                = require 'lodash'
-internalProperty = require '../utils/internal_property'
-Event            = require './event'
+_                  = require 'lodash'
+internalObjectData = require '../utils/internal_object_data'
+Event              = require './event'
 
 
 class EventEmitter
@@ -36,15 +36,16 @@ class EventEmitter
     @
 
   once: (event, handler) ->
-    internalProperty(handler, @).set 'eventEmitter:once', true
+    iod = internalObjectData handler, @
+    iod['eventEmitter:once'] = true
     @on event, handler
     @
 
   _fire: (callbacks, handler, args) ->
-    ip = internalProperty handler, @
+    iod = internalObjectData handler, @
 
-    if ip.get 'eventEmitter:once'
-      ip.set 'eventEmitter:once', false
+    if iod['eventEmitter:once']
+      iod['eventEmitter:once'] = false
       idx = callbacks.indexOf handler
       callbacks.splice idx, 1 if ~idx
 
