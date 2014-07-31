@@ -1,19 +1,16 @@
-_contextID = 0
+internalProperty = require './internal_property'
 
-getContextID = (o) -> (o.__contextID ?= ++_contextID)
 
 bindContext = (fn, ctx, alt) ->
-  id = getContextID ctx
+  prop = '_contextFunction'
 
-  bindName = "__bind_#{id}"
+  ip = internalProperty fn, ctx
 
   if alt
-    bindName += "_#{alt._bindName}" if alt._bindName
-    fn[bindName] ?= alt
+    prop += "_#{alt._bindName}" if alt._bindName
+    ip.iset prop, alt
   else
-    fn[bindName] ?= fn.bind ctx
-
-  true
+    ip.iset prop, fn.bind(ctx)
 
 
 module.exports = bindContext

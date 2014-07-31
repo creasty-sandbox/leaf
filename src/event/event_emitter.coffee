@@ -1,5 +1,6 @@
-_     = require 'lodash'
-Event = require './event'
+_                = require 'lodash'
+internalProperty = require '../utils/internal_property'
+Event            = require './event'
 
 
 class EventEmitter
@@ -35,19 +36,23 @@ class EventEmitter
     @
 
   once: (event, handler) ->
-    fired = false
-
-    unless handler.__once_fn
-      _once = =>
-        @off event, _once
-        handler arguments...
-      handler.__once_fn = _once
-
-    @on event, handler.__once_fn ? handler
+    internalProperty(handler, @).set 'eventEmitter:once', true
+    @on event, handler
     @
 
+  _fire: (callbacks, handler, args) ->
+    ip = internalProperty handler, @
+
+    if ip.get 'eventEmitter:once'
+      ip.set 'eventEmitter:once', false
+      idx = callbacks.indexOf handler
+      callbacks.splice idx, 1 if ~idx
+
+    handler.apply null, args
+
   trigger: (event, args...) ->
-    event = if event instanceof Event
+    event =
+      if event instanceof Event
         event.clone()
       else
         new Event name: event
@@ -57,8 +62,8 @@ class EventEmitter
 
     args.unshift event
 
-    callback.apply null, args for callback in callbacks
-    callback.apply null, args for callback in wildCallbacks
+    @_fire callbacks, callback, args for callback in callbacks
+    @_fire wildCallbacks, callback, args for callback in wildCallbacks
 
     @
 
