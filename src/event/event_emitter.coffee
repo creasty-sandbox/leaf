@@ -58,8 +58,10 @@ class EventEmitter
       else
         new Event name: event
 
-    callbacks = @_getCallbacks event.callbacksName ? event.name
+    callbacks = @_getCallbacks event.name
     wildCallbacks = @_getCallbacks WILD_CARD
+
+    event = event.fireWithEventObject ? event
 
     args.unshift event
 
